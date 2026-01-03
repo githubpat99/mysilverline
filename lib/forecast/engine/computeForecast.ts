@@ -3,6 +3,9 @@
 // ================================
 
 import type { ForecastInput, ForecastPoint } from "../types";
+import { applyExpenses } from "../expenses/applyExpenses";
+import { applyIncome } from "../income/applyIncome";
+import { applyDebts } from "../debts/applyDebts";
 
 import type {
   Assumptions,
@@ -122,14 +125,14 @@ export function computeForecast(input: ForecastInput): ForecastPoint[] {
     scenario,
   } = input;
 
-  const horizonYears = Math.max(0, (planToAge + extraSafetyYears) - selfAgeToday);
+  const horizonYears = Math.max(0, planToAge + extraSafetyYears - selfAgeToday);
   const points: ForecastPoint[] = [];
 
   const inflation = assumptions.inflation ?? 0;
 
   const nominalReturn =
     assumptions.returnMode === "nominal"
-      ? (assumptions.nominalReturn ?? 0)
+      ? assumptions.nominalReturn ?? 0
       : (assumptions.realReturn ?? 0) + inflation;
 
   const annualFees = assumptions.annualFees ?? 0;
@@ -140,7 +143,7 @@ export function computeForecast(input: ForecastInput): ForecastPoint[] {
   let wealth = Math.trunc(wealthToday);
 
   // scenario: one-off cash add (lotto)
-  const lottoAt = scenario?.type === "lotto" ? (scenario.atYearOffset ?? 0) : null;
+  const lottoAt = scenario?.type === "lotto" ? scenario.atYearOffset ?? 0 : null;
   const lottoAmount = scenario?.type === "lotto" ? Math.trunc(scenario.lumpSumCHF) : 0;
 
   for (let t = 0; t <= horizonYears; t++) {
@@ -152,79 +155,29 @@ export function computeForecast(input: ForecastInput): ForecastPoint[] {
     }
 
     // ---- Expenses (annual) ----
-    let expenses = annualSpendingToday;
-
-    // spending adjustments are expressed "startsAtAge" relative to self
-    for (const adj of spendingAdjustments) {
-      if (age >= adj.startsAtAge) expenses += adj.annualDelta;
-    }
-
-    // indexation
-    // nominal: grows with inflation + extraGrowth
-    // fixed_nominal: no growth
-    // fixed_real: grows with inflation to stay real-constant (your naming says "real konstant")
-    if (spendingIndexation === "inflation") {
-      expenses = expenses * Math.pow(1 + inflation + spendingExtraGrowth, t);
-    } else if (spendingIndexation === "fixed_real") {
-      expenses = expenses * Math.pow(1 + inflation, t);
-    } // fixed_nominal => unchanged
-
-    // one-off spend events (already in CHF, yearOffset)
-    for (const e of oneOffSpendEvents) {
-      if (e.yearOffset === t) expenses += e.amount;
-    }
-
-    expenses = Math.trunc(expenses);
+    const expenses = applyExpenses({
+      t,
+      age,
+      annualSpendingToday,
+      spendingIndexation,
+      inflation,
+      spendingExtraGrowth,
+      spendingAdjustments,
+      oneOffSpendEvents,
+    });
 
     // ---- Income (annual) ----
-    let income = 0;
-
-    // other incomes are defined with year offsets; keep minimal & consistent:
-    // - amountTodayOrAtStart grows depending on indexation
-    for (const line of otherIncomes) {
-      const start = line.startYearOffset ?? 0;
-      const end = line.endYearOffset ?? Infinity;
-      if (t < start || t > end) continue;
-
-      let amt = line.amountTodayOrAtStart;
-
-      const dt = t - start;
-      if (line.indexation === "inflation") {
-        amt = amt * Math.pow(1 + inflation + (line.extraGrowth ?? 0), dt);
-      } else if (line.indexation === "fixed_real") {
-        amt = amt * Math.pow(1 + inflation, dt);
-      } // fixed_nominal => unchanged
-
-      income += amt;
-    }
-
-    // pensions (self + partner) based on startsAtAge
-    const allPensions = [...pensionsSelf, ...pensionsPartner];
-    for (const p of allPensions) {
-      if (age < p.startsAtAge) continue;
-
-      if (p.mode === "annuity") {
-        income += p.annuityAnnual ?? 0;
-      } else if (p.mode === "capital") {
-        // capital is one-off at startsAtAge
-        if (age === p.startsAtAge) income += p.capitalAmount ?? 0;
-      }
-    }
-
-    income = Math.trunc(income);
+    const income = applyIncome({
+      t,
+      age,
+      inflation,
+      otherIncomes,
+      pensionsSelf,
+      pensionsPartner,
+    });
 
     // ---- Debts (minimal) ----
-    // For v1: subtract annualPayment if provided (and not payoffImmediately)
-    let debtCost = 0;
-    for (const d of debts) {
-      if (d.payoffImmediately) continue;
-      if (typeof d.annualPayment === "number") debtCost += d.annualPayment;
-      else {
-        // fallback: interest-only cost on principalToday (no amortization)
-        debtCost += Math.trunc(d.principalToday * (d.annualInterestRate ?? 0));
-      }
-    }
-    debtCost = Math.trunc(debtCost);
+    const debtCost = applyDebts({ debts });
 
     // treat debtCost as extra expenses
     const totalExpenses = expenses + debtCost;

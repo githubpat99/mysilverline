@@ -23,3 +23,16 @@ export function applyIndexation(
   }
   return amount; // fixed_nominal
 }
+
+export function indexationFactor(
+  mode: IndexationMode,
+  inflation: number,
+  dtYears: number,
+  extraGrowth = 0,
+): number {
+  if (dtYears <= 0) return 1;
+
+  if (mode === "inflation") return Math.pow(1 + inflation + extraGrowth, dtYears);
+  if (mode === "fixed_real") return Math.pow(1 + inflation, dtYears);
+  return 1; // fixed_nominal
+}

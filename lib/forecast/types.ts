@@ -7,6 +7,12 @@ import type {
   PensionDraft,
   SpendingAdjustmentDraft,
 } from "@/lib/lotto/types";
+import type { YearBreakdown } from "./breakdown/types";
+
+export type ForecastResult = {
+    points: ForecastPoint[];
+    breakdowns: YearBreakdown[];
+};
 
 export type ForecastPoint = {
   yearIndex: number;

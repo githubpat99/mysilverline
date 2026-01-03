@@ -1,2 +1,2 @@
 export * from "./types";
-export { computeForecast, forecastInputFromLottoDraft } from "./engine/computeForecast";
+export { computeForecast, computeForecastWithBreakdown } from "./engine/computeForecast";

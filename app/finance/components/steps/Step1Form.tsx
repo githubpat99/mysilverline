@@ -23,7 +23,31 @@ export default function Step1Form({
         Liquiditäts- und Anlagestrategie.
       </p>
 
+      <div>
+        <label className="block text-sm text-slate-300 mb-1">Geburtsdatum</label>
+        <input
+          type="date"
+          value={value.birthDate ?? ""}
+          onChange={(e) => onChange("birthDate", e.target.value)}
+          className="w-full rounded-xl border border-slate-800 bg-slate-950/30 px-3 py-2 text-slate-100"
+        />
+        <div className="mt-1 text-xs text-slate-500">
+          Alter wird per 01.01. des laufenden Jahres berechnet.
+        </div>
+      </div>
+
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <label className="text-sm text-slate-300">Pensionierungsalter</label>
+        <input
+          type="number"
+          min={50}
+          max={75}
+          value={value.retireAtAge ?? "65"}
+          onChange={(e) => onChange("retireAtAge", e.target.value)} // KEIN Fallback erzwingen
+          className="mt-1 w-full rounded-xl border border-slate-800 bg-slate-950/30 px-3 py-2 text-slate-100"
+        />
+        <p className="mt-1 text-xs text-slate-500">Standard: 65</p>
+
         <FieldMoney
           label="Bargeld / Sichtguthaben"
           value={value.cash}

@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { loadProfile, saveProfile } from "@/lib/profileApi";
+import { useRouter } from "next/navigation";
 
+import { loadProfile, saveProfile } from "@/lib/profileApi";
 import type { CompletionState, FormState, StepId } from "@/lib/types";
 import { STEP_TITLES } from "@/lib/stepConfig";
 import { validateStep } from "@/lib/validate";
@@ -17,7 +18,14 @@ import Step6Form from "@/app/finance/components/steps/Step6Form";
 import StepNavigation from "./components/StepNavigation";
 
 const INITIAL_FORM: FormState = {
-  step1: { cash: "", bankSavings: "", securities: "", otherInvest: "" },
+  step1: {
+    birthDate: "",        // leer -> zwingt später zur Eingabe
+    retireAtAge: 65,
+    cash: "",
+    bankSavings: "",
+    securities: "",
+    otherInvest: ""
+  },
   step2: {
     creditCard: "",
     consumerLoan: "",
@@ -26,7 +34,15 @@ const INITIAL_FORM: FormState = {
     loan: "",
     otherLong: "",
   },
-  step3: { futureIncome: "", futureExpense: "", notes: "" },
+  step3: {
+    annualIncomeToday: "",
+    annualSpendingToday: "",
+    indexation: "inflation",
+    futureIncome: "",
+    futureExpense: "",
+    notes: "",
+  },
+
   step4: { goal: "", risk: null, horizonYears: null },
   step5: { preferred: [], avoided: [] },
   step6: { minLiquidity: "", monthlySaving: "" },
@@ -42,10 +58,13 @@ const INITIAL_COMPLETED: CompletionState = {
 };
 
 export default function Page() {
+  const router = useRouter();
+
   const [currentStep, setCurrentStep] = useState<StepId>(1);
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [completed, setCompleted] = useState<CompletionState>(INITIAL_COMPLETED);
   const [loading, setLoading] = useState(true);
+  const [saveError, setSaveError] = useState<string>("");
 
   useEffect(() => {
     (async () => {
@@ -66,7 +85,10 @@ export default function Page() {
   );
 
   async function handleSave() {
-    await saveProfile(form, currentStep);
+    setSaveError("");
+    const ok = await saveProfile(form, currentStep);
+    if (!ok) setSaveError("Speichern fehlgeschlagen (Login/Nonce/User-Guard).");
+
     setCompleted((prev) => ({
       ...prev,
       [currentStep]: validateStep(currentStep, form),
@@ -74,15 +96,39 @@ export default function Page() {
   }
 
   async function handleNext() {
-    const ok = validateStep(currentStep, form);
-    setCompleted((prev) => ({ ...prev, [currentStep]: ok }));
-    if (!ok) return;
+    setSaveError("");
 
-    await saveProfile(form, currentStep);
+    const okStep = validateStep(currentStep, form);
+    setCompleted((prev) => ({ ...prev, [currentStep]: okStep }));
+    if (!okStep) return;
+
+    const okSave = await saveProfile(form, currentStep);
+    if (!okSave) {
+      setSaveError("Speichern fehlgeschlagen (Login/Nonce/User-Guard).");
+      return;
+    }
+
     setCurrentStep((s) => (s < 6 ? ((s + 1) as StepId) : s));
   }
 
+  async function handleGoToSummary() {
+    setSaveError("");
+
+    const ok = validateStep(6, form);
+    setCompleted((prev) => ({ ...prev, 6: ok }));
+    if (!ok) return;
+
+    const saved = await saveProfile(form, 6);
+    if (!saved) {
+      setSaveError("Speichern fehlgeschlagen (Login/Nonce/User-Guard).");
+      return;
+    }
+
+    router.push("/summary"); // basePath wird automatisch angewendet
+  }
+
   function handleBack() {
+    setSaveError("");
     setCurrentStep((s) => (s > 1 ? ((s - 1) as StepId) : s));
   }
 
@@ -148,12 +194,32 @@ export default function Page() {
             <StepNavigation
               currentStep={currentStep}
               completion={completed}
-              onStepClick={(step) => setCurrentStep(step as StepId)}
+              onStepClick={async (step) => {
+                setSaveError("");
+
+                const ok = validateStep(currentStep, form);
+                if (!ok) return;
+
+                const saved = await saveProfile(form, currentStep);
+                if (!saved) {
+                  setSaveError("Speichern fehlgeschlagen (Login/Nonce/User-Guard).");
+                  return;
+                }
+
+                setCompleted((prev) => ({ ...prev, [currentStep]: true }));
+                setCurrentStep(step as StepId);
+              }}
             />
           </aside>
 
           <section className="rounded-2xl border border-slate-800 bg-slate-900/40 p-6 shadow-lg">
             {stepForm}
+
+            {saveError && (
+              <div className="mt-6 rounded-lg border border-rose-800 bg-rose-950/40 px-3 py-2 text-sm text-rose-200">
+                {saveError}
+              </div>
+            )}
 
             <div className="mt-8 flex items-center justify-between gap-3">
               <button
@@ -184,12 +250,13 @@ export default function Page() {
                     Weiter
                   </button>
                 ) : (
-                  <a
-                    href="/summary"
+                  <button
+                    type="button"
+                    onClick={handleGoToSummary}
                     className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-medium text-white hover:bg-emerald-500"
                   >
-                    Zur Bilanz
-                  </a>
+                    Bil…
+                  </button>
                 )}
               </div>
             </div>

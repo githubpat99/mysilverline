@@ -15,6 +15,8 @@ export type AssetType =
   | "other";
 
 export type Step1Data = {
+  birthDate: string;          // ISO date string "YYYY-MM-DD"
+  retireAtAge: number;        // default 65
   cash: string;
   bankSavings: string;
   securities: string;
@@ -31,8 +33,14 @@ export type Step2Data = {
 };
 
 export type Step3Data = {
-  futureIncome: string;
-  futureExpense: string;
+  // NEW: laufender Zustand (Basis)
+  annualIncomeToday: string;   // CHF/Jahr
+  annualSpendingToday: string; // CHF/Jahr
+  indexation: "inflation" | "fixed_nominal" | "fixed_real"; // für beide (v1)
+
+  // Bestehend (oder bisherige Felder)
+  futureIncome: string;  // einmalig (v1: yearOffset 0)
+  futureExpense: string; // einmalig (v1: yearOffset 0)
   notes?: string;
 };
 

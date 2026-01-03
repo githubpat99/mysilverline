@@ -5,11 +5,15 @@ export function validateStep(step: StepId, form: FormState): boolean {
   switch (step) {
     case 1: {
       const d = form.step1;
+      const retireAge = Number(String(d.retireAtAge ?? "").trim());
+      const retireOk = Number.isFinite(retireAge) && retireAge >= 50 && retireAge <= 75;
+
       return (
         isNonNegativeMoney(d.cash) &&
         isNonNegativeMoney(d.bankSavings) &&
         isNonNegativeMoney(d.securities) &&
-        isNonNegativeMoney(d.otherInvest)
+        isNonNegativeMoney(d.otherInvest) &&
+        retireOk
       );
     }
     case 2: {
@@ -25,8 +29,18 @@ export function validateStep(step: StepId, form: FormState): boolean {
     }
     case 3: {
       const d = form.step3;
-      return isNonNegativeMoney(d.futureIncome) && isNonNegativeMoney(d.futureExpense);
+
+      const idxOk = d.indexation === "inflation" || d.indexation === "fixed_nominal" || d.indexation === "fixed_real";
+
+      return (
+        isNonNegativeMoney(d.annualIncomeToday) &&
+        isNonNegativeMoney(d.annualSpendingToday) &&
+        idxOk &&
+        isNonNegativeMoney(d.futureIncome) &&
+        isNonNegativeMoney(d.futureExpense)
+      );
     }
+
     case 4: {
       const d = form.step4;
       const riskOk = d.risk !== null && d.risk >= 1 && d.risk <= 5;
@@ -46,4 +60,20 @@ export function validateStep(step: StepId, form: FormState): boolean {
     default:
       return false;
   }
+}
+
+function isValidBirthDateISO(s: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+  const [yy, mm, dd] = s.split("-").map(Number);
+  if (!yy || !mm || !dd) return false;
+
+  const dt = new Date(Date.UTC(yy, mm - 1, dd));
+  // ensure date round-trips (catch 2025-02-31 etc.)
+  const ok =
+    dt.getUTCFullYear() === yy &&
+    dt.getUTCMonth() === mm - 1 &&
+    dt.getUTCDate() === dd;
+
+  const nowY = new Date().getFullYear();
+  return ok && yy >= 1900 && yy <= nowY;
 }

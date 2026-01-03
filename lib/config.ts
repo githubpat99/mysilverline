@@ -1,0 +1,2 @@
+export const SL_API_BASE =
+  process.env.NEXT_PUBLIC_SL_API_BASE?.replace(/\/+$/, "") ?? "";

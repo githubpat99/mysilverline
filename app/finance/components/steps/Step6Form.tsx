@@ -1,4 +1,5 @@
 import type { Step6Data } from "@/lib/types";
+import FieldMoney from "@/app/finance/components/fields/FieldMoney"; // Pfad ggf. anpassen
 
 type Props = {
   value: Step6Data;
@@ -8,25 +9,17 @@ type Props = {
 export default function Step6Form({ value, onChange }: Props) {
   return (
     <div className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium">Mindestliquidität (CHF)</label>
-        <input
-          className="mt-1 w-full rounded border p-2"
-          value={value.minLiquidity}
-          onChange={(e) => onChange({ ...value, minLiquidity: e.target.value })}
-          inputMode="decimal"
-        />
-      </div>
+      <FieldMoney
+        label="Mindestliquidität (CHF)"
+        value={value.minLiquidity}
+        onChange={(v) => onChange({ ...value, minLiquidity: v })}
+      />
 
-      <div>
-        <label className="block text-sm font-medium">Monatliche Sparrate (CHF)</label>
-        <input
-          className="mt-1 w-full rounded border p-2"
-          value={value.monthlySaving}
-          onChange={(e) => onChange({ ...value, monthlySaving: e.target.value })}
-          inputMode="decimal"
-        />
-      </div>
+      <FieldMoney
+        label="Monatliche Sparrate (CHF)"
+        value={value.monthlySaving}
+        onChange={(v) => onChange({ ...value, monthlySaving: v })}
+      />
     </div>
   );
 }

@@ -1,45 +1,58 @@
-export function parseCHF(input: string): number {
-  if (!input) return 0;
-
-  // z.B. "10'000.50" / "10 000,50" / "10000"
-  const cleaned = input
-    .trim()
-    .replace(/\s/g, "")
-    .replace(/'/g, "")
-    .replace(",", ".");
-
-  const n = Number(cleaned);
-  return Number.isFinite(n) ? n : 0;
-}
-
 export function isNonNegativeMoney(input: string): boolean {
   return parseCHF(input) >= 0;
 }
 
-export function formatCHFInput(input: string): string {
+export function canonicalCHF(input: string): string {
   if (!input) return "";
 
-  // nur Ziffern, Apostroph, Punkt, Komma, Leerzeichen zulassen
-  const cleaned = input
-    .trim()
-    .replace(/[']/g, "")
-    .replace(/\s/g, "");
+  let v = input.trim();
+  if (!v) return "";
 
-  // Dezimaltrennzeichen vereinheitlichen: Komma -> Punkt
-  const normalized = cleaned.replace(",", ".");
+  const neg = v.startsWith("-");
+  if (neg) v = v.slice(1);
 
-  // minus nur vorne erlauben
-  const neg = normalized.startsWith("-");
-  const s = neg ? normalized.slice(1) : normalized;
+  // Tausender/Spaces raus
+  v = v.replace(/[']/g, "").replace(/\s/g, "");
 
-  // split integer/decimal
-  const [intRaw, decRaw] = s.split(".");
-  const intDigits = (intRaw || "").replace(/[^\d]/g, "");
-  const decDigits = (decRaw || "").replace(/[^\d]/g, "").slice(0, 2);
+  // Dezimalteil hart wegschneiden (Punkt ODER Komma)
+  const dot = v.indexOf(".");
+  const comma = v.indexOf(",");
+  const cut = [dot, comma].filter((i) => i >= 0).sort((a, b) => a - b)[0];
+  if (cut !== undefined) v = v.slice(0, cut);
 
-  // Tausendertrennzeichen mit Apostroph
-  const intFormatted = intDigits.replace(/\B(?=(\d{3})+(?!\d))/g, "'");
+  // nur Ziffern
+  const digits = v.replace(/[^\d]/g, "");
+  if (!digits) return "";
 
-  const out = decDigits.length > 0 ? `${intFormatted}.${decDigits}` : intFormatted;
+  return neg ? `-${digits}` : digits;
+}
+
+
+export function parseCHF(input: string): number {
+  if (!input) return 0;
+  const raw = input.trim();
+  const neg = raw.startsWith("-");
+  const s = neg ? raw.slice(1) : raw;
+  const digits = s.replace(/[^\d]/g, "");
+  if (!digits) return 0;
+  const n = parseInt(digits, 10);
+  return neg ? -n : n;
+}
+
+export function formatCHF(n: number): string {
+  const neg = n < 0;
+  const s = Math.abs(Math.trunc(n)).toString();
+  const withSep = s.replace(/\B(?=(\d{3})+(?!\d))/g, "'");
+  return neg ? `-${withSep}` : withSep;
+}
+
+// Wenn du formatCHFInput behalten willst (ok):
+export function formatCHFInput(input: string): string {
+  if (!input) return "";
+  const neg = input.trim().startsWith("-");
+  const digits = input.replace(/[^\d]/g, "");
+  if (!digits) return neg ? "-" : "";
+  const out = digits.replace(/\B(?=(\d{3})+(?!\d))/g, "'");
   return neg ? `-${out}` : out;
 }
+

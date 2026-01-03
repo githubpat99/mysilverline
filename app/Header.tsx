@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { whoAmI, ensureNonce, clearNonce } from "@/lib/profileApi";
+import { API_LOGOUT } from "@/lib/endpoints";
+
 type WhoAmI = {
   logged_in: boolean;
   user_id: number;
@@ -12,59 +15,24 @@ type WhoAmI = {
   roles?: string[];
 };
 
-async function getNonce(): Promise<string> {
-  if (typeof window === "undefined") return "";
-  return localStorage.getItem("sl_wp_nonce") ?? "";
+async function fetchWhoAmI() {
+  return await whoAmI();
 }
-
-async function fetchWhoAmI(): Promise<WhoAmI> {
-  const nonce = await getNonce();
-
-  const res = await fetch(
-    "https://mysilverline.it-pin.ch/wp-json/silverline/v1/whoami",
-    {
-      method: "GET",
-      credentials: "include",
-      headers: nonce ? { "X-WP-Nonce": nonce } : undefined,
-      cache: "no-store",
-    }
-  );
-
-  const json: any = await res.json().catch(() => null);
-
-  // Wenn WP sagt "nicht eingeloggt", dann ist der lokale Nonce wertlos → löschen
-  if (json && typeof json.logged_in === "boolean" && json.logged_in === false) {
-    try {
-      localStorage.removeItem("sl_wp_nonce");
-    } catch { }
-  }
-
-  if (json && typeof json.logged_in === "boolean") {
-    return json as WhoAmI;
-  }
-
-  // Fallback: bei kaputter Antwort ebenfalls Nonce entfernen, um "Geister-Login" zu vermeiden
-  try {
-    localStorage.removeItem("sl_wp_nonce");
-  } catch { }
-
-  return { logged_in: false, user_id: 0, name: null, email: null, roles: [] };
-}
-
 
 async function doLogout() {
-  const nonce = localStorage.getItem("sl_wp_nonce") ?? "";
+  const nonce = await ensureNonce();
 
   try {
-    await fetch("https://mysilverline.it-pin.ch/wp-json/silverline/v1/logout", {
+    await fetch(API_LOGOUT, {
       method: "POST",
       credentials: "include",
       headers: nonce ? { "X-WP-Nonce": nonce } : undefined,
+      cache: "no-store",
     });
   } finally {
-    localStorage.removeItem("sl_wp_nonce");
+    clearNonce();
     // WICHTIG: auf Seite OHNE silverline_bootstrap
-    window.location.href = "https://mysilverline.it-pin.ch/abgemeldet/";
+    window.location.href = "https://mysilverline.it-pin.ch/login?logged_out=1";
   }
 }
 
@@ -75,6 +43,8 @@ export default function Header() {
   const pathname = usePathname();
   const isFinance = pathname?.startsWith("/finance");
   const isSummary = pathname?.startsWith("/summary");
+  const isLotto = pathname?.startsWith("/lotto");
+  const isForecast = pathname?.startsWith("/forecast");
 
   useEffect(() => {
     let alive = true;
@@ -107,10 +77,9 @@ export default function Header() {
           setMenuOpen(false);
           void doLogout();
         }}
-        className={[
-          "text-slate-300 hover:text-sky-400 transition",
-          className,
-        ].join(" ")}
+        className={["text-slate-300 hover:text-sky-400 transition", className].join(
+          " "
+        )}
       >
         Abmelden
       </button>
@@ -125,23 +94,30 @@ export default function Header() {
 
         <div className="hidden md:flex items-center gap-6">
           <nav className="flex items-center gap-2 text-sm">
-            <Link href="/finance" className={linkClass(isFinance)}>
+            <Link href="/finance" className={linkClass(!!isFinance)}>
               Finanz-Workflow
             </Link>
-            <span className="text-slate-500">/</span>
-            <Link href="/summary" className={linkClass(isSummary)}>
+            <li className="text-slate-600">·</li>
+            <Link href="/summary" className={linkClass(!!isSummary)}>
               Bilanz
             </Link>
-            <span className="text-slate-500">/</span>
+            <li className="text-slate-600">·</li>
+            <Link href="/lotto" className={linkClass(!!isLotto)}>
+              Lotto
+            </Link>
+            <li className="text-slate-600">·</li>
+            <Link href="/forecast?src=finance" className={linkClass(!!isForecast)}>
+              Forecast
+            </Link>
+            <li className="text-slate-600">·</li>
             <a
               href="https://mysilverline.it-pin.ch"
               className="text-slate-300 hover:text-sky-400 transition"
             >
               Website
             </a>
-            <span className="text-slate-500">/</span>
+            <li className="text-slate-600">·</li>
             <LogoutBtn />
-
           </nav>
 
           <span className="rounded-full border border-slate-700 bg-slate-950/30 px-3 py-1 text-xs text-slate-300">
@@ -154,8 +130,18 @@ export default function Header() {
           onClick={() => setMenuOpen((v) => !v)}
           aria-label="Menü öffnen"
         >
-          <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          <svg
+            className="w-7 h-7"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M4 6h16M4 12h16M4 18h16"
+            />
           </svg>
         </button>
       </div>
@@ -169,7 +155,7 @@ export default function Header() {
           <nav className="flex flex-col gap-3 text-sm">
             <Link
               href="/finance"
-              className={[linkClass(isFinance), "block w-full"].join(" ")}
+              className={[linkClass(!!isFinance), "block w-full"].join(" ")}
               onClick={() => setMenuOpen(false)}
             >
               Finanz-Workflow
@@ -177,12 +163,26 @@ export default function Header() {
 
             <Link
               href="/summary"
-              className={[linkClass(isSummary), "block w-full"].join(" ")}
+              className={[linkClass(!!isSummary), "block w-full"].join(" ")}
               onClick={() => setMenuOpen(false)}
             >
               Bilanz
             </Link>
 
+            <Link
+              href="/lotto"
+              className={[linkClass(!!isLotto), "block w-full"].join(" ")}
+              onClick={() => setMenuOpen(false)}
+            >
+              Lotto
+            </Link>
+            <Link
+              href="/forecast?src=finance"
+              className={[linkClass(!!isForecast), "block w-full"].join(" ")}
+              onClick={() => setMenuOpen(false)}
+            >
+              Forecast
+            </Link>
             <a
               href="https://mysilverline.it-pin.ch"
               className="block w-full text-slate-300 hover:text-sky-400 transition"
@@ -190,11 +190,11 @@ export default function Header() {
             >
               Website
             </a>
+
             <LogoutBtn className="block w-full text-left" />
           </nav>
         </div>
       )}
-
     </header>
   );
 }

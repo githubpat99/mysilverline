@@ -1,0 +1,91 @@
+
+---
+
+## 2) Datei: `ARCHITECTURE_C4.md` (C4 nur, wenn dein Renderer es unterstützt)
+
+```markdown
+# Silverline – C4 Architektur
+
+> Hinweis: Mermaid C4 (`C4Context`, `C4Container`, `C4Component`) wird nicht in jedem Renderer unterstützt.
+> Wenn es nicht rendert, ist die Datei trotzdem korrekt; nutze dann Mermaid Live oder ein C4-fähiges Rendering.
+```
+---
+
+## C4 – Context
+
+```mermaid
+C4Context
+title Silverline – System Context
+
+Person(user, "User", "Erfasst Finanzdaten, nutzt Forecast & Lotto")
+System(silverline, "Silverline Web App", "FinWF (SoT), Forecast, Lotto Overlay")
+System_Ext(wp, "WordPress + Silverline API", "REST, Auth, Persistenz")
+System_Ext(db, "MariaDB", "sl_finance_profile")
+System_Ext(local, "Browser Storage", "Lotto Draft (lokal)")
+
+Rel(user, silverline, "Nutzt", "HTTPS")
+Rel(silverline, wp, "Liest/schreibt Profil", "REST + credentials + X-WP-Nonce")
+Rel(wp, db, "Persistiert Daten", "SQL")
+Rel(silverline, local, "Speichert Lotto-Szenario", "localStorage")
+```
+
+```mermaid
+C4Container
+title Silverline – Container
+
+Person(user, "User", "UI Nutzer")
+
+System_Boundary(s1, "Silverline") {
+  Container(ui, "Next.js Frontend", "TypeScript", "UI, Validation, Mapping, Forecast")
+  Container(lotto, "Lotto Draft Store", "Browser Storage", "Szenario-Overlay (lokal)")
+}
+
+System_Boundary(s2, "WordPress") {
+  Container(api, "Silverline WP REST API Plugin", "PHP", "Auth/Nonce, Normalisierung, /profile GET/POST")
+}
+
+ContainerDb(finDB, "MariaDB", "sl_finance_profile", "Persistierter FormState (FinWF)")
+
+Rel(user, ui, "Bedient", "HTTPS")
+Rel(ui, api, "loadProfile/saveProfile", "REST + credentials + X-WP-Nonce")
+Rel(api, finDB, "SELECT/UPDATE", "SQL")
+Rel(ui, lotto, "load/save draft", "localStorage")
+```
+
+```mermaid
+C4Component
+title Silverline – Components
+
+System_Boundary(frontend, "Next.js Frontend") {
+  Component(pages, "Pages", "React", "/finance /lotto /forecast /summary")
+  Component(forms, "Step Forms", "React", "Bearbeiten FormState")
+  Component(validation, "Validation", "TypeScript", "validateStep()")
+  Component(apiClient, "profileApi.ts", "TypeScript", "Nonce, Retry, load/save")
+  Component(mapping, "financeMapping.ts", "TypeScript", "FormState -> ForecastInput")
+  Component(engine, "computeForecast.ts", "TypeScript", "ForecastInput -> ForecastPoint[] (pure)")
+  Component(lottoPersist, "lotto/persist.ts", "TypeScript", "Local scenario persist")
+}
+
+System_Boundary(backend, "WP Plugin (silverline-api.php)") {
+  Component(routes, "REST Routes", "PHP", "/nonce /whoami /profile /profile/reset")
+  Component(auth, "Permission/Auth", "PHP", "login + wp_verify_nonce('wp_rest')")
+  Component(norm, "Normalization", "PHP", "Ranges/Enums/Defaults/Money strings")
+  Component(repo, "DB Access", "PHP", "$wpdb read/write sl_finance_profile")
+}
+
+ContainerDb(finDB, "MariaDB", "sl_finance_profile", "FinWF FormState")
+
+Rel(pages, forms, "Komponiert")
+Rel(forms, validation, "nutzt")
+Rel(forms, apiClient, "saveProfile()", "HTTP")
+Rel(apiClient, routes, "ruft auf", "REST")
+Rel(routes, auth, "prüft")
+Rel(routes, norm, "normalisiert")
+Rel(norm, repo, "persistiert/liest")
+Rel(repo, finDB, "SQL")
+
+Rel(pages, apiClient, "loadProfile()", "REST")
+Rel(pages, mapping, "baut ForecastInput", "in-memory")
+Rel(mapping, engine, "computeForecast()", "in-memory")
+Rel(pages, lottoPersist, "load/save draft", "localStorage")
+```

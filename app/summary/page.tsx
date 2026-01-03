@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+
 import DonutChart from "@/app/components/DonutChart";
 import { loadProfile } from "@/lib/profileApi";
 import type { FormState } from "@/lib/types";
-import { formatCHFInput, parseCHF } from "@/lib/format";
+import { parseCHF, formatCHF } from "@/lib/format";
 
 export default function SummaryPage() {
   const [form, setForm] = useState<FormState | null>(null);
@@ -56,14 +58,24 @@ export default function SummaryPage() {
   const sum = (items: { value: string }[]) =>
     items.reduce((acc, x) => acc + parseCHF(x.value), 0);
 
-  const aktivenTotal = useMemo(() => sum(aktivenKurz) + sum(aktivenLang), [aktivenKurz, aktivenLang]);
-  const passivenTotal = useMemo(() => sum(passivKurz) + sum(passivLang), [passivKurz, passivLang]);
+  const aktivenTotal = useMemo(
+    () => sum(aktivenKurz) + sum(aktivenLang),
+    [aktivenKurz, aktivenLang]
+  );
+
+  const passivenTotal = useMemo(
+    () => sum(passivKurz) + sum(passivLang),
+    [passivKurz, passivLang]
+  );
 
   if (loading) {
-    return <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">Lade Bilanz…</main>;
+    return (
+      <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
+        Lade Bilanz…
+      </main>
+    );
   }
 
-  // Nicht eingeloggt oder noch keine Daten
   if (!form) {
     return (
       <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
@@ -73,9 +85,12 @@ export default function SummaryPage() {
             Keine DB-Daten gefunden oder nicht eingeloggt. Bitte zuerst im Workflow speichern.
           </p>
           <div className="mt-6">
-            <a href="/finance" className="rounded-lg border border-slate-700 px-4 py-2 hover:border-slate-500">
+            <Link
+              href="/finance"
+              className="rounded-lg border border-slate-700 px-4 py-2 hover:border-slate-500"
+            >
               Zum Finanz-Workflow
-            </a>
+            </Link>
           </div>
         </div>
       </main>
@@ -91,7 +106,7 @@ export default function SummaryPage() {
           <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-lg">
             <h2 className="text-2xl font-semibold text-green-400">Aktiven</h2>
             <p className="text-lg text-green-300 mt-1 mb-6">
-              Total: {formatCHFInput(aktivenTotal.toString())}
+              Total: {formatCHF(aktivenTotal)}
             </p>
 
             <Section title="Kurzfristig">
@@ -110,7 +125,7 @@ export default function SummaryPage() {
           <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-lg">
             <h2 className="text-2xl font-semibold text-red-400">Passiven</h2>
             <p className="text-lg text-red-300 mt-1 mb-6">
-              Total: {formatCHFInput(passivenTotal.toString())}
+              Total: {formatCHF(passivenTotal)}
             </p>
 
             <Section title="Kurzfristig">
@@ -128,7 +143,6 @@ export default function SummaryPage() {
         </div>
 
         <div className="mt-12 rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-lg">
-          <h2 className="text-center text-lg font-semibold text-slate-100 mb-6">Vermögensstruktur</h2>
           <DonutChart aktiven={aktivenTotal} passiven={passivenTotal} />
         </div>
       </div>
@@ -145,13 +159,22 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function Row({ label, value, color }: { label: string; value: string; color: "green" | "red" }) {
+function Row({
+  label,
+  value,
+  color,
+}: {
+  label: string;
+  value: string;
+  color: "green" | "red";
+}) {
   const n = parseCHF(value);
+
   return (
     <div className="flex justify-between border-b border-slate-800 pb-2 text-sm">
       <span>{label}</span>
       <span className={color === "green" ? "text-green-300" : "text-red-300"}>
-        {formatCHFInput(n.toString())}
+        {formatCHF(n)}
       </span>
     </div>
   );

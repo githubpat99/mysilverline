@@ -19,14 +19,28 @@ export type ForecastPoint = {
 };
 
 export default function ForecastChart({
-    data, retireAtAge }: { data: ForecastPoint[]; retireAtAge: number }) {
+    data,
+    retireAtAge,
+    onSelectAge,
+}: {
+    data: ForecastPoint[];
+    retireAtAge: number;
+    onSelectAge?: (age: number) => void;
+}) {
     return (
         <div className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
             <div className="mb-3 text-sm text-slate-300">Vermögensverlauf (CHF)</div>
 
             <div className="h-80 w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={data}>
+                    <LineChart
+                        data={data}
+                        onClick={(e: any) => {
+                            const age = e?.activeLabel;
+                            if (typeof age === "number") onSelectAge?.(age);
+                        }}
+                    >
+
                         <XAxis dataKey="age" tick={{ fontSize: 12 }} />
                         <YAxis
                             tick={{ fontSize: 12 }}

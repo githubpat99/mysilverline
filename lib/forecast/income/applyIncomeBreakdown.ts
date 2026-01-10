@@ -1,4 +1,5 @@
-import type { IncomeLine, PensionDraft } from "@/lib/lotto/types";
+import type { PensionDraft } from "@/lib/lotto/types";
+import type { IncomeLine } from "./incomeLine";
 import { applyIndexation } from "../utils/indexation";
 
 export function buildIncomeLines(params: {
@@ -33,7 +34,7 @@ export function buildIncomeLines(params: {
       line.indexation,
       inflation,
       dt,
-      line.extraGrowth ?? 0,
+      0,        // no extra growth - for income lines
     );
 
     lines.push({

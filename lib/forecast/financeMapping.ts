@@ -19,7 +19,7 @@ function parseMoneyCHF(v: unknown): number {
   return Number.isFinite(n) ? Math.trunc(n) : 0;
 }
 
-function clampInt(n: unknown, lo: number, hi: number, fallback: number): number {
+export function clampInt(n: unknown, lo: number, hi: number, fallback: number): number {
   const x = typeof n === "number" ? n : Number(n);
   if (!Number.isFinite(x)) return fallback;
   const r = Math.round(x);
@@ -27,7 +27,7 @@ function clampInt(n: unknown, lo: number, hi: number, fallback: number): number 
   return r;
 }
 
-function assumptionsFromGoal(goal: unknown): Assumptions {
+export function assumptionsFromGoal(goal: unknown): Assumptions {
   const base: Assumptions = {
     currency: "CHF",
     taxMode: "none",

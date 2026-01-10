@@ -2,11 +2,17 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { bootstrapProfileV2 } from "@/lib/bootstrapProfileV2";
 
-import { loadProfile, saveProfile } from "@/lib/profileApi";
+import { saveProfileV2Safe } from "@/lib/profileApiV2";
 import type { CompletionState, FormState, StepId } from "@/lib/types";
 import { STEP_TITLES } from "@/lib/stepConfig";
 import { validateStep } from "@/lib/validate";
+import { mapV2ToFormState } from "@/lib/mapping/mapV2ToForm";
+import { mapFormStateToProfileV2 } from "@/lib/mapping";
+
+import type { ProfileV2 } from "@/lib/types/v2";
+import { makeEmptyProfileV2 } from "@/lib/profile/makeEmptyProfileV2";
 
 import Step1Form from "@/app/finance/components/steps/Step1Form";
 import Step2Form from "@/app/finance/components/steps/Step2Form";
@@ -19,12 +25,12 @@ import StepNavigation from "./components/StepNavigation";
 
 const INITIAL_FORM: FormState = {
   step1: {
-    birthDate: "",        // leer -> zwingt später zur Eingabe
+    birthDate: "",
     retireAtAge: 65,
     cash: "",
     bankSavings: "",
     securities: "",
-    otherInvest: ""
+    otherInvest: "",
   },
   step2: {
     creditCard: "",
@@ -35,14 +41,11 @@ const INITIAL_FORM: FormState = {
     otherLong: "",
   },
   step3: {
-    annualIncomeToday: "",
-    annualSpendingToday: "",
+    annualIncomeToday: "0",
+    annualSpendingToday: "0",
     indexation: "inflation",
-    futureIncome: "",
-    futureExpense: "",
-    notes: "",
+    events: [],
   },
-
   step4: { goal: "", risk: null, horizonYears: null },
   step5: { preferred: [], avoided: [] },
   step6: { minLiquidity: "", monthlySaving: "" },
@@ -65,48 +68,71 @@ export default function Page() {
   const [completed, setCompleted] = useState<CompletionState>(INITIAL_COMPLETED);
   const [loading, setLoading] = useState(true);
   const [saveError, setSaveError] = useState<string>("");
+  const [profileV2, setProfileV2] = useState<ProfileV2 | null>(null);
 
   useEffect(() => {
-    (async () => {
-      try {
-        const dbForm = await loadProfile();
-        if (dbForm) setForm(dbForm);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
-    })();
+    bootstrapProfileV2({
+      setProfileV2,
+      setForm,
+      setLoading,
+    });
   }, []);
 
-  const isValid = useMemo(
-    () => validateStep(currentStep, form),
-    [currentStep, form]
-  );
+
+  const isValid = useMemo(() => validateStep(currentStep, form), [currentStep, form]);
+
+  // ---- helpers: build + save v2 (single place, so you don't duplicate logic)
+  async function buildAndSaveV2(): Promise<{ ok: boolean }> {
+
+    if (!profileV2) {
+      setSaveError("Profil noch nicht geladen.");
+      return { ok: false };
+    }
+
+    const next = mapFormStateToProfileV2(form, profileV2);
+
+    console.log("Saving profileV2:", next);   // TODO PIN entfernen
+
+    const r = await saveProfileV2Safe(next);
+
+    if (!r.ok) {
+      if (r.status === 401 || r.status === 403) {
+        setSaveError("Nicht eingeloggt oder Nonce ungültig. Bitte neu anmelden.");
+      } else if (r.status === 500) {
+        setSaveError("Serverfehler beim Speichern (500).");
+      } else {
+        setSaveError("Speichern fehlgeschlagen.");
+      }
+      return { ok: false };
+    }
+
+    setSaveError("");
+    setProfileV2(r.profile ?? next); // server wins
+    return { ok: true };
+  }
 
   async function handleSave() {
     setSaveError("");
-    const ok = await saveProfile(form, currentStep);
-    if (!ok) setSaveError("Speichern fehlgeschlagen (Login/Nonce/User-Guard).");
 
-    setCompleted((prev) => ({
-      ...prev,
-      [currentStep]: validateStep(currentStep, form),
-    }));
+    const ok = validateStep(currentStep, form);
+    if (!ok) {
+      setSaveError("Bitte Schritt zuerst vollständig ausfüllen.");
+      return;
+    }
+
+    const saved = await buildAndSaveV2();
+    if (saved.ok) setCompleted((prev) => ({ ...prev, [currentStep]: true }));
   }
 
   async function handleNext() {
     setSaveError("");
 
-    const okStep = validateStep(currentStep, form);
-    setCompleted((prev) => ({ ...prev, [currentStep]: okStep }));
-    if (!okStep) return;
+    const ok = validateStep(currentStep, form);
+    if (!ok) return;
 
-    const okSave = await saveProfile(form, currentStep);
-    if (!okSave) {
-      setSaveError("Speichern fehlgeschlagen (Login/Nonce/User-Guard).");
-      return;
-    }
+    // best-effort save, aber weiter navigieren wie bei dir entschieden
+    const saved = await buildAndSaveV2();
+    if (saved.ok) setCompleted((prev) => ({ ...prev, [currentStep]: true }));
 
     setCurrentStep((s) => (s < 6 ? ((s + 1) as StepId) : s));
   }
@@ -118,13 +144,10 @@ export default function Page() {
     setCompleted((prev) => ({ ...prev, 6: ok }));
     if (!ok) return;
 
-    const saved = await saveProfile(form, 6);
-    if (!saved) {
-      setSaveError("Speichern fehlgeschlagen (Login/Nonce/User-Guard).");
-      return;
-    }
+    const saved = await buildAndSaveV2();
+    if (!saved.ok) return;
 
-    router.push("/summary"); // basePath wird automatisch angewendet
+    router.push("/summary");
   }
 
   function handleBack() {
@@ -138,14 +161,10 @@ export default function Page() {
   const setStep2 = (field: keyof FormState["step2"], value: string) =>
     setForm((prev) => ({ ...prev, step2: { ...prev.step2, [field]: value } }));
 
-  const setStep3 = (next: FormState["step3"]) =>
-    setForm((prev) => ({ ...prev, step3: next }));
-  const setStep4 = (next: FormState["step4"]) =>
-    setForm((prev) => ({ ...prev, step4: next }));
-  const setStep5 = (next: FormState["step5"]) =>
-    setForm((prev) => ({ ...prev, step5: next }));
-  const setStep6 = (next: FormState["step6"]) =>
-    setForm((prev) => ({ ...prev, step6: next }));
+  const setStep3 = (next: FormState["step3"]) => setForm((prev) => ({ ...prev, step3: next }));
+  const setStep4 = (next: FormState["step4"]) => setForm((prev) => ({ ...prev, step4: next }));
+  const setStep5 = (next: FormState["step5"]) => setForm((prev) => ({ ...prev, step5: next }));
+  const setStep6 = (next: FormState["step6"]) => setForm((prev) => ({ ...prev, step6: next }));
 
   const stepForm = useMemo(() => {
     switch (currentStep) {
@@ -200,11 +219,9 @@ export default function Page() {
                 const ok = validateStep(currentStep, form);
                 if (!ok) return;
 
-                const saved = await saveProfile(form, currentStep);
-                if (!saved) {
-                  setSaveError("Speichern fehlgeschlagen (Login/Nonce/User-Guard).");
-                  return;
-                }
+                // best-effort save vor Sprung
+                const saved = await buildAndSaveV2();
+                if (!saved.ok) return;
 
                 setCompleted((prev) => ({ ...prev, [currentStep]: true }));
                 setCurrentStep(step as StepId);

@@ -193,9 +193,9 @@ export async function loadProfile(): Promise<FormState | null> {
   return normalizeForm((json as any).form as FormState);
 }
 
-export async function saveProfile(form: FormState, completedStep = 0): Promise<boolean> {
+export async function saveProfile(form: FormState, completedStep = 0): Promise<{ ok: boolean; status?: number }> {
   const me = await whoAmI();
-  if (!me.logged_in || !me.user_id) return false;
+  if (!me.logged_in || !me.user_id) return { ok: false, status: 0 };
 
   const payload = normalizeForm(form);
 
@@ -205,13 +205,13 @@ export async function saveProfile(form: FormState, completedStep = 0): Promise<b
     body: JSON.stringify({ ...payload, completed_step: completedStep }),
   });
 
-  if (!res.ok) return false;
+  if (!res.ok) return { ok: false, status: 0 };
 
   const json = (await res.json().catch(() => null)) as ProfilePostResponse | null;
-  if (json && (json as any).ok === true) return true;
+  if (json && (json as any).ok === true) return { ok: true };
 
   // Some backends just return 200/204 without JSON; treat as ok if status ok
-  return res.ok;
+  return { ok: true };
 }
 
 /* =========================

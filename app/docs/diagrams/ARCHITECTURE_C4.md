@@ -1,14 +1,16 @@
 
 ---
 
-## 2) Datei: `ARCHITECTURE_C4.md` (C4 nur, wenn dein Renderer es unterstützt)
+## `ARCHITECTURE_C4.md`
 
 ```markdown
-# Silverline – C4 Architektur
-
-> Hinweis: Mermaid C4 (`C4Context`, `C4Container`, `C4Component`) wird nicht in jedem Renderer unterstützt.
-> Wenn es nicht rendert, ist die Datei trotzdem korrekt; nutze dann Mermaid Live oder ein C4-fähiges Rendering.
+# Silverline – Architektur
 ```
+---
+### Related diagrams
+- [Finance Init – UI ready](financeInit.md)
+- [Finance Save](financeSave.md)
+- [Finance Next (best-effort)](financeNext.md)
 ---
 
 ## C4 – Context

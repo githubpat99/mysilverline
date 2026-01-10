@@ -1,4 +1,4 @@
-import type { Debt } from "@/lib/lotto/types";
+import type { Debt } from "@/lib/forecast/types";
 
 export function buildDebtLines(params: {
   debts?: Debt[];

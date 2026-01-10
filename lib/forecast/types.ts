@@ -1,13 +1,13 @@
 // src/lib/forecast/types.ts
 import type {
-  Assumptions,
-  Debt,
+  Assumptions,  
   IncomeLine,
   Model1DraftState,
   PensionDraft,
   SpendingAdjustmentDraft,
 } from "@/lib/lotto/types";
 import type { YearBreakdown } from "./breakdown/types";
+import type { Event } from "../types/v2";
 
 export type ForecastResult = {
     points: ForecastPoint[];
@@ -46,9 +46,20 @@ export type ForecastInput = {
   planToAge: number;
   extraSafetyYears?: number;
 
+  events?: Event[];
+
   scenario?: {
     type: "lotto";
     lumpSumCHF: number;
     atYearOffset?: number;
   };
+};
+
+export type Debt = {
+  id?: string;
+  label?: string;
+  principalToday: number;
+  annualInterestRate?: number;
+  annualPayment?: number;
+  payoffImmediately?: boolean;
 };

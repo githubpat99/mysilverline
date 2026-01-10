@@ -1,7 +1,7 @@
+import type { Event } from "@/lib/types/v2/events";
+
 export type StepId = 1 | 2 | 3 | 4 | 5 | 6;
-
 export type InvestmentGoal = "security" | "balance" | "growth";
-
 export type AssetType =
   | "cash"
   | "bonds"
@@ -33,15 +33,12 @@ export type Step2Data = {
 };
 
 export type Step3Data = {
-  // NEW: laufender Zustand (Basis)
   annualIncomeToday: string;   // CHF/Jahr
   annualSpendingToday: string; // CHF/Jahr
-  indexation: "inflation" | "fixed_nominal" | "fixed_real"; // für beide (v1)
+  indexation: "inflation" | "fixed_nominal" | "fixed_real";
 
-  // Bestehend (oder bisherige Felder)
-  futureIncome: string;  // einmalig (v1: yearOffset 0)
-  futureExpense: string; // einmalig (v1: yearOffset 0)
-  notes?: string;
+  // NEW: Events (v2)
+  events: Event[];
 };
 
 export type Step4Data = {

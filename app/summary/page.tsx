@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import DonutChart from "@/app/components/DonutChart";
 import { loadProfile } from "@/lib/profileApi";
+import { loadProfileV2 } from "@/lib/profileApiV2"; 
 import type { FormState } from "@/lib/types";
 import { parseCHF, formatCHF } from "@/lib/format";
 

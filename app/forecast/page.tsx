@@ -2,15 +2,17 @@
 import { useEffect, useMemo, useState } from "react";
 
 import ForecastChart from "./ForecastChart";
-import { computeForecastWithBreakdown } from "@/lib/forecast";
-import { forecastInputFromFinanceProfile } from "@/lib/forecast/financeMapping";
-import { loadProfile } from "@/lib/profileApi";
+import type { YearBreakdown } from "@/lib/forecast/breakdown/types";
+import { loadProfileV2 } from "@/lib/profileApiV2";
 import type { ForecastPoint } from "@/lib/forecast";
+import { computeForecastFromProfileV2 } from "@/lib/forecast/computeForecastFromProfileV2";
 
 export default function ForecastPage() {
   const [data, setData] = useState<ForecastPoint[]>([]);
   const [emptyMsg, setEmptyMsg] = useState<string>("");
   const [retireAtAge, setRetireAtAge] = useState<number>(65);
+  const [breakdowns, setBreakdowns] = useState<YearBreakdown[]>([]);
+  const [openAge, setOpenAge] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -18,30 +20,32 @@ export default function ForecastPage() {
     async function run() {
       const baseYear = new Date().getFullYear();
 
-      const profile = await loadProfile();
-      if (cancelled) return;
+      try {
+        const { ok, profile } = await loadProfileV2();
+        if (!ok || !profile) {
+          setEmptyMsg("Profil noch nicht erfasst.");
+          setData([]);
+          setBreakdowns([]);
+          return;
+        }
 
-      if (!profile) {
-        setEmptyMsg("Kein Finance-Profil gefunden. Bitte zuerst im Finance-Workflow speichern.");
+        console.log("[LOAD] annuals.indexation from API:", profile.annuals?.indexation);    // TODO PIN entfernen
+
+        const self = profile.household.persons.find((p) => p.role === "self");
+        setRetireAtAge(self?.retireAtAge ?? 65);
+
+        setEmptyMsg("");
+
+        const out = computeForecastFromProfileV2(profile);
+        setData(out.points);
+        setBreakdowns(out.breakdowns);
+
+      } catch (e) {
+        console.error(e);
+        setEmptyMsg("Profil konnte nicht geladen werden.");
         setData([]);
-        return;
+        setBreakdowns([]);
       }
-
-      setRetireAtAge(profile.step1?.retireAtAge ?? 65);
-
-      const built = forecastInputFromFinanceProfile(profile, { baseYear });
-
-      if (!built.ok) {
-        setEmptyMsg(built.message);
-        setData([]);
-        return;
-      }
-
-      const { points /*, breakdowns */ } =
-        computeForecastWithBreakdown(built.input);
-
-      setData(points);
-      // breakdowns später, wenn du sie brauchst
     }
 
     run();
@@ -49,6 +53,7 @@ export default function ForecastPage() {
       cancelled = true;
     };
   }, []);
+
 
   const { minWealth, minAge } = useMemo(() => {
     if (!data.length) return { minWealth: null as number | null, minAge: null as number | null };
@@ -80,7 +85,14 @@ export default function ForecastPage() {
       ) : (
         <>
           <ForecastHeader minWealth={minWealth} minAge={minAge} />
-          <ForecastChart data={data} retireAtAge={retireAtAge} />
+          <div className="h-[320px]">
+            <ForecastChart
+              data={data}
+              retireAtAge={retireAtAge}
+              onSelectAge={(age) => setOpenAge(age)}
+            />
+            <BreakdownList breakdowns={breakdowns} openAge={openAge} setOpenAge={setOpenAge} />
+          </div>
         </>
       )}
     </div>
@@ -126,6 +138,121 @@ function ForecastHeader({
           <div className="text-sm text-slate-400 mb-2">Szenario</div>
           <div className="text-xs text-slate-500">Keine Overlay-Parameter im Finance-Forecast.</div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function BreakdownList({
+  breakdowns,
+  openAge,
+  setOpenAge,
+}: {
+  breakdowns: YearBreakdown[];
+  openAge: number | null;
+  setOpenAge: (age: number | null) => void;
+}) {
+  const [showAll, setShowAll] = useState(false);
+
+  // Wenn per Chart ein Jahr geöffnet wird,
+  // das nicht in den letzten 5 liegt → automatisch "Mehr anzeigen"
+  useEffect(() => {
+    if (!breakdowns.length) return;
+    if (openAge === null) return;
+    if (showAll) return;
+
+    const inShown = breakdowns.slice(0, 5).some((b) => b.age === openAge);
+    if (!inShown) setShowAll(true);
+  }, [openAge, showAll, breakdowns]);
+
+  if (!breakdowns.length) return null;
+
+  // Standard: nächste 5 Jahre ab heute
+  const shown = showAll ? breakdowns : breakdowns.slice(0, 5);
+
+
+  return (
+    <div className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="text-sm text-slate-300">Details pro Jahr</div>
+
+        {breakdowns.length > 5 && (
+          <button
+            type="button"
+            onClick={() => setShowAll((v) => !v)}
+            className="text-xs text-slate-200 underline decoration-slate-600 underline-offset-4"
+          >
+            {showAll ? "Weniger anzeigen" : `Mehr anzeigen (${breakdowns.length - 5})`}
+          </button>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        {shown.map((b) => (
+          <details
+            key={b.yearIndex}
+            open={openAge === b.age}
+            onToggle={(e) => {
+              const el = e.currentTarget;
+              if (el.open) setOpenAge(b.age);
+              else if (openAge === b.age) setOpenAge(null);
+            }}
+            className="rounded-xl border border-slate-800 bg-slate-950/20 px-4 py-3"
+          >
+            <summary className="cursor-pointer list-none">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="text-sm text-slate-200">
+                  Jahr {b.yearIndex} · Alter {b.age}
+                </div>
+
+                <div className="text-xs text-slate-400">
+                  Net:{" "}
+                  <span className="text-slate-200">
+                    {b.totals.net.toLocaleString("de-CH")} CHF
+                  </span>{" "}
+                  · Ende:{" "}
+                  <span className="text-slate-200">
+                    {b.wealthEnd.toLocaleString("de-CH")} CHF
+                  </span>
+                </div>
+              </div>
+            </summary>
+
+            <div className="mt-3 grid gap-3 lg:grid-cols-3">
+              <BreakdownBlock title="Einkommen" lines={b.income} />
+              <BreakdownBlock title="Ausgaben" lines={b.expenses} />
+              <BreakdownBlock title="Schulden" lines={b.debts} />
+            </div>
+          </details>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function BreakdownBlock({
+  title,
+  lines,
+}: {
+  title: string;
+  lines: Array<{ label: string; amount: number }>;
+}) {
+  const sum = lines.reduce((s, l) => s + l.amount, 0);
+
+  return (
+    <div className="rounded-xl border border-slate-800 bg-slate-950/20 p-3">
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-slate-200">{title}</div>
+        <div className="text-xs text-slate-400">{sum.toLocaleString("de-CH")} CHF</div>
+      </div>
+
+      <div className="mt-2 space-y-1">
+        {lines.map((l, idx) => (
+          <div key={idx} className="flex items-center justify-between text-xs">
+            <div className="text-slate-400">{l.label}</div>
+            <div className="text-slate-200">{l.amount.toLocaleString("de-CH")} CHF</div>
+          </div>
+        ))}
       </div>
     </div>
   );

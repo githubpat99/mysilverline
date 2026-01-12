@@ -237,16 +237,6 @@ export function profileV2ToForecastInput(
     const self = getSelfPerson(profile);
     const birthDate = String(self?.birthDate ?? "1980-01-01");
     const retireAtAge = Number(self?.retireAtAge ?? 65) || 65;
-
-
-    console.log("[FC] baseYear:", baseYear);
-    console.log("[FC] self:", {
-        role: self?.role,
-        id: self?.id,
-        birthDate: self?.birthDate,
-        retireAtAge: self?.retireAtAge,
-    });
-
     const selfAgeToday = calcAgeInYear(birthDate, baseYear);
 
     // ---- Horizon (years) from profile.meta.forecastHorizonYears
@@ -265,10 +255,6 @@ export function profileV2ToForecastInput(
 
     // planToAge must be derived from horizon (NOT retireAtAge+30)
     const planToAge = selfAgeToday + horizonYears;
-
-    console.log("[FC] horizon - Neu:", { horizonRawAny, horizonRawNum, horizonYears, planToAge });
-
-
     const instruments = profile.instruments ?? [];
     const annuals = profile.annuals as any;
 
@@ -287,13 +273,6 @@ export function profileV2ToForecastInput(
     const liquidityToday = mapLiquidityTodayCHF(instruments);
     const shortDebtToday = mapShortDebtTodayCHF(instruments);
     const availabilityToday = Math.trunc(liquidityToday - shortDebtToday);
-
-    console.log("[FC] start buckets:", {
-        liquidityToday,
-        shortDebtToday,
-        availabilityToday,
-        wealthToday_debug_only: wealthToday,
-    });
 
     /**
      * WICHTIGER FIX:

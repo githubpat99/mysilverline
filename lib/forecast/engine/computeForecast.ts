@@ -136,23 +136,6 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
       totalCHF: debtCostTotal,
     }).lines;
 
-    // Test: Logge Breakdown Jahr 0
-    if (t === 0) {
-      console.log("[FC t0] incomeBase", incomeBase);
-      console.log("[FC t0] expensesBase", expensesBase);
-      console.log("[FC t0] debtCostTotal", debtCostTotal);
-      console.log("[FC t0] eventIncome", eventsIncome);
-      console.log("[FC t0] eventExpense", eventsExpense);
-      console.log("[FC t0] eventsNet", eventsNet);
-      console.log(
-        "[FC t0] annualSpendingToday",
-        annualSpendingToday,
-        "spendingIndexation",
-        spendingIndexation
-      );
-      console.log("[FC adapter] otherIncomes[0]", otherIncomes?.[0]);
-    }
-
     // ---- Point (Chart) ----
     points.push({
       yearIndex: t,

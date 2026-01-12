@@ -61,11 +61,6 @@ function sumOneTimeEventsFromYear(
 }
 
 export function mapV2ToFormState(p: ProfileV2): FormState {
-
-  console.log("[mapV2ToFormState] annuals from API", p.annuals);              // TODO PIN entfernen
-console.log("[mapV2ToFormState] annuals.indexation", p.annuals?.indexation);  // TODO PIN entfernen
-
-
   const self = p.household.persons.find((x) => x.role === "self");
 
   // BaseYear: aus meta.startYear – fallback auf aktuelles Jahr

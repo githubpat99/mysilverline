@@ -82,9 +82,6 @@ export default function Page() {
     }
 
     const next = mapFormStateToProfileV2(form, profileV2);
-
-    console.log("Saving profileV2:", next);   // TODO PIN entfernen
-
     const r = await saveProfileV2Safe(next);
 
     if (!r.ok) {

@@ -215,12 +215,6 @@ export async function saveProfileV2Safe(profile: ProfileV2): Promise<{
 
     try {
       const saved = parseProfileV2(savedRaw) as ProfileV2;
-
-      console.log("[SAVE] sent meta:", profile.meta);
-console.log("[SAVE] raw returned meta:", savedRaw?.meta);
-console.log("[SAVE] parsed meta:", saved?.meta);
-
-
       return { ok: true, status: res.status, profile: saved, raw: json };
     } catch {
       // Falls Backend mal anders liefert: nicht crashen

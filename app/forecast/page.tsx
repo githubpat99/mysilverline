@@ -74,23 +74,6 @@ export default function ForecastPage() {
     async function run() {
       try {
         const { ok, profile } = await loadProfileV2();
-
-        console.log("[FC] profile keys:", Object.keys(profile as any));
-        console.log("[FC] step1 candidates:", {
-          step1: (profile as any).step1,
-          legacyStep1: (profile as any).legacy?.step1,
-          annuals: (profile as any).annuals,
-          household: (profile as any).household,
-          basic: (profile as any).basic,
-        });
-        console.log("[FC] step2 candidates:", {
-          step2: (profile as any).step2,
-          legacyStep2: (profile as any).legacy?.step2,
-          debts: (profile as any).debts,
-          basic: (profile as any).basic,
-        });
-
-
         if (!ok || !profile) {
           setEmptyMsg("Profil noch nicht erfasst.");
           setData([]);

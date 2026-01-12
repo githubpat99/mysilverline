@@ -68,12 +68,6 @@ export default function SummaryPage() {
         const r = await loadProfileV2();
         const p = (r as any)?.profile ?? r;     // ✅ unwrap
         const instruments = (p as any)?.instruments ?? [];
-
-        console.log("profileV2 raw:", r);
-        console.log("profileV2 unwrapped:", p);
-        console.log("instruments:", instruments);
-
-
         if (!p) {
           setItems(null);
           return;

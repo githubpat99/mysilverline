@@ -12,10 +12,7 @@ export type ForecastOut = ForecastResult & {
 };
 
 export function computeForecastFromProfileV2(profile: ProfileV2): ForecastOut {
-  console.log("[FC] computeForecastFromProfileV2 called");
-
   const input = profileV2ToForecastInput(profile);
-
   const out = computeForecastWithBreakdown(input);
 
   return {

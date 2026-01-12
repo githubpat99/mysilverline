@@ -17,9 +17,6 @@ import { makeEmptyProfileV2 } from "@/lib/profile/makeEmptyProfileV2";
 import Step1Form from "@/app/finance/components/steps/Step1Form";
 import Step2Form from "@/app/finance/components/steps/Step2Form";
 import Step3Form from "@/app/finance/components/steps/Step3Form";
-import Step4Form from "@/app/finance/components/steps/Step4Form";
-import Step5Form from "@/app/finance/components/steps/Step5Form";
-import Step6Form from "@/app/finance/components/steps/Step6Form";
 
 import StepNavigation from "./components/StepNavigation";
 
@@ -27,6 +24,7 @@ const INITIAL_FORM: FormState = {
   step1: {
     birthDate: "",
     retireAtAge: 65,
+    forecastHorizonYears: "55",
     cash: "",
     bankSavings: "",
     securities: "",
@@ -46,18 +44,12 @@ const INITIAL_FORM: FormState = {
     indexation: "inflation",
     events: [],
   },
-  step4: { goal: "", risk: null, horizonYears: null },
-  step5: { preferred: [], avoided: [] },
-  step6: { minLiquidity: "", monthlySaving: "" },
 };
 
 const INITIAL_COMPLETED: CompletionState = {
   1: false,
   2: false,
   3: false,
-  4: false,
-  5: false,
-  6: false,
 };
 
 export default function Page() {
@@ -140,10 +132,6 @@ export default function Page() {
   async function handleGoToSummary() {
     setSaveError("");
 
-    const ok = validateStep(6, form);
-    setCompleted((prev) => ({ ...prev, 6: ok }));
-    if (!ok) return;
-
     const saved = await buildAndSaveV2();
     if (!saved.ok) return;
 
@@ -162,9 +150,6 @@ export default function Page() {
     setForm((prev) => ({ ...prev, step2: { ...prev.step2, [field]: value } }));
 
   const setStep3 = (next: FormState["step3"]) => setForm((prev) => ({ ...prev, step3: next }));
-  const setStep4 = (next: FormState["step4"]) => setForm((prev) => ({ ...prev, step4: next }));
-  const setStep5 = (next: FormState["step5"]) => setForm((prev) => ({ ...prev, step5: next }));
-  const setStep6 = (next: FormState["step6"]) => setForm((prev) => ({ ...prev, step6: next }));
 
   const stepForm = useMemo(() => {
     switch (currentStep) {
@@ -174,12 +159,6 @@ export default function Page() {
         return <Step2Form value={form.step2} onChange={setStep2} />;
       case 3:
         return <Step3Form value={form.step3} onChange={setStep3} />;
-      case 4:
-        return <Step4Form value={form.step4} onChange={setStep4} />;
-      case 5:
-        return <Step5Form value={form.step5} onChange={setStep5} />;
-      case 6:
-        return <Step6Form value={form.step6} onChange={setStep6} />;
       default:
         return null;
     }

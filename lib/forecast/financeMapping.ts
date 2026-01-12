@@ -60,8 +60,6 @@ export function forecastInputFromFinanceProfile(
   const s1: any = profile.step1 ?? {};
   const s2: any = profile.step2 ?? {};
   const s3: any = profile.step3 ?? {};
-  const s4: any = profile.step4 ?? {};
-
   const birthDateISO = String(s1.birthDate ?? "").trim();
   if (!birthDateISO) {
     return { ok: false, error: "missing_birthDate", message: "Geburtsdatum fehlt. Bitte in Step 1 erfassen." };
@@ -96,9 +94,6 @@ export function forecastInputFromFinanceProfile(
   // Finance plan horizon defaults
   const planToAge = clampInt(opts?.planToAge ?? 95, 70, 110, 95);
   const extraSafetyYears = clampInt(opts?.extraSafetyYears ?? 0, 0, 30, 0);
-
-  // Assumptions
-  const assumptions = assumptionsFromGoal(s4.goal);
 
   // Step3 annualIncomeToday (not used directly, but could be in future)
   const annualIncome = parseMoneyCHF(s3.annualIncomeToday);
@@ -144,8 +139,6 @@ export function forecastInputFromFinanceProfile(
     pensionsPartner: [],
 
     debts: [],
-
-    assumptions,
 
     retireAtAge,
     planToAge,

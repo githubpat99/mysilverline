@@ -71,7 +71,7 @@ export function forecastInputFromProfileV2(
   profile: ProfileV2,
   opts?: {
     baseYear?: number; // default current year
-    planToAge?: number; // default 95
+    planToAge?: number; // optional override (absolute age)
     extraSafetyYears?: number; // default 0
     spendingIndexation?: ForecastInput["spendingIndexation"]; // default inflation
   }
@@ -89,7 +89,37 @@ export function forecastInputFromProfileV2(
   const self = profile.household.persons.find((p) => p.role === "self");
   const retireAtAge = clampInt(self?.retireAtAge ?? 65, 50, 75, 65);
 
-  const planToAge = clampInt(opts?.planToAge ?? 95, 70, 110, 95);
+  // -----------------------------
+  // Horizon / planToAge
+  // -----------------------------
+  const meta: any = profile.meta ?? {};
+  const horizonRawAny =
+    meta.forecastHorizonYears ??
+    meta.forecast_horizon_years ??
+    null;
+
+  const horizonRawNum =
+    typeof horizonRawAny === "number" ? horizonRawAny : Number(String(horizonRawAny ?? "").trim());
+
+  // Safety only (not a product rule): prevent absurd values from breaking charts
+  const horizonYears = clampInt(
+    Number.isFinite(horizonRawNum) && horizonRawNum > 0 ? horizonRawNum : 55,
+    1,
+    120,
+    55
+  );
+
+  // If caller provides planToAge explicitly, it wins. Otherwise derive from horizon.
+  const planToAgeDerived = selfAgeToday + horizonYears;
+
+  // Safety only: keep within reasonable chart range
+  const planToAge = clampInt(
+    opts?.planToAge ?? planToAgeDerived,
+    1,
+    140,
+    planToAgeDerived
+  );
+
   const extraSafetyYears = clampInt(opts?.extraSafetyYears ?? 0, 0, 30, 0);
 
   // Wealth today
@@ -112,13 +142,8 @@ export function forecastInputFromProfileV2(
       yearOffset: ((e.year ?? baseYear) - baseYear) as number,
     }));
 
-  // IMPORTANT:
-  // You said IncomeLine currently comes from Lotto.
-  // So we don't generate otherIncomes yet to avoid wrong type imports.
-  // Once you introduce a forecast-specific Income type, fill it here.
   const otherIncomes: ForecastInput["otherIncomes"] = [];
 
-  // Assumptions: goal not in v2 yet -> default
   const assumptions = assumptionsFromGoal("balance" as any);
 
   const input: ForecastInput = {
@@ -140,16 +165,10 @@ export function forecastInputFromProfileV2(
 
     debts: [],
 
-    assumptions,
-
     retireAtAge,
     planToAge,
     extraSafetyYears,
   };
-
-  // Optional: if you still want annualIncome to flow in but don't have typed otherIncomes yet,
-  // you can keep annualIncomeToday as derived info (not used by engine) or later add it to otherIncomes.
-  // For now, engine uses annualSpendingToday; income can be introduced once IncomeLine type exists.
 
   return { ok: true, input, derived: { baseYear, selfAgeToday } };
 }

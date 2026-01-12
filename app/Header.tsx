@@ -43,7 +43,6 @@ export default function Header() {
   const pathname = usePathname();
   const isFinance = pathname?.startsWith("/finance");
   const isSummary = pathname?.startsWith("/summary");
-  const isLotto = pathname?.startsWith("/lotto");
   const isForecast = pathname?.startsWith("/forecast");
 
   useEffect(() => {
@@ -93,33 +92,28 @@ export default function Header() {
         </Link>
 
         <div className="hidden md:flex items-center gap-6">
-          <nav className="flex items-center gap-2 text-sm">
+          <nav className="flex items-center gap-4 text-sm">
             <Link href="/finance" className={linkClass(!!isFinance)}>
               Finanz-Workflow
             </Link>
-            <li className="text-slate-600">·</li>
+
             <Link href="/summary" className={linkClass(!!isSummary)}>
               Bilanz
             </Link>
-            <li className="text-slate-600">·</li>
-            <Link href="/lotto" className={linkClass(!!isLotto)}>
-              Lotto
-            </Link>
-            <li className="text-slate-600">·</li>
+
             <Link href="/forecast?src=finance" className={linkClass(!!isForecast)}>
               Forecast
             </Link>
-            <li className="text-slate-600">·</li>
+
             <a
               href="https://mysilverline.it-pin.ch"
               className="text-slate-300 hover:text-sky-400 transition"
             >
               Website
             </a>
-            <li className="text-slate-600">·</li>
+
             <LogoutBtn />
           </nav>
-
           <span className="rounded-full border border-slate-700 bg-slate-950/30 px-3 py-1 text-xs text-slate-300">
             {userLabel}
           </span>
@@ -169,13 +163,6 @@ export default function Header() {
               Bilanz
             </Link>
 
-            <Link
-              href="/lotto"
-              className={[linkClass(!!isLotto), "block w-full"].join(" ")}
-              onClick={() => setMenuOpen(false)}
-            >
-              Lotto
-            </Link>
             <Link
               href="/forecast?src=finance"
               className={[linkClass(!!isForecast), "block w-full"].join(" ")}

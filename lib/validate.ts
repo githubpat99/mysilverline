@@ -59,22 +59,6 @@ export function validateStep(step: StepId, form: FormState): boolean {
       );
     }
 
-    case 4: {
-      const d = form.step4;
-      const riskOk = d.risk !== null && d.risk >= 1 && d.risk <= 5;
-      const horizonOk = d.horizonYears !== null && d.horizonYears >= 1 && d.horizonYears <= 40;
-      return d.goal !== "" && riskOk && horizonOk;
-    }
-    case 5: {
-      const d = form.step5;
-      // bevorzugt und zu meiden sollten sich nicht überschneiden
-      const overlap = d.preferred.some((x) => d.avoided.includes(x));
-      return !overlap;
-    }
-    case 6: {
-      const d = form.step6;
-      return isNonNegativeMoney(d.minLiquidity) && isNonNegativeMoney(d.monthlySaving);
-    }
     default:
       return false;
   }

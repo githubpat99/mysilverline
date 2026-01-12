@@ -33,7 +33,7 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
     planToAge,
     extraSafetyYears = 0,
 
-    // NEW (oder bestehend falls du es schon hast)
+    // NEW
     baseYear,
     events = [],
   } = input as any;
@@ -43,14 +43,15 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
   const points: ForecastPoint[] = [];
   const breakdowns: YearBreakdown[] = [];
 
-  const inflation = assumptions.inflation ?? 0;
+  // --- HARD GUARD (sonst knallt es wie du gesehen hast) ---
+  const inflation = (assumptions?.inflation ?? 0) as number;
 
   const nominalReturn =
-    assumptions.returnMode === "nominal"
-      ? assumptions.nominalReturn ?? 0
-      : (assumptions.realReturn ?? 0) + inflation;
+    assumptions?.returnMode === "nominal"
+      ? (assumptions?.nominalReturn ?? 0)
+      : (assumptions?.realReturn ?? 0) + inflation;
 
-  const annualFees = assumptions.annualFees ?? 0;
+  const annualFees = assumptions?.annualFees ?? 0;
   const g = Math.max(-0.99, nominalReturn - annualFees);
 
   let wealth = Math.trunc(wealthToday);
@@ -92,16 +93,13 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
       yearIndex: t,
       inflation,
     });
-    // eventResult:
-    // {
-    //   incomeCHF,
-    //   expenseCHF,
-    //   incomeLines: BreakdownLine[],
-    //   expenseLines: BreakdownLine[]
-    // }
 
-    const incomeTotal = incomeBase + eventResult.incomeCHF;
-    const expensesTotal = expensesBase + eventResult.expenseCHF;
+    const eventsIncome = eventResult.incomeCHF;
+    const eventsExpense = eventResult.expenseCHF;
+    const eventsNet = eventsIncome - eventsExpense;
+
+    const incomeTotal = incomeBase + eventsIncome;
+    const expensesTotal = expensesBase + eventsExpense;
     const totalExpenses = expensesTotal + debtCostTotal;
 
     // ---- Breakdown Lines ----
@@ -143,13 +141,17 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
       console.log("[FC t0] incomeBase", incomeBase);
       console.log("[FC t0] expensesBase", expensesBase);
       console.log("[FC t0] debtCostTotal", debtCostTotal);
-      console.log("[FC t0] eventIncome", eventResult.incomeCHF);
-      console.log("[FC t0] eventExpense", eventResult.expenseCHF);
-      console.log("[FC t0] annualSpendingToday", annualSpendingToday, "spendingIndexation", spendingIndexation);
+      console.log("[FC t0] eventIncome", eventsIncome);
+      console.log("[FC t0] eventExpense", eventsExpense);
+      console.log("[FC t0] eventsNet", eventsNet);
+      console.log(
+        "[FC t0] annualSpendingToday",
+        annualSpendingToday,
+        "spendingIndexation",
+        spendingIndexation
+      );
       console.log("[FC adapter] otherIncomes[0]", otherIncomes?.[0]);
-
     }
-
 
     // ---- Point (Chart) ----
     points.push({
@@ -180,6 +182,16 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
         expenses: expensesTotal,
         debts: debtCostTotal,
         net,
+
+        // NEW: Events separat (optional in Type, siehe types.ts)
+        eventsIncome,
+        eventsExpense,
+        eventsNet,
+      },
+      // optional: wenn du Events im UI als Liste anzeigen willst
+      events: {
+        incomeLines: eventResult.incomeLines,
+        expenseLines: eventResult.expenseLines,
       },
     });
   }

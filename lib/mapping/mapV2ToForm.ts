@@ -3,6 +3,7 @@ import type { FormState } from "@/lib/types";
 import type { Instrument, AssetInstrument, DebtInstrument } from "@/lib/types/v2";
 import type { Year } from "@/lib/types/v2"; // falls Year dort exportiert ist; sonst aus money importieren
 import { UI_EVT } from "./mapFormStateToProfileV2";
+import { profile } from "console";
 
 function moneyToNumber(m: unknown): number {
   if (typeof m === "number" && Number.isFinite(m)) return m;
@@ -108,6 +109,7 @@ console.log("[mapV2ToFormState] annuals.indexation", p.annuals?.indexation);  //
   const next = {
     step1: {
       birthDate: self?.birthDate ?? "",
+      forecastHorizonYears: String(p.meta?.forecastHorizonYears ?? 55),
       retireAtAge: self?.retireAtAge ?? 65,
       cash: toStr(sumAssets("cash")),
       bankSavings: toStr(sumAssets("bank")),
@@ -128,13 +130,7 @@ console.log("[mapV2ToFormState] annuals.indexation", p.annuals?.indexation);  //
       indexation: idx,
       events: p.events ?? [],
     },
-    step4: {
-      goal: "",
-      risk: 0,
-      horizonYears: 5,
-    },
-    step5: { preferred: [], avoided: [] },
-    step6: { minLiquidity: "", monthlySaving: "" },
+
   } satisfies FormState;
 
   return next;

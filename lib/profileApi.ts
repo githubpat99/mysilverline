@@ -61,10 +61,27 @@ export function normalizeRetireAtAge(v: unknown): number {
 export function normalizeForm(form: FormState): FormState {
   const next: FormState = structuredClone(form);
 
-  if (!next.step1) next.step1 = { cash: "", bankSavings: "", securities: "", otherInvest: "", retireAtAge: 65 } as any;
+  if (!next.step1) {
+    next.step1 = {
+      cash: "",
+      bankSavings: "",
+      securities: "",
+      otherInvest: "",
+      retireAtAge: 65,
+      forecastHorizonYears: "55",
+    } as any;
+  }
 
   // Ensure retireAtAge exists & valid
   (next.step1 as any).retireAtAge = normalizeRetireAtAge((next.step1 as any).retireAtAge ?? 65);
+
+  // Ensure forecastHorizonYears exists & valid (string in UI)
+  const clamp = (n: number, a: number, b: number) => Math.max(a, Math.min(b, n));
+  const hRaw = (next.step1 as any).forecastHorizonYears ?? "55";
+  const hNum =
+    typeof hRaw === "number" ? hRaw : Number(String(hRaw).trim());
+  const h = clamp(Number.isFinite(hNum) ? hNum : 55, 10, 80);
+  (next.step1 as any).forecastHorizonYears = String(h);
 
   return next;
 }

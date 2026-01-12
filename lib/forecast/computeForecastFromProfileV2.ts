@@ -5,11 +5,23 @@ import type { ForecastResult } from "./types";
 import { computeForecastWithBreakdown } from "@/lib/forecast/engine/computeForecast";
 import { profileV2ToForecastInput } from "./profileV2ToForecastInput";
 
-export function computeForecastFromProfileV2(profile: ProfileV2): ForecastResult {
+export type ForecastOut = ForecastResult & {
+  liquidityToday: number;
+  shortDebtToday: number;
+  availabilityToday: number;
+};
 
-    console.log("[FC] computeForecastFromProfileV2 called");
-    
+export function computeForecastFromProfileV2(profile: ProfileV2): ForecastOut {
+  console.log("[FC] computeForecastFromProfileV2 called");
+
   const input = profileV2ToForecastInput(profile);
 
-  return computeForecastWithBreakdown(input);
+  const out = computeForecastWithBreakdown(input);
+
+  return {
+    ...out,
+    liquidityToday: (input as any).liquidityToday ?? 0,
+    shortDebtToday: (input as any).shortDebtToday ?? 0,
+    availabilityToday: (input as any).availabilityToday ?? 0,
+  };
 }

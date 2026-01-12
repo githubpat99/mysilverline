@@ -40,8 +40,6 @@ export type ForecastInput = {
 
   debts?: Debt[];
 
-  assumptions: Assumptions;
-
   retireAtAge: number;
   planToAge: number;
   extraSafetyYears?: number;

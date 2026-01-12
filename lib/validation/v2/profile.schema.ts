@@ -7,6 +7,7 @@ import { YearSchema } from "./money.schema";
 
 export const ProfileMetaSchema = z.object({
   startYear: YearSchema,
+  forecastHorizonYears: z.number().int().optional(),
 });
 
 export const ProfileV2Schema = z.object({

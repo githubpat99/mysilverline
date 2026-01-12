@@ -276,7 +276,17 @@ export function mapFormStateToProfileV2(form: FormState, prev: ProfileV2): Profi
   const baseYear = (next.meta?.startYear ?? new Date().getFullYear()) as Year;
 
   // startYear kannst du in meta lassen (ok), aber Indexation NICHT.
-  next.meta = { ...(next.meta ?? {}), startYear: baseYear };
+  const clamp = (n: number, a: number, b: number) => Math.max(a, Math.min(b, n));
+  const hRaw = (form.step1 as any)?.forecastHorizonYears;
+  const h = typeof hRaw === "number" ? hRaw : Number(String(hRaw ?? "").trim());
+  const forecastHorizonYears = clamp(Number.isFinite(h) ? h : 55, 1, 120);
+
+  next.meta = {
+    ...(next.meta ?? {}),
+    startYear: baseYear,
+    forecastHorizonYears,
+  };
+
 
   const idxRaw = (form.step3?.indexation ?? "").trim() as AnnualIndexation | "";
   const prevIdx = (next.annuals?.indexation ?? "inflation") as AnnualIndexation;

@@ -26,6 +26,10 @@ export function makeEmptyProfileV2(): ProfileV2 {
     events: [],
     meta: {
       startYear: currentYear,
+
+      // NEW: Forecast-Horizont (Jahre ab Startjahr)
+      // Default bewusst < "bis 95", damit auch <40-Jährige realistisch planen
+      forecastHorizonYears: 55,
     },
   };
 }

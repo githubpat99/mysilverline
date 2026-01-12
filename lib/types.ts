@@ -1,6 +1,6 @@
 import type { Event } from "@/lib/types/v2/events";
 
-export type StepId = 1 | 2 | 3 | 4 | 5 | 6;
+export type StepId = 1 | 2 | 3;
 export type InvestmentGoal = "security" | "balance" | "growth";
 export type AssetType =
   | "cash"
@@ -15,8 +15,9 @@ export type AssetType =
   | "other";
 
 export type Step1Data = {
-  birthDate: string;          // ISO date string "YYYY-MM-DD"
-  retireAtAge: number;        // default 65
+  birthDate: string;            // ISO "YYYY-MM-DD"
+  forecastHorizonYears?: string; // default "55"
+  retireAtAge: number;          // z.B. 65
   cash: string;
   bankSavings: string;
   securities: string;
@@ -41,29 +42,10 @@ export type Step3Data = {
   events: Event[];
 };
 
-export type Step4Data = {
-  goal: InvestmentGoal | "";
-  risk: number | null;          // 1..5
-  horizonYears: number | null;  // 1..40
-};
-
-export type Step5Data = {
-  preferred: AssetType[];
-  avoided: AssetType[];
-};
-
-export type Step6Data = {
-  minLiquidity: string;
-  monthlySaving: string;
-};
-
 export type FormState = {
   step1: Step1Data;
   step2: Step2Data;
   step3: Step3Data;
-  step4: Step4Data;
-  step5: Step5Data;
-  step6: Step6Data;
 };
 
 export type CompletionState = Record<StepId, boolean>;

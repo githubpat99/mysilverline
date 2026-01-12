@@ -87,21 +87,21 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-slate-800 bg-slate-900/80 backdrop-blur">
       <div className="mx-auto max-w-6xl px-4 py-4 flex items-center justify-between gap-4">
-        <Link href="/finance" className="text-xl font-semibold tracking-tight">
+        <Link href="/finance" prefetch={false} className="text-xl font-semibold tracking-tight">
           <span className="text-sky-400">Silverline</span>
         </Link>
 
         <div className="hidden md:flex items-center gap-6">
           <nav className="flex items-center gap-4 text-sm">
-            <Link href="/finance" className={linkClass(!!isFinance)}>
+            <Link href="/finance" prefetch={false} className={linkClass(!!isFinance)}>
               Finanz-Workflow
             </Link>
 
-            <Link href="/summary" className={linkClass(!!isSummary)}>
+            <Link href="/summary" prefetch={false} className={linkClass(!!isSummary)}>
               Bilanz
             </Link>
 
-            <Link href="/forecast?src=finance" className={linkClass(!!isForecast)}>
+            <Link href="/forecast?src=finance" prefetch={false} className={linkClass(!!isForecast)}>
               Forecast
             </Link>
 
@@ -148,7 +148,7 @@ export default function Header() {
 
           <nav className="flex flex-col gap-3 text-sm">
             <Link
-              href="/finance"
+              href="/finance" prefetch={false} 
               className={[linkClass(!!isFinance), "block w-full"].join(" ")}
               onClick={() => setMenuOpen(false)}
             >
@@ -156,7 +156,7 @@ export default function Header() {
             </Link>
 
             <Link
-              href="/summary"
+              href="/summary" prefetch={false} 
               className={[linkClass(!!isSummary), "block w-full"].join(" ")}
               onClick={() => setMenuOpen(false)}
             >
@@ -164,7 +164,7 @@ export default function Header() {
             </Link>
 
             <Link
-              href="/forecast?src=finance"
+              href="/forecast?src=finance" prefetch={false} 
               className={[linkClass(!!isForecast), "block w-full"].join(" ")}
               onClick={() => setMenuOpen(false)}
             >

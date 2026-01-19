@@ -4,22 +4,15 @@ import { useMemo, useRef, useState } from "react";
 import type { FormState, AssetPosition, Availability, AssetClass, Goal } from "@/lib/types";
 import { Amount, InlineAmount } from "../Amount";
 import { FieldMoneyInt } from "../fields/FieldMoney";
+import { bucketFromAvailability, type Bucket } from "@/lib/forecast/buckets";
 
 type Step1Data = FormState["step1"];
-type Bucket = "LIQ" | "ST" | "LT" | "REAL";
 
-function deriveBucket(a: Availability): Bucket {
-  switch (a) {
-    case "instant":
-      return "LIQ";
-    case "3m_3y":
-      return "ST";
-    case "gt_3y":
-      return "LT";
-    case "locked":
-      return "REAL";
-  }
-}
+// Minimal ForecastRow shape for header CF (avoid importing forecast types here)
+type ForecastRowLike = {
+  assetCashflowToLiq?: number;
+  assetCashflowReinvest?: number;
+};
 
 function sum(xs: number[]) {
   return xs.reduce((a, b) => a + b, 0);
@@ -46,12 +39,14 @@ export default function Step1Form({
   activeBucket,
   onActiveBucketChange,
   onCommit, // <- SAVE trigger vom Parent
+  rows, // <- Forecast rows (optional), for header CF
 }: {
   value: Step1Data;
   onChange: (next: Step1Data) => void;
   activeBucket: Bucket;
   onActiveBucketChange: (b: Bucket) => void;
   onCommit?: () => void | Promise<void>;
+  rows?: ForecastRowLike[];
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -63,7 +58,7 @@ export default function Step1Form({
 
   const grouped = useMemo(() => {
     const g: Record<Bucket, AssetPosition[]> = { LIQ: [], ST: [], LT: [], REAL: [] };
-    for (const p of positions) g[deriveBucket(p.availability)].push(p);
+    for (const p of positions) g[bucketFromAvailability(p.availability)].push(p);
     return g;
   }, [positions]);
 
@@ -88,6 +83,10 @@ export default function Step1Form({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [positions, grouped]);
+
+  console.log("[S1] allCashflowToLiq", totals.allCashflowToLiq);
+  console.log("[S1] positions", positions.map(p => ({ id: p.id, cf: p.cashflowPa, goal: p.goal })));
+
 
   function setPositions(next: AssetPosition[]) {
     onChange({ ...value, positions: next });
@@ -159,6 +158,10 @@ export default function Step1Form({
     setIsModalOpen(false);
   }
 
+  // Prefer forecast-derived CF if available, else UI-derived sum
+  const r0 = rows?.[0];
+  const cfToLiq = (typeof r0?.assetCashflowToLiq === "number" ? r0.assetCashflowToLiq : totals.allCashflowToLiq) ?? 0;
+
   return (
     <div>
       {/* Header (ohne Kachel) */}
@@ -183,7 +186,7 @@ export default function Step1Form({
             <div className="mt-2 text-sm text-slate-400">
               Cashflows → Liq p.a.:{" "}
               <span className="text-slate-200">
-                <InlineAmount value={totals.allCashflowToLiq} />
+                <InlineAmount value={cfToLiq} />
               </span>
             </div>
           </div>
@@ -262,9 +265,7 @@ export default function Step1Form({
             <div className="rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl">
               <div className="flex items-start justify-between gap-4 border-b border-slate-800 p-5">
                 <div>
-                  <div className="font-semibold text-slate-100">
-                    Details: {BUCKET_META[activeBucket].title}
-                  </div>
+                  <div className="font-semibold text-slate-100">Details: {BUCKET_META[activeBucket].title}</div>
                   <div className="text-sm text-slate-400">
                     Du steuerst Label/Wert/Verfügbarkeit/AssetClass/Cashflow/Ziel/Notiz.
                   </div>
@@ -382,7 +383,7 @@ export default function Step1Form({
                         <div>
                           <div className="text-xs text-slate-400 mb-1">Bucket</div>
                           <div className="rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-300">
-                            {deriveBucket(p.availability).toLowerCase()}
+                            {bucketFromAvailability(p.availability)}
                           </div>
                         </div>
                       </div>
@@ -499,7 +500,7 @@ export default function Step1Form({
                           </td>
 
                           <td className="py-2 pr-3 text-slate-300 hidden xl:table-cell">
-                            {deriveBucket(p.availability).toLowerCase()}
+                            {bucketFromAvailability(p.availability)}
                           </td>
 
                           <td className="py-2 pr-3">

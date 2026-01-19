@@ -19,6 +19,14 @@ export type ForecastResult = {
   rows?: ForecastYearRow[];
 };
 
+export type DebtYear = {
+  interest: number;
+  amort: number;
+  interestShort: number;
+  interestLong: number;
+  amortShort: number;
+  amortLong: number;
+};
 
 export type ForecastPoint = {
   yearIndex: number;

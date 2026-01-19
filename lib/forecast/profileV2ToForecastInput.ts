@@ -6,13 +6,18 @@ import type { Money } from "@/lib/types/v2/money";
 import type { Instrument } from "@/lib/types/v2/instruments";
 import type { AnnualItem, Annuals } from "@/lib/types/v2/annuals";
 import { clampInt } from "./financeMapping";
+import {
+    bucketFromAvailability,
+    type Availability,
+    type Bucket,
+} from "@/lib/forecast/buckets";
 
 function moneyToCHF(m: Money | undefined | null): number {
     if (!m) return 0;
     if (typeof (m as any).chf === "number") return Math.trunc((m as any).chf);
     if (typeof m === "number") return Math.trunc(m);
     const n = Number((m as any).value ?? (m as any).amount ?? 0);
-    return Math.trunc(isFinite(n) ? n : 0);
+    return Math.trunc(Number.isFinite(n) ? n : 0);
 }
 
 function yearFromISODate(d: string): number {
@@ -55,131 +60,136 @@ function mapWealthTodayCHF(instruments: Instrument[]): number {
     return Math.trunc(assetsCHF - debtsCHF);
 }
 
-function normType(x: any): string {
-    return String(x ?? "").toLowerCase().trim();
-}
+// ---------- NEW (availability-based starts) ----------
 
-/**
- * Liquidität aus Instruments ableiten.
- * WICHTIG: Wenn nichts zuverlässig klassifiziert werden kann, NICHT "alle Assets" nehmen,
- * sonst werden langfristige Anlagen fälschlich als liquid behandelt.
- */
-function mapLiquidityTodayCHF(instruments: Instrument[]): number {
+function sumAssetsByAvailability(instruments: Instrument[]) {
     const assets = instruments.filter((i) => i.kind === "asset") as any[];
 
-    const liquidTypes = new Set([
-        "cash",
-        "bargeld",
-        "sight",
-        "sichtguthaben",
-        "bank",
-        "banksavings",
-        "banksaving",
-        "saving",
-        "sparen",
-        "securities",
-        "wertschriften",
-        "etf",
-        "stocks",
-        "aktien",
-        "funds",
-        "fonds",
-    ]);
-
-    let liq = 0;
-    let matched = 0;
+    const out = { liq: 0, shortA: 0, longA: 0, realA: 0 };
 
     for (const a of assets) {
-        const t =
-            normType((a as any).assetType) ||
-            normType((a as any).type) ||
-            normType((a as any).category) ||
-            normType((a as any).client_id) ||
-            normType((a as any).label);
+        const av = (a as any).availability as Availability | undefined;
+        const v = moneyToCHF((a as any).value);
 
-        const isLiquid = [...liquidTypes].some((k) => t.includes(k));
-        if (isLiquid) {
-            liq += moneyToCHF((a as any).value);
-            matched++;
+        // If availability is missing, we skip to avoid misclassifying long-term assets as liquid.
+        if (!av) continue;
+
+        const b: Bucket = bucketFromAvailability(av);
+        switch (b) {
+            case "LIQ":
+                out.liq += v;
+                break;
+            case "ST":
+                out.shortA += v;
+                break;
+            case "LT":
+                out.longA += v;
+                break;
+            case "REAL":
+                out.realA += v;
+                break;
         }
     }
 
-    // Konservativer Fallback: wenn nichts erkannt wird, lieber 0 + Warnung als falsch alles mitzuzählen.
-    if (matched === 0) {
-        console.warn(
-            "[FC] mapLiquidityTodayCHF: no liquid assets matched (assetType/type/category/label). Returning 0 to avoid counting long-term assets as liquid.",
-            {
-                assets: assets.map((a) => ({
-                    id: (a as any).id,
-                    label: (a as any).label,
-                    assetType: (a as any).assetType,
-                    type: (a as any).type,
-                    category: (a as any).category,
-                    client_id: (a as any).client_id,
-                    value: moneyToCHF((a as any).value),
-                })),
-            }
-        );
-        return 0;
-    }
-
-    return Math.trunc(liq);
+    return out;
 }
 
-function mapShortDebtTodayCHF(instruments: Instrument[]): number {
+function sumAssetCashflows(instruments: Instrument[]) {
+    const assets = instruments.filter((i) => i.kind === "asset") as any[];
+
+    let toLiq = 0;
+    const reinvest = { shortA: 0, longA: 0, realA: 0 };
+
+    for (const a of assets) {
+        const av = a.availability as Availability | undefined;
+        const cf =
+            Number(
+                (a as any).cashflow_pa ??
+                (a as any).cashflowPa ??
+                (a as any).cashflow ??
+                0
+            ) || 0;
+
+        const goal =
+            String(
+                (a as any).goal ??
+                (a as any).cashflowTarget ??
+                "liq"
+            );
+
+        const target = String(a.cashflowTarget ?? a.ziel ?? "liq"); // "liq" | "reinvest"
+
+        if (!av || cf === 0) continue;
+
+        const b: Bucket = bucketFromAvailability(av);
+
+        if (target === "liq") {
+            toLiq += cf;
+        } else if (target === "reinvest") {
+            if (b === "ST") reinvest.shortA += cf;
+            else if (b === "LT") reinvest.longA += cf;
+            else if (b === "REAL") reinvest.realA += cf;
+            // b === "LIQ" -> ignorieren oder toLiq addieren, je nach UX-Entscheid
+        }
+    }
+
+    return { toLiq: Math.trunc(toLiq), reinvest };
+}
+
+function sumDebtsByAvailability(instruments: Instrument[]) {
     const debts = instruments.filter((i) => i.kind === "debt") as any[];
 
-    const shortTypes = new Set([
-        "creditcard",
-        "kreditkarte",
-        "consumerloan",
-        "konsumkredit",
-        "othershort",
-        "kurzfristig",
-        "short",
-    ]);
-
-    let kfr = 0;
-    let matched = 0;
+    const out = { shortD: 0, longD: 0 };
 
     for (const d of debts) {
-        const t =
-            normType((d as any).debtType) ||
-            normType((d as any).type) ||
-            normType((d as any).category) ||
-            normType((d as any).client_id) ||
-            normType((d as any).label);
+        const av = (d as any).availability as Availability | undefined;
+        const v = moneyToCHF((d as any).balance);
 
-        const isShort = [...shortTypes].some((k) => t.includes(k));
-        if (isShort) {
-            kfr += moneyToCHF((d as any).balance);
-            matched++;
-        }
+        if (!av) continue;
+
+        const b: Bucket = bucketFromAvailability(av);
+        if (b === "LIQ" || b === "ST") out.shortD += v;
+        else out.longD += v; // LT or REAL
     }
 
-    // Fallback: wenn nichts klassifiziert werden konnte → 0 (nicht alles als KFR behandeln)
-    if (matched === 0) return 0;
-
-    return Math.trunc(kfr);
+    return out;
 }
+
+// ---------- Forecast mapping helpers ----------
 
 function mapDebtsForForecast(instruments: Instrument[]): any[] {
     const debts = instruments.filter((i) => i.kind === "debt") as any[];
 
     return debts.map((d) => {
         const principalToday = moneyToCHF(d.balance);
-        const raw = Number((d as any).interestRate ?? 0) || 0;
-        const annualInterestRate = raw > 1 ? raw / 100 : raw;
+
+        // interestRate ist Prozent (0.6 / 0.7 / 2) -> Faktor
+        const rawPct = Number(d.interestRatePct ?? d.interestRate ?? 0) || 0;
+        const annualInterestRate = rawPct / 100;
+
+        const interest = Math.trunc(principalToday * annualInterestRate);
+
+        // NEW: amortization from instrument
+        const amortObj = (d as any).amortization as { type?: string; amountAnnual?: number } | undefined;
+        const amortType = String(amortObj?.type ?? "none");
+        const amortAnnual = Math.trunc(Number(amortObj?.amountAnnual ?? 0) || 0);
+
+        const amort = amortType === "direct" ? amortAnnual : 0;
 
         return {
             id: (d as any).id,
             label: (d as any).label,
             principalToday,
             annualInterestRate,
+
+            // enables amortization in applyDebtsDetailed()
+            annualPayment: interest + amort,
+            availability: d.availability,   // << NEW
             payoffImmediately: false,
         };
     });
 }
+
 
 function mapAnnualsToOtherIncomes(annuals: Annuals, baseYear: number): any[] {
     return (annuals.income ?? []).map((it) => {
@@ -218,14 +228,38 @@ function mapNeedToSpendingAdjustments(annuals: Annuals, baseYear: number): any[]
 
 // Rückgabetyp inkl. Availability
 export type ForecastInputWithStart = ForecastInput & {
-    /** nur freie Liquidität (Startwert für die Forecast-Kurve) */
+    /** nur freie Liquidität (Startwert für UI/KPIs) */
     liquidityToday: number;
     /** kurzfristige Verbindlichkeiten (KFR) */
     shortDebtToday: number;
     /** frei verfügbar = liquidity - shortDebt (für UI-KPI "Ausgangslage") */
     availabilityToday: number;
-    /** net worth (nur debug/ später, darf Forecast nicht starten) */
+
+    /** net worth total (für Debug/ später) */
     wealthToday: number;
+    // Annuals -> Forecast (damit klar ist, dass das drin ist)
+    annualSpendingToday: number;
+    spendingIndexation: string; // oder IndexationMode, falls du es hast
+    spendingAdjustments: any[]; // besser: SpendingAdjustment[]
+    otherIncomes: any[];        // besser: OtherIncome[]
+
+    /** Start-Buckets Aktiven */
+    assetsToday: {
+        liq: number;
+        shortA: number;
+        longA: number;
+        realA: number;
+    };
+
+    /** Start-Buckets Passiven */
+    debtsToday: {
+        shortD: number;
+        longD: number;
+    };
+
+    assetCashflowToLiq: number;
+    assetCashflowReinvest: { shortA: number; longA: number; realA: number };
+
 };
 
 export function profileV2ToForecastInput(
@@ -241,58 +275,72 @@ export function profileV2ToForecastInput(
 
     // ---- Horizon (years) from profile.meta.forecastHorizonYears
     const meta: any = profile?.meta ?? {};
-    const horizonRawAny =
-        meta.forecastHorizonYears ??
-        meta.forecast_horizon_years ??
-        null;
+    const horizonRawAny = meta.forecastHorizonYears ?? meta.forecast_horizon_years ?? null;
 
     const horizonRawNum =
-        typeof horizonRawAny === "number"
-            ? horizonRawAny
-            : Number(String(horizonRawAny ?? "").trim());
+        typeof horizonRawAny === "number" ? horizonRawAny : Number(String(horizonRawAny ?? "").trim());
 
     const horizonYears = Number.isFinite(horizonRawNum) && horizonRawNum > 0 ? horizonRawNum : 55;
 
     // planToAge must be derived from horizon (NOT retireAtAge+30)
     const planToAge = selfAgeToday + horizonYears;
+
     const instruments = profile.instruments ?? [];
-    
-    // später: Vermögensverlauf typ-basiert
+
+    console.log("[FC] instruments debts RAW", instruments.filter((i: any) => i.kind === "debt"));
+
+
+
+    // später: Vermögensverlauf typ-basiert (debug only)
     const wealthToday = mapWealthTodayCHF(instruments);
 
     const debts = mapDebtsForForecast(instruments);
 
-
+    // NEW: availability-based starts
+    const assetsTodayAgg = sumAssetsByAvailability(instruments);
+    const debtsTodayAgg = sumDebtsByAvailability(instruments);
 
     // Ausgangslage (frei verfügbar)
-    const liquidityToday = mapLiquidityTodayCHF(instruments);
-    const shortDebtToday = mapShortDebtTodayCHF(instruments);
+    const liquidityToday = Math.trunc(assetsTodayAgg.liq);
+    const shortDebtToday = Math.trunc(debtsTodayAgg.shortD);
     const availabilityToday = Math.trunc(liquidityToday - shortDebtToday);
 
-    /**
-     * WICHTIGER FIX:
-     * Der Forecast (Kurve + Tiefststand + "reicht") muss mit FREIER Liquidität starten,
-     * nicht mit wealthToday (das enthält langfristige Anlagen).
-     *
-     * Deshalb: ForecastInput.wealthToday = availabilityToday (bis später der echte Vermögensverlauf kommt).
-     */
+    const annuals: Annuals = (profile as any).annuals ?? { income: [], need: [] };
+
+    // Income: annuals.income -> otherIncomes (applyIncome)
+    const otherIncomes = mapAnnualsToOtherIncomes(annuals, baseYear);
+
+    // Need: im baseYear als "annualSpendingToday" (applyExpenses)
+    const annualSpendingToday = sumAnnualNeedBase(annuals, baseYear);
+
+    // Need über die Jahre als adjustments (applyExpenses)
+    const spendingAdjustments = mapNeedToSpendingAdjustments(annuals, baseYear);
+
+    // Indexation für Need/Spending (string/enum, nicht numeric)
+    const spendingIndexation =
+        (annuals as any).indexation ?? meta?.spendingIndexation ?? "inflation";
+
+    // Asset Cashflows
+    const assetCF = sumAssetCashflows(instruments);
+
     const input: ForecastInputWithStart = {
         baseYear,
         selfAgeToday,
 
-        // Forecast-Startwert (aktuell missbraucht das Modell dieses Feld als "Start-Kapital" der Kurve)
+        // Start-Nettovermögen (für Legacy/Debug)
         wealthToday: availabilityToday,
 
         retireAtAge,
         planToAge,
 
-        
-
         spendingExtraGrowth: 0,
-   
         oneOffSpendEvents: [],
 
-   
+        annualSpendingToday,
+        spendingIndexation,
+        spendingAdjustments,
+        otherIncomes,
+
         pensionsSelf: [],
         pensionsPartner: [],
 
@@ -300,6 +348,21 @@ export function profileV2ToForecastInput(
         events: profile.events ?? [],
 
         extraSafetyYears: 0,
+
+        // NEW: Bucket-Starts für Forecast (availability-basiert)
+        assetsToday: {
+            liq: Math.trunc(assetsTodayAgg.liq),
+            shortA: Math.trunc(assetsTodayAgg.shortA),
+            longA: Math.trunc(assetsTodayAgg.longA),
+            realA: Math.trunc(assetsTodayAgg.realA),
+        },
+        debtsToday: {
+            shortD: Math.trunc(debtsTodayAgg.shortD),
+            longD: Math.trunc(debtsTodayAgg.longD),
+        },
+
+        assetCashflowToLiq: assetCF.toLiq,
+        assetCashflowReinvest: assetCF.reinvest,
 
         // Extras für UI/KPIs
         liquidityToday,

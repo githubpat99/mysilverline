@@ -4,47 +4,23 @@ import { useMemo, useRef, useState } from "react";
 import type { FormState, DebtPosition } from "@/lib/types";
 import { FieldMoneyInt } from "../fields/FieldMoney";
 import { Amount, InlineAmount } from "../Amount";
+import { bucketFromAvailability, availabilityFromBucket } from "@/lib/forecast/buckets";
+import type { Bucket } from "@/lib/forecast/buckets";
+
 
 type Step2Data = FormState["step2"];
-type DebtBucket = "immediate" | "mid" | "long";
 type DebtType = DebtPosition["debtType"];
+
+const buckets: Bucket[] = ["LIQ", "ST", "LT", "REAL"];
+  const BUCKET_META: Record<Bucket, { title: string; subtitle: string; hint: string }> = {
+    LIQ: { title: "Sofort", subtitle: "kurz fällig", hint: "z.B. Kreditkarte, offene Rechnungen" },
+    ST: { title: "3m–3y", subtitle: "mittelfristig", hint: "z.B. Konsumkredit, kurzfristige Darlehen" },
+    LT: { title: ">3y", subtitle: "langfristig", hint: "z.B. Hypothek, langfristige Darlehen" },
+    REAL: { title: "Gebunden", subtitle: "nicht disponibel", hint: "z.B. verpfändet/gebunden (falls relevant)" },
+  };
 
 function uid() {
   return "d_" + Math.random().toString(16).slice(2) + "_" + Date.now().toString(16);
-}
-
-function bucketToAvailability(b: DebtBucket): DebtPosition["availability"] {
-  if (b === "immediate") return "instant";
-  if (b === "mid") return "3m_3y";
-  return "gt_3y";
-}
-
-function availabilityToBucket(a: DebtPosition["availability"]): DebtBucket {
-  if (a === "instant") return "immediate";
-  if (a === "3m_3y") return "mid";
-  return "long";
-}
-
-function bucketLabel(b: DebtBucket) {
-  switch (b) {
-    case "immediate":
-      return "Sofort";
-    case "mid":
-      return "3m–3y";
-    case "long":
-      return ">3y";
-  }
-}
-
-function bucketHint(b: DebtBucket) {
-  switch (b) {
-    case "immediate":
-      return "z.B. Kreditkarte, offene Rechnungen";
-    case "mid":
-      return "z.B. Konsumkredit, kurzfristige Darlehen";
-    case "long":
-      return "z.B. Hypothek, langfristige Darlehen";
-  }
 }
 
 function typeLabel(t: DebtType) {
@@ -75,10 +51,10 @@ export default function Step2Form({
     ? ((value as any).positions as DebtPosition[])
     : [];
 
-  const buckets: DebtBucket[] = ["immediate", "mid", "long"];
+  type Bucket = "LIQ" | "ST" | "LT" | "REAL";
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [activeBucket, setActiveBucket] = useState<DebtBucket>("immediate");
+  const [activeBucket, setActiveBucket] = useState<Bucket>("LIQ");
 
   // dirty per id
   const dirtyIdsRef = useRef<Set<string>>(new Set());
@@ -112,14 +88,17 @@ export default function Step2Form({
     }
   }
 
-  function addPosition(bucket: DebtBucket) {
+  function addPosition(bucket: Bucket) {
     const next: DebtPosition = {
       id: uid(),
       label: "",
       balanceChf: 0,
       currency: "CHF",
-      availability: bucketToAvailability(bucket),
-      debtType: bucket === "long" ? "mortgage" : bucket === "immediate" ? "creditcard" : "consumer",
+      availability: availabilityFromBucket(bucket),
+
+      // debtType Default (nur UX):
+      debtType: bucket === "LT" || bucket === "REAL" ? "mortgage" : bucket === "LIQ" ? "creditcard" : "consumer",
+
       interestRatePct: undefined,
       amortizationType: "none",
       amortizationPaChf: 0,
@@ -139,11 +118,11 @@ export default function Step2Form({
     setPositions(positions.filter((x) => x.id !== id));
   }
 
-  function listForBucket(bucket: DebtBucket): DebtPosition[] {
-    return positions.filter((p) => availabilityToBucket(p.availability) === bucket);
+  function listForBucket(bucket: Bucket): DebtPosition[] {
+    return positions.filter((p) => bucketFromAvailability(p.availability) === bucket);
   }
 
-  function openDetails(bucket: DebtBucket) {
+  function openDetails(bucket: Bucket) {
     setActiveBucket(bucket);
     setIsModalOpen(true);
   }
@@ -154,16 +133,16 @@ export default function Step2Form({
   }
 
   const totals = useMemo(() => {
-    const byBucket: Record<DebtBucket, number> = { immediate: 0, mid: 0, long: 0 };
-    const counts: Record<DebtBucket, number> = { immediate: 0, mid: 0, long: 0 };
+    const byBucket: Record<Bucket, number> = { LIQ: 0, ST: 0, LT: 0, REAL: 0 };
+    const counts: Record<Bucket, number> = { LIQ: 0, ST: 0, LT: 0, REAL: 0 };
 
     for (const p of positions) {
-      const b = availabilityToBucket(p.availability);
+      const b = bucketFromAvailability(p.availability);
       byBucket[b] += typeof p.balanceChf === "number" ? p.balanceChf : 0;
       counts[b] += 1;
     }
 
-    const totalAll = byBucket.immediate + byBucket.mid + byBucket.long;
+    const totalAll = byBucket.LIQ + byBucket.ST + byBucket.LT + byBucket.REAL;
     return { byBucket, counts, totalAll };
   }, [positions]);
 
@@ -183,7 +162,6 @@ export default function Step2Form({
 
     return { interestPa, amortPa, burdenPa: interestPa + amortPa };
   }, [positions]);
-
   const activeItems = listForBucket(activeBucket);
 
   return (
@@ -197,7 +175,7 @@ export default function Step2Form({
           </div>
 
           <div className="min-w-0 text-right">
-            <div className="text-xs uppercase tracking-wide text-slate-400 whitespace-normal break-words">
+            <div className="text-xs uppercase tracking-wide text-slate-400 whitespace-normal wrap-break-word">
               Gesamtverpflichtungen
             </div>
 
@@ -244,8 +222,10 @@ export default function Step2Form({
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="text-sm font-semibold text-slate-100">{bucketLabel(b)}</div>
-                  <div className="text-xs text-slate-400">{bucketHint(b)}</div>
+                  <div className="text-sm font-semibold text-slate-100">{BUCKET_META[b].title}</div>
+                  <div className="text-xs text-slate-400">{BUCKET_META[b].hint}
+
+                  </div>
                 </div>
 
                 <div className="min-w-0 text-right">
@@ -269,7 +249,7 @@ export default function Step2Form({
             <div className="rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl">
               <div className="flex items-start justify-between gap-4 border-b border-slate-800 p-5">
                 <div>
-                  <div className="font-semibold text-slate-100">Details: {bucketLabel(activeBucket)}</div>
+                  <div className="font-semibold text-slate-100">Details: {BUCKET_META[activeBucket].title}.</div>
                   <div className="text-sm text-slate-400">
                     Du steuerst Bezeichnung/Typ/Saldo/Zins. Laufzeit ist bucket-basiert.
                   </div>
@@ -395,7 +375,7 @@ export default function Step2Form({
 
                         <div className="mt-1 flex items-center justify-between gap-3">
                           <div className="text-xs text-slate-500">
-                            Laufzeit: <span className="text-slate-300">{bucketLabel(activeBucket)}</span>
+                            Laufzeit: <span className="text-slate-300">{BUCKET_META[activeBucket].title}</span>
                           </div>
 
                           <button
@@ -532,7 +512,7 @@ export default function Step2Form({
                       {activeItems.length === 0 && (
                         <tr>
                           <td colSpan={7} className="py-6 text-center text-slate-500">
-                            Keine Positionen in {bucketLabel(activeBucket)}.
+                            Keine Positionen in {BUCKET_META[activeBucket].title}.
                           </td>
                         </tr>
                       )}

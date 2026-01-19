@@ -73,7 +73,7 @@ export function forecastInputFromProfileV2(
     baseYear?: number; // default current year
     planToAge?: number; // optional override (absolute age)
     extraSafetyYears?: number; // default 0
-    spendingIndexation?: ForecastInput["spendingIndexation"]; // default inflation
+
   }
 ): FinanceForecastBuild {
   const baseYear = (opts?.baseYear ?? new Date().getFullYear()) as Year;
@@ -127,11 +127,7 @@ export function forecastInputFromProfileV2(
   const debtsTotal = profile.instruments.filter(isDebt).reduce((acc, i) => acc + i.balance, 0);
   const wealthToday = assetsTotal - debtsTotal;
 
-  // Annuals
-  const annualIncomeToday = sumAnnual(profile.annuals?.income, baseYear);
-  const annualSpendingToday = sumAnnual(profile.annuals?.need, baseYear);
-
-  const idx = (opts?.spendingIndexation ?? "inflation") as ForecastInput["spendingIndexation"];
+  
 
   // One-off spending events
   const oneOffSpendEvents = (profile.events ?? [])
@@ -142,7 +138,7 @@ export function forecastInputFromProfileV2(
       yearOffset: ((e.year ?? baseYear) - baseYear) as number,
     }));
 
-  const otherIncomes: ForecastInput["otherIncomes"] = [];
+  
 
   const assumptions = assumptionsFromGoal("balance" as any);
 
@@ -152,14 +148,13 @@ export function forecastInputFromProfileV2(
 
     wealthToday: Math.trunc(wealthToday),
 
-    annualSpendingToday,
-    spendingIndexation: idx,
+    
 
     spendingExtraGrowth: 0,
     spendingAdjustments: [],
     oneOffSpendEvents,
 
-    otherIncomes,
+    
     pensionsSelf: [],
     pensionsPartner: [],
 

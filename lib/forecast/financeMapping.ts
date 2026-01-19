@@ -52,7 +52,6 @@ export function forecastInputFromFinanceProfile(
     baseYear?: number; // default current year
     planToAge?: number; // default 95
     extraSafetyYears?: number; // default 0
-    spendingIndexation?: ForecastInput["spendingIndexation"]; // default fixed_real
   }
 ): FinanceForecastBuild {
   const baseYear = opts?.baseYear ?? new Date().getFullYear();
@@ -70,21 +69,25 @@ export function forecastInputFromFinanceProfile(
     return { ok: false, error: "invalid_birthDate", message: "Geburtsdatum ist ungültig. Format YYYY-MM-DD." };
   }
 
-  // Assets (Step1)
-  const assets =
-    parseMoneyCHF(s1.cash) +
-    parseMoneyCHF(s1.bankSavings) +
-    parseMoneyCHF(s1.securities) +
-    parseMoneyCHF(s1.otherInvest);
+  // Assets (Step1) — NEW (positions-based)
+const assetPositions = Array.isArray(s1.positions) ? s1.positions : [];
+
+const assets = assetPositions.reduce((sum: number, p: any) => {
+  const n =
+    typeof p?.amountChf === "number"
+      ? p.amountChf
+      : parseMoneyCHF(p?.amountChf); // fallback (shouldn't happen once types are clean)
+
+  return sum + (Number.isFinite(n) ? Math.trunc(n) : 0);
+}, 0);
+
 
   // Debts (Step2)
-  const debtsTotal =
-    parseMoneyCHF(s2.creditCard) +
-    parseMoneyCHF(s2.consumerLoan) +
-    parseMoneyCHF(s2.otherShort) +
-    parseMoneyCHF(s2.mortgage) +
-    parseMoneyCHF(s2.loan) +
-    parseMoneyCHF(s2.otherLong);
+  const debtPositions = Array.isArray(s2.positions) ? s2.positions : [];
+  const debtsTotal = debtPositions.reduce((sum: number, p: any) => {
+    const n = typeof p?.balanceChf === "number" ? p.balanceChf : parseMoneyCHF(p?.balanceChf);
+    return sum + (Number.isFinite(n) ? Math.trunc(n) : 0);
+  }, 0);
 
   const wealthToday = assets - debtsTotal;
 
@@ -127,14 +130,12 @@ export function forecastInputFromFinanceProfile(
 
     wealthToday: Math.trunc(wealthToday),
 
-    annualSpendingToday: annualSpending,
-    spendingIndexation: idx,
 
     spendingExtraGrowth: 0,
     spendingAdjustments: [],
     oneOffSpendEvents,
 
-    otherIncomes,
+
     pensionsSelf: [],
     pensionsPartner: [],
 

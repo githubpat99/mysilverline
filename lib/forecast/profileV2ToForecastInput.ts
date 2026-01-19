@@ -256,18 +256,13 @@ export function profileV2ToForecastInput(
     // planToAge must be derived from horizon (NOT retireAtAge+30)
     const planToAge = selfAgeToday + horizonYears;
     const instruments = profile.instruments ?? [];
-    const annuals = profile.annuals as any;
-
+    
     // später: Vermögensverlauf typ-basiert
     const wealthToday = mapWealthTodayCHF(instruments);
 
     const debts = mapDebtsForForecast(instruments);
 
-    const annualSpendingToday = sumAnnualNeedBase(annuals, baseYear);
-    const spendingIndexation = (annuals as any).indexation ?? "inflation";
 
-    const otherIncomes = mapAnnualsToOtherIncomes(annuals, baseYear);
-    const spendingAdjustments = mapNeedToSpendingAdjustments(annuals, baseYear);
 
     // Ausgangslage (frei verfügbar)
     const liquidityToday = mapLiquidityTodayCHF(instruments);
@@ -291,14 +286,13 @@ export function profileV2ToForecastInput(
         retireAtAge,
         planToAge,
 
-        annualSpendingToday,
-        spendingIndexation,
+        
 
         spendingExtraGrowth: 0,
-        spendingAdjustments,
+   
         oneOffSpendEvents: [],
 
-        otherIncomes,
+   
         pensionsSelf: [],
         pensionsPartner: [],
 

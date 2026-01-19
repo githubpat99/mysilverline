@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { canonicalCHF, formatCHFInput } from "@/lib/format";
+import { canonicalCHF, formatCHFInput, formatCHF, parseCHF } from "@/lib/format";
 
-export default function FieldMoney({
+export function FieldMoney({
   label,
-  suffix = "CHF",
+  suffix,
   value,
   onChange,
   placeholder = "z.B. 8'500",
@@ -59,5 +59,27 @@ export default function FieldMoney({
         {suffix && <span className="ml-2 text-xs text-slate-400">{suffix}</span>}
       </div>
     </label>
+  );
+}
+
+/** FieldMoney(string) -> CHF int im State */
+export function FieldMoneyInt({
+  label,
+  valueChf,
+  onChangeChf,
+}: {
+  label: string;
+  valueChf: number;
+  onChangeChf: (n: number) => void;
+}) {
+  return (
+    <FieldMoney
+      label={label}
+      value={valueChf ? formatCHF(valueChf) : ""}
+      onChange={(raw) => {
+        const canon = canonicalCHF(raw);
+        onChangeChf(parseCHF(canon));
+      }}
+    />
   );
 }

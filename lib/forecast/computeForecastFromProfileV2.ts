@@ -2,8 +2,9 @@
 
 import type { ProfileV2 } from "@/lib/types/v2/profile";
 import type { ForecastResult } from "./types";
-import { computeForecastWithBreakdown } from "@/lib/forecast/engine/computeForecast";
 import { profileV2ToForecastInput } from "./profileV2ToForecastInput";
+import { computeForecastWithBreakdown } from "@/lib/forecast/engine/computeForecast";
+
 
 export type ForecastOut = ForecastResult & {
   liquidityToday: number;

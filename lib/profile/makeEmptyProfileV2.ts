@@ -19,10 +19,7 @@ export function makeEmptyProfileV2(): ProfileV2 {
       domicileCountry: "CH",
     },
     instruments: [],
-    annuals: {
-      income: [],
-      need: [],
-    },
+   annualsV2: { income: [], expense: [] },
     events: [],
     meta: {
       startYear: currentYear,

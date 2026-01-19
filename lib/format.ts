@@ -27,6 +27,15 @@ export function canonicalCHF(input: string): string {
   return neg ? `-${digits}` : digits;
 }
 
+export function formatIntCH(n: number) {
+  return n ? n.toLocaleString("de-CH") : "";
+}
+
+export function parseIntCH(raw: string) {
+  const s = raw.replace(/['\s]/g, "").replace(/,/g, ".");
+  const n = Math.trunc(Number(s));
+  return Number.isFinite(n) ? n : 0;
+}
 
 export function parseCHF(input: string): number {
   if (!input) return 0;

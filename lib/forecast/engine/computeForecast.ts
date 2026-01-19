@@ -33,7 +33,7 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
     planToAge,
     extraSafetyYears = 0,
 
-    // NEW
+    // NEW (optional)
     baseYear,
     events = [],
   } = input as any;
@@ -43,7 +43,6 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
   const points: ForecastPoint[] = [];
   const breakdowns: YearBreakdown[] = [];
 
-  // --- HARD GUARD (sonst knallt es wie du gesehen hast) ---
   const inflation = (assumptions?.inflation ?? 0) as number;
 
   const nominalReturn =
@@ -58,10 +57,11 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
 
   for (let t = 0; t <= horizonYears; t++) {
     const age = selfAgeToday + t;
-    const year = baseYear + t;
+    // baseYear wird hier nicht zwingend gebraucht, aber bleibt kompatibel
+    // const year = (baseYear ?? 0) + t;
+
     const wealthStart = wealth;
 
-    // ---- Base Expenses (annual) ----
     const expensesBase = applyExpenses({
       t,
       age,
@@ -73,7 +73,6 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
       oneOffSpendEvents,
     });
 
-    // ---- Base Income (annual) ----
     const incomeBase = applyIncome({
       t,
       age,
@@ -83,10 +82,8 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
       pensionsPartner,
     });
 
-    // ---- Debts ----
     const debtCostTotal = applyDebts({ debts });
 
-    // ---- Events (YEAR-based, no partial years) ----
     const eventResult = sumEventsForYearDetailed({
       events,
       baseYear,
@@ -102,7 +99,6 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
     const expensesTotal = expensesBase + eventsExpense;
     const totalExpenses = expensesTotal + debtCostTotal;
 
-    // ---- Breakdown Lines ----
     const incomeLines = [
       ...buildIncomeLines({
         t,
@@ -136,7 +132,6 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
       totalCHF: debtCostTotal,
     }).lines;
 
-    // ---- Point (Chart) ----
     points.push({
       yearIndex: t,
       age,
@@ -145,13 +140,11 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
       expenses: totalExpenses,
     });
 
-    // ---- Wealth Evolution ----
     const net = incomeTotal - totalExpenses;
     wealth = wealth + net;
     wealth = Math.trunc(wealth * (1 + g));
     const wealthEnd = wealth;
 
-    // ---- Breakdown ----
     breakdowns.push({
       yearIndex: t,
       age,
@@ -165,19 +158,17 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
         expenses: expensesTotal,
         debts: debtCostTotal,
         net,
-
-        // NEW: Events separat (optional in Type, siehe types.ts)
         eventsIncome,
         eventsExpense,
         eventsNet,
-      },
-      // optional: wenn du Events im UI als Liste anzeigen willst
+      } as any,
       events: {
         incomeLines: eventResult.incomeLines,
         expenseLines: eventResult.expenseLines,
       },
-    });
+    } as any);
   }
 
-  return { points, breakdowns };
+return { points, breakdowns };
+
 }

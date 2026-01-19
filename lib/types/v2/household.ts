@@ -5,7 +5,7 @@ export type Person = {
   id: string;
   role: PersonRole;
   firstName?: string;
-  birthDate?: string; // "YYYY-MM-DD"
+  birthDate: string; // "YYYY-MM-DD"
   retireAtAge?: number;
 };
 

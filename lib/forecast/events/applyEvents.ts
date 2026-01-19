@@ -1,11 +1,11 @@
-import type { Event } from "@/lib/types/v2/events";
+import type { ProfileEvent } from "@/lib/types/v2/events";
 
 function yearOf(isoDate: string): number {
   // isoDate = YYYY-MM-DD
   return Number(isoDate.slice(0, 4));
 }
 
-function isActiveInYear(e: Event, year: number): boolean {
+function isActiveInYear(e: ProfileEvent, year: number): boolean {
   if (e.active !== 1) return false;
 
   const sy = yearOf(e.start_date);
@@ -19,7 +19,7 @@ function isActiveInYear(e: Event, year: number): boolean {
   return true;
 }
 
-function baseAnnualAmountCHF(e: Event): number {
+function baseAnnualAmountCHF(e: ProfileEvent): number {
   const a = Math.trunc(e.line?.amount_chf ?? 0);
   if (e.recurrence === "monthly") return a * 12;
   return a; // none oder yearly => a (pro Jahr bzw. einmal)
@@ -37,7 +37,7 @@ function indexedAmountCHF(baseCHF: number, indexation: string | null, inflation:
 }
 
 export function sumEventsForYear(params: {
-  events: Event[];
+  events: ProfileEvent[];
   baseYear: number;     // z.B. aktuelles Kalenderjahr
   yearIndex: number;    // t
   inflation: number;

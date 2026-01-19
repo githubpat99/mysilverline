@@ -67,8 +67,6 @@ export function normalizeForm(form: FormState): FormState {
       bankSavings: "",
       securities: "",
       otherInvest: "",
-      retireAtAge: 65,
-      forecastHorizonYears: "55",
     } as any;
   }
 
@@ -77,11 +75,11 @@ export function normalizeForm(form: FormState): FormState {
 
   // Ensure forecastHorizonYears exists & valid (string in UI)
   const clamp = (n: number, a: number, b: number) => Math.max(a, Math.min(b, n));
-  const hRaw = (next.step1 as any).forecastHorizonYears ?? "55";
+  const hRaw = (next.step1 as any).forecastHorizonYears ?? 55;
   const hNum =
     typeof hRaw === "number" ? hRaw : Number(String(hRaw).trim());
   const h = clamp(Number.isFinite(hNum) ? hNum : 55, 10, 80);
-  (next.step1 as any).forecastHorizonYears = String(h);
+  (next.step1 as any).forecastHorizonYears = h;
 
   return next;
 }
@@ -237,6 +235,6 @@ export async function saveProfile(form: FormState, completedStep = 0): Promise<{
 
 export async function loadRetireAtAgeFromProfile(): Promise<number> {
   const form = await loadProfile();
-  const v = form?.step1?.retireAtAge ?? 65;
+  const v = form?.base?.retireAtAge ?? 65;
   return normalizeRetireAtAge(v);
 }

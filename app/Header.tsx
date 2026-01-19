@@ -41,6 +41,7 @@ export default function Header() {
   const [me, setMe] = useState<WhoAmI | null>(null);
 
   const pathname = usePathname();
+  const isBase = pathname?.startsWith("/base");
   const isFinance = pathname?.startsWith("/finance");
   const isSummary = pathname?.startsWith("/summary");
   const isForecast = pathname?.startsWith("/forecast");
@@ -87,12 +88,20 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-slate-800 bg-slate-900/80 backdrop-blur">
       <div className="mx-auto max-w-6xl px-4 py-4 flex items-center justify-between gap-4">
-        <Link href="/finance" prefetch={false} className="text-xl font-semibold tracking-tight">
+        <Link
+          href="/finance"
+          prefetch={false}
+          className="text-xl font-semibold tracking-tight"
+        >
           <span className="text-sky-400">Silverline</span>
         </Link>
 
         <div className="hidden md:flex items-center gap-6">
           <nav className="flex items-center gap-4 text-sm">
+            <Link href="/base" prefetch={false} className={linkClass(!!isBase)}>
+              Basis
+            </Link>
+
             <Link href="/finance" prefetch={false} className={linkClass(!!isFinance)}>
               Finanz-Workflow
             </Link>
@@ -101,7 +110,11 @@ export default function Header() {
               Bilanz
             </Link>
 
-            <Link href="/forecast?src=finance" prefetch={false} className={linkClass(!!isForecast)}>
+            <Link
+              href="/forecast?src=finance"
+              prefetch={false}
+              className={linkClass(!!isForecast)}
+            >
               Forecast
             </Link>
 
@@ -148,7 +161,17 @@ export default function Header() {
 
           <nav className="flex flex-col gap-3 text-sm">
             <Link
-              href="/finance" prefetch={false} 
+              href="/base"
+              prefetch={false}
+              className={[linkClass(!!isBase), "block w-full"].join(" ")}
+              onClick={() => setMenuOpen(false)}
+            >
+              Basis
+            </Link>
+
+            <Link
+              href="/finance"
+              prefetch={false}
               className={[linkClass(!!isFinance), "block w-full"].join(" ")}
               onClick={() => setMenuOpen(false)}
             >
@@ -156,7 +179,8 @@ export default function Header() {
             </Link>
 
             <Link
-              href="/summary" prefetch={false} 
+              href="/summary"
+              prefetch={false}
               className={[linkClass(!!isSummary), "block w-full"].join(" ")}
               onClick={() => setMenuOpen(false)}
             >
@@ -164,12 +188,14 @@ export default function Header() {
             </Link>
 
             <Link
-              href="/forecast?src=finance" prefetch={false} 
+              href="/forecast?src=finance"
+              prefetch={false}
               className={[linkClass(!!isForecast), "block w-full"].join(" ")}
               onClick={() => setMenuOpen(false)}
             >
               Forecast
             </Link>
+
             <a
               href="https://mysilverline.it-pin.ch"
               className="block w-full text-slate-300 hover:text-sky-400 transition"
@@ -185,3 +211,34 @@ export default function Header() {
     </header>
   );
 }
+
+export function WorkflowStepSubnav({
+  active,
+}: {
+  active: "assets" | "debts" | "future";
+}) {
+  const item = (key: typeof active, label: string, href: string) => (
+    <Link
+      href={href}
+      prefetch={false}
+      scroll={false}
+      className={[
+        "text-sm transition",
+        active === key ? "text-sky-300" : "text-slate-400 hover:text-slate-200",
+      ].join(" ")}
+    >
+      {label}
+    </Link>
+  );
+
+  return (
+    <div className="mt-1 flex flex-wrap items-center gap-2">
+      {item("assets", "Vermögen", "/finance?step=1")}
+      <span className="text-slate-600">–</span>
+      {item("debts", "Verpflichtungen", "/finance?step=2")}
+      <span className="text-slate-600">–</span>
+      {item("future", "Ein-/Ausgaben", "/finance?step=3")}
+    </div>
+  );
+}
+

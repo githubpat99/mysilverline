@@ -116,11 +116,24 @@ export const AmortizationSchema = z.object({
 });
 export type Amortization = z.infer<typeof AmortizationSchema>;
 
+export const GoalSchema = z.enum(["liq", "reinvest"]);
+
 export const AssetInstrumentSchema = InstrumentBaseSchema.extend({
   kind: z.literal("asset"),
   assetType: AssetTypeSchema,
+
+  // falls bei dir im Base nicht drin: value / annualFlow
+  value: MoneySchema,
+  annualFlow: MoneySchema.optional(),
+
+  // NEW
+  goal: GoalSchema.default("liq"),
+
+  // routing keys
+  sourceAccountKey: z.string().optional(),
+  targetAccountKey: z.string().optional(),
 }).superRefine((a, ctx) => {
-  // Optional sanity: prevent routing keys pointing to itself when using "asset:<id>".
+  // sourceAccountKey: weiterhin nie self (macht fachlich keinen Sinn)
   if (a.sourceAccountKey === `asset:${a.id}`) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
@@ -128,14 +141,20 @@ export const AssetInstrumentSchema = InstrumentBaseSchema.extend({
       message: "sourceAccountKey must not point to itself",
     });
   }
-  if (a.targetAccountKey === `asset:${a.id}`) {
+
+  // targetAccountKey: self ist OK bei reinvest (thesaurierend/intern)
+  if (a.goal !== "reinvest" && a.targetAccountKey === `asset:${a.id}`) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["targetAccountKey"],
-      message: "targetAccountKey must not point to itself",
+      message: "targetAccountKey must not point to itself unless goal=reinvest",
     });
   }
+
+  // Optional: bei goal=liq self explizit verbieten (redundant zur Regel oben)
+  // Optional: bei goal=reinvest targetAccountKey erzwingen (wenn annualFlow != 0)
 });
+
 
 export type AssetInstrument = z.infer<typeof AssetInstrumentSchema>;
 

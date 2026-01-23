@@ -43,7 +43,7 @@ export function formStep1ToAssetDtos(step1: any): AssetDTO[] {
 
     // API uses bucket/availability
     bucket: p.availability ?? null,
-    availability: p.availability ?? null,
+    goal: p.goal ?? null,
 
     assetType: assetTypeFromAssetClass(p.assetClass),
     valueCHF: toInt(p.amountChf),

@@ -7,6 +7,7 @@ import { FieldMoneyInt } from "../fields/FieldMoney";
 import { Amount, InlineAmount } from "../Amount";
 import { bucketFromAvailability, availabilityFromBucket } from "@/lib/forecast/buckets";
 import type { Bucket } from "@/lib/forecast/buckets";
+import { Plus, X } from "lucide-react";
 
 /**
  * TYPE-ÄNDERUNGEN (in "@/lib/types")
@@ -85,6 +86,15 @@ export default function Step2Form({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeBucket, setActiveBucket] = useState<Bucket>("LIQ");
 
+  useEffect(() => {
+    if (!isModalOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [isModalOpen]);
+
   // dirty per id
   const dirtyIdsRef = useRef<Set<string>>(new Set());
   const committingRef = useRef(false);
@@ -162,6 +172,18 @@ export default function Step2Form({
       return changed ? next : prev;
     });
   }, [defaultLiquidityAccountKey]);
+
+  const [entered, setEntered] = useState(false);
+
+  useEffect(() => {
+    if (!isModalOpen) {
+      setEntered(false);
+      return;
+    }
+    const t = window.setTimeout(() => setEntered(true), 10);
+    return () => window.clearTimeout(t);
+  }, [isModalOpen]);
+
 
   function ensureSourceForShortBuckets(p: DebtPosition): DebtPosition {
     const b = bucketFromAvailability(p.availability);
@@ -279,33 +301,31 @@ export default function Step2Form({
     <div>
       {/* Header */}
       <div className="px-5 pt-4 pb-3">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <h2 className="text-base font-semibold text-slate-50">Schritt 2: Passiven</h2>
-            <p className="mt-2 text-sm text-slate-300">Laufzeiten gem. Spending-Instruments.</p>
-          </div>
 
-          <div className="min-w-0 text-right">
-            <div className="text-xs uppercase tracking-wide text-slate-400 whitespace-normal wrap-break-word">
-              Gesamt
-            </div>
-
-            <div className="mt-1">
-              <Amount value={totals.totalAll} size="lg" align="right" />
-            </div>
-
-            <div className="mt-2 space-y-1 text-sm text-slate-400">
-              <div>
-                Zinsen p.a.:{" "}
-                <span className="text-slate-200">
-                  <InlineAmount value={debtFlows.interestPa} />
-                </span>
+        {/* KPI row */}
+        <div className="mt-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <div className="text-[11px] uppercase tracking-wide text-slate-400">
+                Gesamtverpflichtungen
               </div>
-              <div>
-                Amort. p.a.:{" "}
-                <span className="text-slate-200">
-                  <InlineAmount value={debtFlows.amortPa} />
-                </span>
+              <div className="mt-1 text-lg font-semibold text-slate-50">
+                <Amount value={totals.totalAll} size="lg" align="left" />
+              </div>
+            </div>
+
+            <div className="text-right">
+              <div className="text-[11px] uppercase tracking-wide text-slate-400">
+                Zinsen p.a.
+              </div>
+              <div className="mt-1 text-lg font-semibold text-slate-50">
+                <InlineAmount value={debtFlows.interestPa} />
+              </div>
+              <div className="text-[11px] uppercase tracking-wide text-slate-400">
+                Amort. p.a.
+              </div>
+              <div className="mt-1 text-lg font-semibold text-slate-50">
+                <InlineAmount value={debtFlows.amortPa} />
               </div>
             </div>
           </div>
@@ -352,16 +372,28 @@ export default function Step2Form({
       {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50">
-          <button type="button" className="absolute inset-0 bg-black/60" onClick={closeModal} aria-label="Close" />
+          {/* backdrop (kein button, sonst kann er Scroll/Pointer fressen) */}
+          <div
+            className="absolute inset-0 bg-slate-700/40"
+            onClick={closeModal}
+          />
 
-          <div className="absolute inset-x-0 top-6 mx-auto w-[calc(100%-2rem)] max-w-5xl">
-            <div className="rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl">
-              <div className="flex items-start justify-between gap-4 border-b border-slate-800 p-5">
-                <div>
-                  <div className="font-semibold text-slate-100">Details: {BUCKET_META[activeBucket].title}.</div>
-                  <div className="text-sm text-slate-400">
-                    Du steuerst Bezeichnung/Typ/Saldo/Zins/Quelle/Amortisation p.a. Quelle muss ein bestehendes Konto sein.
+           {/*panel */}
+          <div
+            className={[
+              "rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl max-h-[calc(100vh-3rem)] flex flex-col overflow-hidden",
+              "transform transition duration-200 ease-out will-change-transform will-change-opacity",
+              entered ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-[0.985] translate-y-1",
+            ].join(" ")}
+          >
+            <div className="rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl max-h-[calc(100vh-3rem)] flex flex-col overflow-hidden">
+              {/* Header bleibt fix */}
+              <div className="flex items-start gap-4 border-b border-slate-800 p-4">
+                <div className="min-w-0 flex-1">
+                  <div className="font-semibold text-slate-100 truncate">
+                    {BUCKET_META[activeBucket].title}.
                   </div>
+
                   {!defaultLiquidityAccountKey && (
                     <div className="mt-2 text-xs text-amber-400/90">
                       Hinweis: Kein LIQ-Aktivenkonto gefunden. Für LIQ/ST-Schulden fehlt das Default-Gegenkonto.
@@ -369,25 +401,45 @@ export default function Step2Form({
                   )}
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex shrink-0 items-start gap-2">
+                  {/* Desktop */}
                   <button
                     onClick={() => addPosition(activeBucket)}
-                    className="rounded-full border border-slate-700 px-4 py-2 text-sm hover:border-slate-600 whitespace-nowrap"
+                    className="hidden sm:inline-flex rounded-full border border-slate-700 px-4 py-2 text-sm hover:border-slate-600 whitespace-nowrap"
                     type="button"
                   >
                     + Position
                   </button>
                   <button
                     onClick={closeModal}
-                    className="rounded-full border border-slate-700 px-4 py-2 text-sm hover:border-slate-600"
+                    className="hidden sm:inline-flex rounded-full border border-slate-700 px-4 py-2 text-sm hover:border-slate-600"
                     type="button"
                   >
                     Schliessen
                   </button>
+
+                  {/* Mobile icons */}
+                  <button
+                    onClick={() => addPosition(activeBucket)}
+                    className="sm:hidden rounded-full border border-slate-700 p-2 hover:border-slate-600"
+                    title="Position hinzufügen"
+                    type="button"
+                  >
+                    <Plus size={18} className="text-sky-400" />
+                  </button>
+                  <button
+                    onClick={closeModal}
+                    className="sm:hidden rounded-full border border-slate-700 p-2 hover:border-slate-600"
+                    title="Schliessen"
+                    type="button"
+                  >
+                    <X size={18} className="text-slate-400 hover:text-slate-100 transition" />
+                  </button>
                 </div>
               </div>
 
-              <div className="p-5">
+              {/* Content scrollt */}
+              <div className="p-5 overflow-y-auto overscroll-contain [webkit-overflow-scrolling:touch]">
                 {/* Mobile: Cards */}
                 <div className="space-y-3 md:hidden">
                   {activeItems.map((it) => {
@@ -677,7 +729,6 @@ export default function Step2Form({
                     </tbody>
                   </table>
                 </div>
-
                 <div className="mt-3 text-xs text-slate-500">
                   Regel: Zinsen belasten die Liquidität. Amortisation ist als CHF p.a. erfasst; Quelle muss ein existierendes Konto sein.
                 </div>

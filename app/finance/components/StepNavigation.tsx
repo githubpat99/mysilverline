@@ -1,21 +1,19 @@
 "use client";
 
-import type { StepId, CompletionState } from "@/lib/types";
+import type { StepId } from "@/lib/types";
 import { STEP_ORDER, STEP_TITLES } from "@/lib/stepConfig";
 
 type Props = {
   currentStep: StepId;
-  completion: CompletionState;
   onStepClick: (step: StepId) => void;
 };
 
-export default function StepNavigation({ currentStep, completion, onStepClick }: Props) {
+export default function StepNavigation({ currentStep, onStepClick }: Props) {
   return (
     <div className="space-y-2">
       {STEP_ORDER.map((step) => {
         const active = step === currentStep;
-        const done = completion?.[step];
-
+        
         return (
           <button
             key={step}
@@ -32,7 +30,6 @@ export default function StepNavigation({ currentStep, completion, onStepClick }:
               <span className="text-slate-100">
                 {step}. {STEP_TITLES[step]}
               </span>
-              <span className="text-xs text-slate-400">{done ? "✓" : ""}</span>
             </div>
           </button>
         );

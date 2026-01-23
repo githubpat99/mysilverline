@@ -1,11 +1,12 @@
 // app/finance/components/steps/Step1Form.tsx
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { FormState, AssetPosition, DebtPosition, Availability, AssetClass, Goal } from "@/lib/types";
 import { Amount, InlineAmount } from "../Amount";
 import { FieldMoneyInt } from "../fields/FieldMoney";
 import { bucketFromAvailability, type Bucket } from "@/lib/forecast/buckets";
+import { Plus, X } from "lucide-react";
 
 type Step1Data = FormState["step1"];
 
@@ -72,6 +73,16 @@ function keyId(key: string) {
   return i >= 0 ? key.slice(i + 1) : key;
 }
 
+function hasCashflow(p: AssetPosition) {
+  return typeof p.cashflowPa === "number" && Math.abs(p.cashflowPa) > 0;
+}
+
+type AssetPositionUI = AssetPosition & {
+  goal: Goal;
+  targetAccountKey?: string;
+  sourceAccountKey?: string;
+};
+
 export default function Step1Form({
   value,
   onChange,
@@ -90,16 +101,36 @@ export default function Step1Form({
   debts?: DebtPosition[];
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [entered, setEntered] = useState(false);
+
+  useEffect(() => {
+    if (!isModalOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [isModalOpen]);
+
+  useEffect(() => {
+    if (!isModalOpen) {
+      setEntered(false);
+      return;
+    }
+    const t = window.setTimeout(() => setEntered(true), 20);
+    return () => window.clearTimeout(t);
+  }, [isModalOpen]);
+
 
   // "dirty per position id"
   const dirtyIdsRef = useRef<Set<string>>(new Set());
   const committingRef = useRef(false);
 
   // IMPORTANT: use canonical form field "targetAccountKey" (camelCase) stored in FormState
-  const positions: AssetPosition[] = (value.positions ?? []) as any;
+  const positions: AssetPositionUI[] = (value.positions ?? []) as any;
 
   const grouped = useMemo(() => {
-    const g: Record<Bucket, AssetPosition[]> = { LIQ: [], ST: [], LT: [], REAL: [] };
+    const g: Record<Bucket, AssetPositionUI[]> = { LIQ: [], ST: [], LT: [], REAL: [] };
     for (const p of positions) g[bucketFromAvailability(p.availability)].push(p);
     return g;
   }, [positions]);
@@ -162,7 +193,7 @@ export default function Step1Form({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [positions, grouped]);
 
-  function setPositions(next: AssetPosition[]) {
+  function setPositions(next: AssetPositionUI[]) {
     onChange({ ...value, positions: next as any });
   }
 
@@ -191,16 +222,19 @@ export default function Step1Form({
     }
   }
 
-  function ensureCounterAccount(p: AssetPosition): AssetPosition {
+  function ensureCounterAccount(p: AssetPositionUI): AssetPositionUI {
     // Wenn kein Cashflow: Gegenkonto nicht erzwingen
     const hasCf = typeof p.cashflowPa === "number" && Math.abs(p.cashflowPa) > 0;
     if (!hasCf) return p;
 
     const selfKey = makeKey("asset", p.id);
 
-    // nie auf sich selbst
+    // nicht auf sich selbst - ausser bei Re-invest, da ist self ok
     const isSelf = p.targetAccountKey === selfKey;
-    let nextKey = isSelf ? undefined : p.targetAccountKey ?? undefined;
+    let nextKey =
+      p.goal === "reinvest"
+        ? (p.targetAccountKey ?? undefined) // self ist ok
+        : (isSelf ? undefined : p.targetAccountKey ?? undefined);
 
     if (p.goal === "liq") {
       // muss LIQ-Asset existieren
@@ -215,8 +249,7 @@ export default function Step1Form({
           const id = keyId(nextKey);
           const opt = accountOptions.find((o) => o.kind === "asset" && o.id === id);
           return opt?.bucket === "LIQ";
-        })() &&
-        nextKey !== selfKey;
+        })();
 
       if (!ok) {
         // default: erstes LIQ-Asset, aber nicht self
@@ -228,8 +261,6 @@ export default function Step1Form({
     }
 
     // goal === "reinvest"
-    if (!defaultNonLiqAssetKey) return { ...p, targetAccountKey: undefined };
-
     const ok =
       typeof nextKey === "string" &&
       isValidKey(nextKey, accountOptions) &&
@@ -237,19 +268,18 @@ export default function Step1Form({
       (() => {
         const id = keyId(nextKey);
         const opt = accountOptions.find((o) => o.kind === "asset" && o.id === id);
-        return opt?.bucket !== "LIQ";
-      })() &&
-      nextKey !== selfKey;
+        // erlaubt: self (intern) ODER Nicht-LIQ
+        return nextKey === selfKey || opt?.bucket !== "LIQ";
+      })();
 
     if (!ok) {
-      const candidate = accountOptions.find((o) => o.kind === "asset" && o.bucket !== "LIQ" && o.key !== selfKey)?.key;
-      return { ...p, targetAccountKey: candidate };
+      // Default bei reinvest: intern (self)
+      return { ...p, targetAccountKey: selfKey };
     }
-
     return { ...p, targetAccountKey: nextKey };
   }
 
-  function upsert(id: string, patch: Partial<AssetPosition>) {
+  function upsert(id: string, patch: Partial<AssetPositionUI>) {
     markDirty(id);
     const next = positions.map((p) => {
       if (p.id !== id) return p;
@@ -260,7 +290,7 @@ export default function Step1Form({
   }
 
   function addPosition(intoBucket: Bucket) {
-    const next: AssetPosition = ensureCounterAccount({
+    const next: AssetPositionUI = ensureCounterAccount({
       id: makeId(),
       label: "Neue Position",
       amountChf: 0,
@@ -298,6 +328,13 @@ export default function Step1Form({
   // Prefer forecast-derived CF if available, else UI-derived sum
   const r0 = rows?.[0];
   const cfToLiq = (typeof r0?.assetCashflowToLiq === "number" ? r0.assetCashflowToLiq : totals.allCashflowToLiq) ?? 0;
+  const cfTotalUI =
+    sum(positions.map((p) => (typeof p.cashflowPa === "number" ? p.cashflowPa : 0)));
+
+  const cfTotal =
+    (typeof r0?.assetCashflowReinvest === "number" && typeof r0?.assetCashflowToLiq === "number")
+      ? (r0.assetCashflowToLiq + r0.assetCashflowReinvest)
+      : cfTotalUI;
 
   const missingPrereqs = useMemo(() => {
     const hasLiqAsset = !!defaultLiqAssetKey;
@@ -305,30 +342,34 @@ export default function Step1Form({
     return { hasLiqAsset, hasNonLiqAsset };
   }, [defaultLiqAssetKey, defaultNonLiqAssetKey]);
 
-  function counterOptionsFor(p: AssetPosition) {
+  function counterOptionsFor(p: AssetPositionUI) {
     const selfKey = makeKey("asset", p.id);
 
     if (p.goal === "liq") {
-      // nur LIQ-Assets
+      // nur LIQ-Assets, aber NICHT self
       return accountOptions.filter((o) => o.kind === "asset" && o.bucket === "LIQ" && o.key !== selfKey);
     }
-    // reinvest: nur Nicht-LIQ-Assets
-    return accountOptions.filter((o) => o.kind === "asset" && o.bucket !== "LIQ" && o.key !== selfKey);
+
+    // reinvest: self erlauben + alle Nicht-LIQ
+    return accountOptions.filter((o) => o.kind === "asset" && (o.key === selfKey || o.bucket !== "LIQ"));
   }
 
-  function counterError(p: AssetPosition) {
+
+  function counterError(p: AssetPositionUI) {
     const hasCf = typeof p.cashflowPa === "number" && Math.abs(p.cashflowPa) > 0;
     if (!hasCf) return "";
 
     const opts = counterOptionsFor(p);
     if (p.goal === "liq" && opts.length === 0) return "Für Ziel=liq brauchst du mindestens ein LIQ-Konto bei Aktiven.";
-    if (p.goal === "reinvest" && opts.length === 0) return "Für Ziel=reinvest brauchst du mindestens ein Nicht-LIQ-Konto bei Aktiven.";
 
     const selfKey = makeKey("asset", p.id);
     if (!p.targetAccountKey) return "Gegenkonto fehlt.";
-    if (p.targetAccountKey === selfKey) return "Gegenkonto darf nicht die gleiche Position sein.";
-    if (!opts.some((o) => o.key === p.targetAccountKey)) return "Gegenkonto ist ungültig (falscher Bucket/Ziel).";
 
+    if (p.goal === "liq" && p.targetAccountKey === selfKey) {
+      return "Gegenkonto darf bei Ziel=liq nicht die gleiche Position sein.";
+    }
+
+    if (!opts.some((o) => o.key === p.targetAccountKey)) return "Gegenkonto ist ungültig (falscher Bucket/Ziel).";
     return "";
   }
 
@@ -336,30 +377,47 @@ export default function Step1Form({
     <div>
       {/* Header (ohne Kachel) */}
       <div className="px-5 pt-4 pb-3">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <h2 className="text-base font-semibold text-slate-50">Schritt 1: Aktiven</h2>
-            <p className="mt-2 text-sm text-slate-300">Abgeleitet aus Verfügbarkeit + AssetClass. Kein Bucket-Feld.</p>
-          </div>
 
-          <div className="min-w-0 text-right">
-            <div className="text-xs uppercase tracking-wide text-slate-400 whitespace-normal wrap-break-word">Gesamtvermögen</div>
-
-            <div className="mt-1">
-              <Amount value={totals.allValue} size="lg" align="right" />
+        {/* KPI row */}
+        <div className="mt-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <div className="text-[11px] uppercase tracking-wide text-slate-400">
+                Gesamtvermögen
+              </div>
+              <div className="mt-1 text-lg font-semibold text-slate-50">
+                <Amount value={totals.allValue} size="lg" align="left" />
+              </div>
             </div>
 
-            <div className="mt-2 text-sm text-slate-400">
-              Cashflows p.a.:{" "}
-              <span className="text-slate-200">
+            <div className="text-right">
+              <div className="text-[11px] uppercase tracking-wide text-slate-400">
+                Cashflow gesamt p.a. (CHF)
+              </div>
+              <div className="mt-1 text-lg font-semibold text-slate-50">
+                <InlineAmount value={cfTotal} />
+              </div>
+
+              <div className="mt-3 text-[11px] uppercase tracking-wide text-slate-400">
+                → Liquidität p.a. (CHF)
+              </div>
+              <div className="mt-1 text-base font-semibold text-slate-100">
                 <InlineAmount value={cfToLiq} />
-              </span>
+              </div>
+              <div className="mt-3 text-[11px] uppercase tracking-wide text-slate-400">
+                → Reinvest p.a. (CHF)
+              </div>
+              <div className="mt-1 text-base font-semibold text-slate-100">
+                <InlineAmount value={Math.trunc(cfTotal - cfToLiq)} />
+              </div>
             </div>
+
           </div>
         </div>
 
         <div className="mt-4 border-t border-slate-800/80" />
       </div>
+
 
       {/* Tiles */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">
@@ -414,48 +472,83 @@ export default function Step1Form({
       {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50">
-          {/* backdrop */}
-          <button type="button" className="absolute inset-0 bg-black/60" onClick={closeModal} aria-label="Close" />
+          {/* backdrop (kein button, sonst kann er Scroll/Pointer fressen) */}
+          <div
+            className="absolute inset-0 bg-slate-700/40"
+            onClick={closeModal}
+          />
 
-          {/* panel */}
-          <div className="absolute inset-x-0 top-6 mx-auto w-[calc(100%-2rem)] max-w-5xl">
-            <div className="rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl">
-              <div className="flex items-start justify-between gap-4 border-b border-slate-800 p-5">
-                <div>
-                  <div className="font-semibold text-slate-100">Details: {BUCKET_META[activeBucket].title}</div>
-                  <div className="text-sm text-slate-400">Du steuerst Label/Wert/Verfügbarkeit/AssetClass/Cashflow/Ziel/Gegenkonto/Notiz.</div>
+           {/*panel */}
+          <div
+            className={[
+              "rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl max-h-[calc(100vh-3rem)] flex flex-col overflow-hidden",
+              "transform transition duration-200 ease-out will-change-transform will-change-opacity",
+              entered ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-[0.985] translate-y-1",
+            ].join(" ")}
+          >
+            <div className="rounded-2xl border border-slate-700 bg-slate-950 shadow-2xl ring-1 ring-white/5">
+
+              {/* Header bleibt fix */}
+              <div className="flex items-start gap-4 border-b border-slate-800 p-4">
+                {/* Left: Title */}
+                <div className="min-w-0 flex-1">
+                  <div className="font-semibold text-slate-100 truncate">
+                    {BUCKET_META[activeBucket].title}
+                  </div>
 
                   {!missingPrereqs.hasLiqAsset && (
                     <div className="mt-2 text-xs text-amber-400/90">
-                      Hinweis: Kein LIQ-Aktivenkonto vorhanden. Ziel=liq kann nicht korrekt geroutet werden.
+                      Hinweis: Kein LIQ-Aktivenkonto vorhanden.
                     </div>
                   )}
                   {!missingPrereqs.hasNonLiqAsset && (
                     <div className="mt-1 text-xs text-amber-400/90">
-                      Hinweis: Kein Nicht-LIQ-Aktivenkonto vorhanden. Ziel=reinvest kann nicht korrekt geroutet werden.
+                      Hinweis: Re-Invest nur intern möglich.
                     </div>
                   )}
                 </div>
 
-                <div className="flex items-center gap-2">
+                {/* Right: Actions */}
+                <div className="flex shrink-0 items-start gap-2">
+                  {/* Desktop */}
                   <button
                     onClick={() => addPosition(activeBucket)}
-                    className="rounded-full border border-slate-700 px-4 py-2 text-sm hover:border-slate-600 whitespace-nowrap"
+                    className="hidden sm:inline-flex rounded-full border border-slate-700 px-4 py-2 text-sm hover:border-slate-600"
                     type="button"
                   >
                     + Position
                   </button>
+
                   <button
                     onClick={closeModal}
-                    className="rounded-full border border-slate-700 px-4 py-2 text-sm hover:border-slate-600"
+                    className="hidden sm:inline-flex rounded-full border border-slate-700 px-4 py-2 text-sm hover:border-slate-600"
                     type="button"
                   >
                     Schliessen
                   </button>
+
+                  {/* Mobile Icons */}
+                  <button
+                    onClick={() => addPosition(activeBucket)}
+                    className="sm:hidden rounded-full border border-slate-700 p-2 hover:border-slate-600"
+                    title="Position hinzufügen"
+                    type="button"
+                  >
+                    <Plus size={18} />
+                  </button>
+
+                  <button
+                    onClick={closeModal}
+                    className="sm:hidden rounded-full border border-slate-700 p-2 hover:border-slate-600"
+                    title="Schliessen"
+                    type="button"
+                  >
+                    <X size={18} />
+                  </button>
                 </div>
               </div>
-
-              <div className="p-5">
+              {/* Content scrollt */}
+              <div className="p-5 overflow-y-auto overscroll-contain [webkit-overflow-scrolling:touch]">
                 {/* Mobile: Cards */}
                 <div className="space-y-3 md:hidden">
                   {activeItems.map((p) => {
@@ -541,22 +634,24 @@ export default function Step1Form({
                             </select>
                           </div>
 
-                          <div>
-                            <div className="text-xs text-slate-400 mb-1">Gegenkonto</div>
-                            <select
-                              value={p.targetAccountKey ?? ""}
-                              onChange={(e) => upsert(p.id, { targetAccountKey: e.target.value || undefined })}
-                              className="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm"
-                            >
-                              <option value="">Gegenkonto wählen…</option>
-                              {counterOptionsFor(p).map((o) => (
-                                <option key={o.key} value={o.key}>
-                                  {o.label}
-                                </option>
-                              ))}
-                            </select>
-                            {err && <div className="mt-1 text-xs text-amber-400/90">{err}</div>}
-                          </div>
+                          {hasCashflow(p) && (
+                            <div>
+                              <div className="text-xs text-slate-400 mb-1">Gegenkonto</div>
+                              <select
+                                value={p.targetAccountKey ?? ""}
+                                onChange={(e) => upsert(p.id, { targetAccountKey: e.target.value || undefined })}
+                                className="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm"
+                              >
+                                <option value="">Gegenkonto wählen…</option>
+                                {counterOptionsFor(p).map((o) => (
+                                  <option key={o.key} value={o.key}>
+                                    {o.label}{o.key === makeKey("asset", p.id) ? " (intern)" : ""}
+                                  </option>
+                                ))}
+                              </select>
+                              {counterError(p) && <div className="mt-1 text-xs text-amber-400/90">{counterError(p)}</div>}
+                            </div>
+                          )}
 
                           <div>
                             <div className="text-xs text-slate-400 mb-1">Bucket</div>
@@ -663,19 +758,27 @@ export default function Step1Form({
                             </td>
 
                             <td className="py-2 pr-3 align-top">
-                              <select
-                                value={p.targetAccountKey ?? ""}
-                                onChange={(e) => upsert(p.id, { targetAccountKey: e.target.value || undefined })}
-                                className="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2"
-                              >
-                                <option value="">Gegenkonto wählen…</option>
-                                {counterOptionsFor(p).map((o) => (
-                                  <option key={o.key} value={o.key}>
-                                    {o.label}
-                                  </option>
-                                ))}
-                              </select>
-                              {err && <div className="mt-1 text-xs text-amber-400/90">{err}</div>}
+                              {hasCashflow(p) ? (
+                                <>
+                                  <select
+                                    value={p.targetAccountKey ?? ""}
+                                    onChange={(e) => upsert(p.id, { targetAccountKey: e.target.value || undefined })}
+                                    className="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2"
+                                  >
+                                    <option value="">Gegenkonto wählen…</option>
+                                    {counterOptionsFor(p).map((o) => (
+                                      <option key={o.key} value={o.key}>
+                                        {o.label}
+                                        {o.key === makeKey("asset", p.id) ? " (intern)" : ""}
+                                      </option>
+                                    ))}
+                                  </select>
+
+                                  {err && <div className="mt-1 text-xs text-amber-400/90">{err}</div>}
+                                </>
+                              ) : (
+                                <div className="text-xs text-slate-500 italic">–</div>
+                              )}
                             </td>
 
                             <td className="py-2 pr-3">
@@ -712,7 +815,7 @@ export default function Step1Form({
                 </div>
 
                 <div className="mt-3 text-xs text-slate-500">
-                  Regeln: Gegenkonto nie auf sich selber. Ziel=liq braucht LIQ-Aktivenkonto. Ziel=reinvest braucht Nicht-LIQ-Aktivenkonto.
+                  Regeln: Ziel=liq → LIQ-Konto (nicht identisch). Ziel=reinvest → intern (identisch) oder Nicht-LIQ-Konto.
                 </div>
               </div>
             </div>

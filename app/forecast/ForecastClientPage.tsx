@@ -5,6 +5,7 @@ import ForecastTableNice, { type YearRow } from "./ForecastTableNice";
 import { computeForecastFromProfileV2 } from "@/lib/forecast/computeForecastFromProfileV2";
 import { loadProfileV2 } from "@/lib/profileApiV2";
 import type { ProfileV2 } from "@/lib/types/v2";
+import { loadPositions } from "@/lib/load/types";
 
 export default function ForecastClientPage() {
     const [rows, setRows] = useState<YearRow[]>([]);
@@ -13,15 +14,16 @@ export default function ForecastClientPage() {
     useEffect(() => {
         async function run() {
             try {
-                const res = await loadProfileV2();
-                const profile: ProfileV2 | null = res?.profile ?? null;
+                const resp = await loadProfileV2();        // <- Wrapper
+                const profile = resp.profile;              // <- echtes ProfileV2 | null
+                const positions = await loadPositions(); // dein /positions API call
 
                 if (!profile) {
                     console.log("NO PROFILE");
                     setRows([]);
                     return;
                 }
-                const out = computeForecastFromProfileV2(profile);
+                const out = computeForecastFromProfileV2(profile, positions);
                 const rows = (out as any).rows ?? [];
 
                 setRows(rows);
@@ -38,6 +40,6 @@ export default function ForecastClientPage() {
         return <div className="text-sm text-slate-400">Forecast wird berechnet …</div>;
     }
 
-    
+
     return <ForecastTableNice rows={rows} />;
 }

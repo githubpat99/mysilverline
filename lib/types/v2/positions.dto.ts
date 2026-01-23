@@ -9,8 +9,8 @@ export type AssetDTO = {
   valueCHF: number;
 
   annualFlowCHF?: number | null;
-  availability?: any;
-
+// NEW
+  goal?: "liq" | "reinvest" | null;
   // NEW:
   source_account_key?: string | null;
   target_account_key?: string | null;

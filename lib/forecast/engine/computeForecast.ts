@@ -246,10 +246,18 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
       debtYear.interest +
       debtYear.amort;
 
-    let a = n(debtYear.amort);
-    const payShort = Math.min(n(debtBuckets.shortD), a);
-    debtBuckets.shortD = Math.max(0, n(debtBuckets.shortD) - n(debtYear.amortShort));
-    debtBuckets.longD = Math.max(0, n(debtBuckets.longD) - n(debtYear.amortLong));
+    const amortTotal = Math.max(0, n(debtYear.amort));
+    const wantShort = Math.max(0, n(debtYear.amortShort));
+    const wantLong = Math.max(0, n(debtYear.amortLong));
+
+    const payShort = Math.min(n(debtBuckets.shortD), Math.min(wantShort, amortTotal));
+    const remaining = Math.max(0, amortTotal - payShort);
+    const payLong = Math.min(n(debtBuckets.longD), Math.min(wantLong, remaining));
+
+    debtBuckets.shortD = Math.max(0, n(debtBuckets.shortD) - payShort);
+    debtBuckets.longD = Math.max(0, n(debtBuckets.longD) - payLong);
+
+
 
     if (t === 0) console.log("[FC] debtYear after map", debtYear);
 
@@ -273,14 +281,21 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
     coverLiquidityDeficit(assets);
 
     // ---- asset return (apply to invested/locked buckets) ----
-    const investBase = n(assets.shortA) + n(assets.longA) + n(assets.realA);
+    // 1) Reinvest addieren (wie jetzt)
+    assets.shortA += n(assetCashflowReinvest.shortA);
+    assets.longA += n(assetCashflowReinvest.longA);
+    assets.realA += n(assetCashflowReinvest.realA);
+
+    // 2) Rendite nur auf Basis NACH Reinvest rechnen, aber assetCF als reiner Rendite-Effekt:
+    const investBeforeReturn = n(assets.shortA) + n(assets.longA) + n(assets.realA);
 
     assets.shortA = Math.trunc(n(assets.shortA) * (1 + g));
     assets.longA = Math.trunc(n(assets.longA) * (1 + g));
     assets.realA = Math.trunc(n(assets.realA) * (1 + g));
 
-    const investAfter = n(assets.shortA) + n(assets.longA) + n(assets.realA);
-    const assetCF = investAfter - investBase; // approx. return effect
+    const investAfterReturn = n(assets.shortA) + n(assets.longA) + n(assets.realA);
+    const assetCF = investAfterReturn - investBeforeReturn; // jetzt wirklich “Rendite”
+
 
     // ---- recompute wealth ----
     wealth = Math.trunc(sumAssets(assets) - sumDebts(debtBuckets));

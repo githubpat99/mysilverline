@@ -13,7 +13,8 @@ export function instrumentAssetToDto(i: AssetInstrument): AssetDTO {
     valueCHF: Math.trunc(i.value.amount),
 
     annualFlowCHF: i.annualFlow ? Math.trunc(i.annualFlow.amount) : null,
-
+// NEW
+    goal: i.goal ?? "liq",
     // NEW
     source_account_key: i.sourceAccountKey ?? undefined,
     target_account_key: i.targetAccountKey ?? undefined,

@@ -24,6 +24,8 @@ export function dtoAssetToInstrument(p: AssetDTO): AssetInstrument {
     value: toMoneyCHF(p.valueCHF),
 
     annualFlow: p.annualFlowCHF == null ? undefined : toMoneyCHF(p.annualFlowCHF),
+    // NEW: goal (Default = liq)
+  goal: (p.goal ?? "liq") as any,
     
 
     // NEW: routing keys (DTO snake_case -> instrument camelCase)

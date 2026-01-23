@@ -122,19 +122,7 @@ export default function FinanceClientPage() {
     }
 
     const nextProfile = mapFormStateToProfileV2(form, profileV2);
-
-    console.log(
-  form.step1.positions.map(p => ({
-    id: p.id,
-    source: p.sourceAccountKey,
-    target: p.targetAccountKey,
-  }))
-);
-
     const nextPositions = mapFormStateToPositions(form);
-
-    console.log("FinanceClient Page: nextProfile = ", nextProfile);
-    console.log("FinanceClient Page: nextPositions = ", nextPositions);
 
     const r = await saveProfileV2Safe(nextProfile);
     if (!r.ok) {
@@ -237,9 +225,6 @@ export default function FinanceClientPage() {
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50">
       <div className="mx-auto max-w-6xl px-4 py-8">
-        <header className="mb-8">
-          <h1 className="text-2xl font-semibold text-slate-50">Silverline – Finanz-Workflow</h1>
-        </header>
 
         <div className="space-y-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
@@ -255,21 +240,9 @@ export default function FinanceClientPage() {
                 const saved = await buildAndSaveV2();
                 if (!saved.ok) return;
 
-                setCompleted((prev) => ({ ...prev, [currentStep]: true }));
                 setCurrentStep(step);
               }}
             />
-            {/*
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={handleSave}
-                className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:border-slate-500"
-              >
-                Speichern
-              </button>
-            </div>
-            */}
           </div>
 
           <section className="min-w-0 rounded-2xl border border-slate-800 bg-slate-900/40 p-6 shadow-lg">

@@ -4,6 +4,7 @@
 // instruments => wealthToday
 // annuals     => annualSpendingToday (+ optional otherIncomes later)
 // events      => one-off spend events (narrowed)
+import { getForecastInstruments } from "@/lib/forecast/instrumentsCompat";
 
 import type {
   ProfileV2,
@@ -38,13 +39,6 @@ function isActiveInYear(item: AnnualItem, year: Year): boolean {
   const start = (item.startYear ?? year) as Year; // default baseYear
   const end = (item.endYear ?? Infinity) as number;
   return year >= start && year <= end;
-}
-
-function sumAnnual(items: AnnualItem[] | undefined, year: Year): number {
-  if (!items?.length) return 0;
-  return items
-    .filter((x) => isActiveInYear(x, year))
-    .reduce((acc, x) => acc + (x.amount ?? 0), 0);
 }
 
 // -----------------------------
@@ -123,8 +117,17 @@ export function forecastInputFromProfileV2(
   const extraSafetyYears = clampInt(opts?.extraSafetyYears ?? 0, 0, 30, 0);
 
   // Wealth today
-  const assetsTotal = profile.instruments.filter(isAsset).reduce((acc, i) => acc + i.value, 0);
-  const debtsTotal = profile.instruments.filter(isDebt).reduce((acc, i) => acc + i.balance, 0);
+  const instruments = getForecastInstruments(profile);
+
+// TEMP: tolerate both shapes
+const assetsTotal = instruments
+  .filter((i: any) => i?.kind === "asset")
+  .reduce((acc, i: any) => acc + Number((i as any).value?.amount ?? (i as any).value ?? 0), 0);
+
+const debtsTotal = instruments
+  .filter((i: any) => i?.kind === "debt")
+  .reduce((acc, i: any) => acc + Number((i as any).balance?.amount ?? (i as any).balance ?? (i as any).value?.amount ?? (i as any).value ?? 0), 0);
+
   const wealthToday = assetsTotal - debtsTotal;
 
   

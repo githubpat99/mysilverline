@@ -11,6 +11,51 @@ function toInt(n: unknown): number {
   return Number.isFinite(x) ? Math.trunc(x) : 0;
 }
 
+function readMoneyLike(v: any): number {
+  // Money object {amount} or plain number
+  if (typeof v === "number" && Number.isFinite(v)) return Math.trunc(v);
+  if (v && typeof v === "object" && typeof v.amount === "number" && Number.isFinite(v.amount)) {
+    return Math.trunc(v.amount);
+  }
+  return 0;
+}
+
+function readBucket(ins: any): any {
+  // new: bucket, old: availability
+  return ins?.bucket ?? ins?.availability ?? "gt_3y";
+}
+
+function readAssetValue(ins: any): number {
+  // new: value, old: value
+  return readMoneyLike(ins?.value ?? ins?.amount_chf ?? ins?.amountCHF);
+}
+
+function readDebtBalance(ins: any): number {
+  // new: value, old: balance
+  return readMoneyLike(ins?.balance ?? ins?.value ?? ins?.amount_chf ?? ins?.valueCHF);
+}
+
+function readDebtRatePct(ins: any): number {
+  // new: interestRatePct, old: interestRate
+  const r = ins?.interestRatePct ?? ins?.interestRate;
+  const x = typeof r === "number" ? r : Number(String(r ?? "").replace(",", "."));
+  return Number.isFinite(x) ? x : 0;
+}
+
+function readDebtAmortAnnual(ins: any): number {
+  // new: amortization.amountAnnual is Money, old: number
+  const a = ins?.amortization;
+  if (!a) return 0;
+  const v = a.amountAnnualCHF ?? a.amountAnnual; // DTO vs Instrument
+  return readMoneyLike(v);
+}
+
+function readAllowLoan(funding: any): boolean {
+  // new events: allowCreditLast, old: allowLoanAsLastResort
+  return !!(funding?.allowCreditLast ?? funding?.allowLoanAsLastResort);
+}
+
+
 function clampNonNeg(n: number): number {
   return n < 0 ? 0 : n;
 }
@@ -22,20 +67,20 @@ function yearFromISO(date: string): number | null {
   return Number.isFinite(y) ? y : null;
 }
 
-function bucketFromAsset(a: AssetInstrument): Bucket {
-  // keep it simple + consistent
-  const at = a.assetType;
-  const avail = a.availability;
+function bucketFromAsset(a: any): Bucket {
+  const at = a?.assetType;
+  const b = readBucket(a);
 
   if (at === "real_estate") return "real";
-  if (avail === "instant") return "liquidity";
-  if (avail === "3m_3y") return "short";
-  if (avail === "gt_3y") return "long";
-  if (avail === "locked") return "real"; // e.g. pension/locked things
+  if (b === "instant") return "liquidity";
+  if (b === "3m_3y") return "short";
+  if (b === "gt_3y") return "long";
+  if (b === "locked") return "real";
   return "long";
 }
 
-function initialBalancesFromInstruments(instruments: Instrument[]): Record<Bucket, number> {
+
+function initialBalancesFromInstruments(instruments: any[]): Record<Bucket, number> {
   const start: Record<Bucket, number> = {
     liquidity: 0,
     short: 0,
@@ -47,38 +92,35 @@ function initialBalancesFromInstruments(instruments: Instrument[]): Record<Bucke
   for (const ins of instruments) {
     if (!ins) continue;
     if (ins.kind === "asset") {
-      const a = ins as AssetInstrument;
-      const v = toInt((a.value as any)?.amount ?? a.value);
-      start[bucketFromAsset(a)] += v;
-    } else {
-      const d = ins as DebtInstrument;
-      const b = toInt((d.balance as any)?.amount ?? d.balance);
-      start.debt += b;
+      start[bucketFromAsset(ins)] += readAssetValue(ins);
+    } else if (ins.kind === "debt") {
+      start.debt += readDebtBalance(ins);
     }
   }
 
   return start;
 }
 
-function sumAssetCashflowPa(instruments: Instrument[]): number {
+function sumAssetCashflowPa(instruments: any[]): number {
   let s = 0;
   for (const ins of instruments) {
     if (ins?.kind !== "asset") continue;
-    const a = ins as AssetInstrument;
-    s += toInt((a as any).cashflow_pa ?? (a as any).cashflowPa ?? 0);
+
+    // new: annualFlow (Money), legacy: cashflow_pa/cashflowPa
+    const flow =
+      ins?.annualFlowCHF ??
+      ins?.annualFlow ??
+      ins?.cashflow_pa ??
+      ins?.cashflowPa ??
+      0;
+
+    s += readMoneyLike(flow);
   }
   return s;
 }
 
-type AnnualItem = {
-  id: string;
-  label: string;
-  amountCHF: number;
-  startYear?: number;
-  endYear?: number;
-};
 
-function isActiveInYear(item: AnnualItem, year: number): boolean {
+function isActiveInYear(item: { startYear?: number; endYear?: number }, year: number): boolean {
   const s = item.startYear ?? year;
   const e = item.endYear ?? year;
   return year >= s && year <= e;
@@ -92,9 +134,9 @@ function sumAnnuals(list: any[], year: number): number {
     if (amt === 0) continue;
     const active = isActiveInYear(
       {
-        id: String(it?.id ?? ""),
-        label: String(it?.label ?? ""),
-        amountCHF: amt,
+ //       id: String(it?.id ?? ""),
+   //     label: String(it?.label ?? ""),
+     //   amountCHF: amt,
         startYear: it?.startYear,
         endYear: it?.endYear,
       },
@@ -146,7 +188,8 @@ function withdrawFromBuckets(
   let usedDebt = 0;
 
   const minLiq = toInt(funding?.minLiquidityCHF ?? 0);
-  const allowLoan = !!funding?.allowLoanAsLastResort;
+const allowLoan = readAllowLoan(funding);
+
 
   const sources = pickFundingSources(funding);
 
@@ -189,52 +232,40 @@ function withdrawFromBuckets(
   return { ok: true, usedDebt };
 }
 
-function applyDebtInterest(end: Record<Bucket, number>, instruments: Instrument[], dayCount: 360 | 365): number {
-  // v1: interest = sum(balance * rate%)
+function applyDebtInterest(end: Record<Bucket, number>, instruments: any[], dayCount: 360 | 365): number {
   let interest = 0;
   for (const ins of instruments) {
     if (ins?.kind !== "debt") continue;
-    const d = ins as DebtInstrument;
-    const bal = toInt((d.balance as any)?.amount ?? d.balance);
-    const rate = typeof d.interestRate === "number" && Number.isFinite(d.interestRate) ? d.interestRate : 0;
+    const bal = readDebtBalance(ins);
+    const rate = readDebtRatePct(ins);
     interest += Math.trunc((bal * rate) / 100);
   }
-  // interest is paid from liquidity (waterfall: liq -> short -> long -> loan if needed)
+
   if (interest > 0) {
     withdrawFromBuckets(end, interest, {
-      fundingStrategy: "waterfall", fundingSources: [
-        { source: "liquidity" }, { source: "short" }, { source: "long" }, { source: "debt" }
-      ]
+      fundingStrategy: "waterfall",
+      fundingSources: [{ source: "liquidity" }, { source: "short" }, { source: "long" }, { source: "debt" }],
     });
   }
   return interest;
 }
 
-function applyDebtAmort(end: Record<Bucket, number>, instruments: Instrument[]): number {
-  // v1: amortization reduces debt and consumes liquidity (waterfall)
+
+function applyDebtAmort(end: Record<Bucket, number>, instruments: any[]): number {
   let amort = 0;
 
   for (const ins of instruments) {
     if (ins?.kind !== "debt") continue;
-    const d = ins as DebtInstrument;
-    const a = d.amortization;
-    if (!a) continue;
-
-    const amt = toInt((a.amountAnnual as any)?.amount ?? a.amountAnnual ?? 0);
-    if (amt <= 0) continue;
-
-    amort += amt;
+    const amt = readDebtAmortAnnual(ins);
+    if (amt > 0) amort += amt;
   }
 
   if (amort > 0) {
-    // pay from buckets
     const pay = withdrawFromBuckets(end, amort, {
-      fundingStrategy: "waterfall", fundingSources: [
-        { source: "liquidity" }, { source: "short" }, { source: "long" }, { source: "debt" }
-      ]
+      fundingStrategy: "waterfall",
+      fundingSources: [{ source: "liquidity" }, { source: "short" }, { source: "long" }, { source: "debt" }],
     });
 
-    // reduce debt only by actually paid amount (if no loan allowed, you could get ok:false)
     const paid = pay.ok ? amort : 0;
     end.debt = clampNonNeg(end.debt - paid);
   }
@@ -242,12 +273,14 @@ function applyDebtAmort(end: Record<Bucket, number>, instruments: Instrument[]):
   return amort;
 }
 
+
 export function runForecast(profile: ProfileV2, opts: RunForecastOptions = {}): ForecastResult {
   const startYear = opts.startYear ?? profile.meta?.startYear ?? new Date().getFullYear();
   const horizonYears = opts.horizonYears ?? profile.meta?.forecastHorizonYears ?? 55;
   const dayCount = opts.interestDayCount ?? 360;
 
-  const instruments = Array.isArray(profile.instruments) ? profile.instruments : [];
+  const instruments: any[] = Array.isArray((profile as any).instruments) ? (profile as any).instruments : [];
+
   const annuals = profile.annualsV2 ?? ({ income: [], expense: [] } as any);
   const events = Array.isArray(profile.events) ? profile.events : [];
 

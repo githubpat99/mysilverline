@@ -1,5 +1,8 @@
-export type Money = number; // intern immer number (CHF/Jahr, CHF aktuell)
+export type Currency = "CHF"; // später erweitern
+export type Money = { amount: number; ccy: Currency };
+export type Year = number; // z.B. 2024
 
-export type Year = number; // z.B. 2026
-export type Age = number;  // z.B. 65
-export type ISODate = string; // YYYY-MM-DD
+export function money(amount: number, ccy: Currency = "CHF"): Money {
+  const n = Number(amount);
+  return { amount: Number.isFinite(n) ? Math.trunc(n) : 0, ccy };
+}

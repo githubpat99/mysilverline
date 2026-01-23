@@ -2,7 +2,9 @@ import type { AnnualsV2 } from "@/lib/types/v2/annualsV2";
 import type { ProfileEvent } from "@/lib/types/v2/events";
 
 export type StepId = 1 | 2 | 3;
+
 export type InvestmentGoal = "security" | "balance" | "growth";
+
 export type AssetType =
   | "cash"
   | "bonds"
@@ -18,6 +20,7 @@ export type AssetType =
 export type DebtType = "mortgage" | "loan" | "consumer" | "creditcard" | "other";
 
 export type Availability = "instant" | "3m_3y" | "gt_3y" | "locked";
+
 export type AssetClass =
   | "cash"
   | "bank"
@@ -31,44 +34,56 @@ export type AssetClass =
 
 export type Goal = "liq" | "reinvest";
 
+// Canonical account key used across UI + API (matches backend snake_case fields)
+export type AccountKey = string; // e.g. "asset:pos_1ntjij7l" | "debt:d_...."
+
 export type AssetPosition = {
-  id: string;          // UI id (uuid)
-  label: string;       // "Bank (Privatkonto)"
-  amountChf: number;   // integer CHF (keine Strings)
-  currency: "CHF";     // aktuell fix
+  id: string; // UI id
+  label: string;
+  amountChf: number; // integer CHF
+  currency: "CHF";
+
   availability: Availability;
   assetClass: AssetClass;
-  cashflowPa: number;  // CHF/Jahr
-  goal: Goal;          // liq | reinvest
+
+  cashflowPa: number; // CHF per year (int)
+  goal: Goal; // liq | reinvest
   notes?: string;
 
-  // optional: DB reference (wenn du roundtrip willst)
+  // Gegenkonto (Quelle/Ziel je nach Logik)
+  sourceAccountKey?: AccountKey;
+  targetAccountKey?: AccountKey;
+
   dbId?: number;
 };
 
 export type AmortizationType = "none" | "direct" | "indirect";
 
 export type DebtPosition = {
-  id: string;            // UI id (uuid)
-  label: string;         // "Hypothek Grünaustrasse", "Visa", ...
-  balanceChf: number;    // integer CHF
-  currency: "CHF";       // aktuell fix
-  availability: Availability;  // instant | 3m_3y | gt_3y | locked
+  id: string; // UI id
+  label: string;
+  balanceChf: number; // integer CHF
+  currency: "CHF";
+
+  availability: Availability;
   debtType: DebtType;
 
   interestRatePct?: number; // optional (z.B. 1.75)
-  amortizationType?: AmortizationType;      // default: "none"
-  amortizationPaChf?: number;               // CHF pro Jahr (int)
+
+  sourceAccountKey?: AccountKey;
+  targetAccountKey?: AccountKey;
+
+  amortizationPaChf?: number; // CHF pro Jahr (int)
   notes?: string;
+
   dbId?: number;
 };
 
 export type BaseData = {
-  birthDate: string;            // ISO "YYYY-MM-DD"
+  birthDate: string; // ISO "YYYY-MM-DD"
   forecastHorizonYears: number; // default 55
-  retireAtAge?: number;          // z.B. 65
+  retireAtAge?: number; // z.B. 65
 };
-
 
 export type Step1Data = {
   positions: AssetPosition[];
@@ -91,3 +106,4 @@ export type FormState = {
 };
 
 export type CompletionState = Record<StepId, boolean>;
+export type Bucket = Availability;

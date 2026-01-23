@@ -14,16 +14,14 @@ export const ProfileMetaSchema = z.object({
 
 export const ProfileV2Schema = z.object({
   household: HouseholdSchema,
-  instruments: z.array(InstrumentSchema).default([]),
 
-  // annuals REMOVED (legacy)
+  // instruments deprecated in profile-v2 transport (handled via /positions)
+  instruments: z.any().optional().transform(() => []),
 
   annualsV2: AnnualsV2Schema.default({ income: [], expense: [] }),
-
   events: z.array(EventSchema).default([]),
   meta: ProfileMetaSchema,
 });
-
 
 // zentrale Parse-Funktion
 export function parseProfileV2(input: unknown) {

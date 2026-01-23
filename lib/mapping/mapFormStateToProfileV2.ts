@@ -13,10 +13,10 @@
 import type { ProfileV2, Person } from "@/lib/types/v2";
 import type { ProfileEvent as ProfileEventV2 } from "@/lib/types/v2/events";
 import type { AnnualsV2 } from "@/lib/types/v2/annualsV2";
-import type { Money, Year } from "@/lib/types/v2/money";
+import type { Year } from "@/lib/types/v2/annualsV2";
 
 import type { AssetClass, FormState, Availability } from "@/lib/types";
-import type { Instrument, DebtInstrument, DebtType as DebtTypeV2 } from "@/lib/types/v2/instruments";
+
 
 import { AnnualsV2Schema } from "@/lib/validation/v2/annualsV2.schema";
 
@@ -48,23 +48,6 @@ function isZeroish(n: number) {
   return !n || Math.abs(n) < 1e-9;
 }
 
-// Money in ProfileV2 is "number" in your current codebase.
-// Keep that (no object), just truncate.
-function moneyFromIntCHF(n: unknown): Money {
-  const x = typeof n === "number" ? n : Number(n);
-  return (Number.isFinite(x) ? Math.trunc(x) : 0) as Money;
-}
-
-function upsertInstrument(list: Instrument[], next: Instrument): Instrument[] {
-  const idx = list.findIndex((i) => i.id === next.id);
-  if (idx >= 0) {
-    const copy = list.slice();
-    copy[idx] = next;
-    return copy;
-  }
-  return [...list, next];
-}
-
 function normalizeAvailability(a: any): Availability {
   if (a === "instant") return "instant";
   if (a === "3m_3y") return "3m_3y";
@@ -73,53 +56,6 @@ function normalizeAvailability(a: any): Availability {
   return "gt_3y";
 }
 
-function metaForAssetPosition(p: any) {
-  return {
-    uiId: p.id,
-    availability: normalizeAvailability(p.availability),
-    cashflowPa: Math.trunc(Number(p.cashflowPa ?? 0)),
-    goal: p.goal,
-    notes: p.notes ?? "",
-    assetClass: p.assetClass, // optional
-  };
-}
-
-function assetTypeFromClass(c: AssetClass): string {
-  switch (c) {
-    case "cash":
-      return "cash";
-    case "bank":
-      return "bank";
-    case "securities":
-      return "securities";
-    case "real_estate":
-      return "real_estate";
-    case "gold":
-      return "gold";
-    case "crypto":
-      return "crypto";
-    case "p2p":
-      return "p2p";
-    case "pension":
-      return "pension";
-    default:
-      return "other";
-  }
-}
-
-// Debt mapping:
-// - base types stay
-// - "other" splits into other_short vs other_long based on availability
-function debtTypeV2FromForm(base: any, availability: any): DebtTypeV2 {
-  if (base === "mortgage") return "mortgage";
-  if (base === "loan") return "loan";
-  if (base === "consumer") return "consumer";
-  if (base === "creditcard") return "creditcard";
-
-  const a = normalizeAvailability(availability);
-  if (a === "gt_3y") return "other_long";
-  return "other_short";
-}
 
 function clampInt(n: unknown, lo: number, hi: number, fallback: number): number {
   const x = typeof n === "number" ? n : Number(n);
@@ -149,90 +85,7 @@ export function mapFormStateToProfileV2(form: FormState, prev: ProfileV2): Profi
   nextPersons[index] = self;
   next.household = { ...next.household, persons: nextPersons };
 
-  // ---- INSTRUMENTS ----
-  let instruments: Instrument[] = Array.isArray(next.instruments) ? next.instruments : [];
-
-  // Step1 owns assets, Step2 owns debts => drop both and rebuild from form
-  instruments = instruments.filter((i: any) => i?.kind !== "asset" && i?.kind !== "debt");
-
-  // Step1 – Assets from positions[]
-  const aPos = (form.step1 as any)?.positions ?? [];
-  for (const p of aPos) {
-    const amount = Math.trunc(Number(p.amountChf ?? 0));
-    if (isZeroish(amount)) continue;
-
-    const inst: any = {
-      // IMPORTANT: keep DB id if we have one; otherwise keep UI id as fallback (until API/DB supports ui_id)
-      id: String((p as any).dbId ?? p.id),
-
-      kind: "asset",
-      assetType: assetTypeFromClass(p.assetClass),
-      label: String(p.label ?? "Position"),
-      value: moneyFromIntCHF(amount),
-
-      // NEW structured fields (must be persisted as columns later)
-      ui_id: String(p.id),
-      availability: p.availability,
-      goal: p.goal,
-      cashflow_pa: Math.trunc(Number((p as any).cashflowPa ?? 0)),
-      asset_class: p.assetClass,
-
-      // Notes: prefer dedicated field
-      notes: typeof (p as any).notes === "string" ? (p as any).notes : "",
-
-      // meta_json should only carry legacy/notes (optional)
-      meta_json: { notes: typeof (p as any).notes === "string" ? (p as any).notes : "" },
-    };
-
-    instruments = upsertInstrument(instruments, inst);
-  }
-
-  // Step2 – Debts from positions[]
-  const dPos = (form.step2 as any)?.positions ?? [];
-  for (const p of dPos) {
-    const bal = Math.trunc(Number(p.balanceChf ?? 0));
-    if (isZeroish(bal)) continue;
-
-    function floatOrUndef(n: unknown): number | undefined {
-      const x = typeof n === "number" ? n : Number(String(n).replace(",", "."));
-      return Number.isFinite(x) ? x : undefined;
-    }
-
-    function amortTypeOrDefault(v: any): "none" | "direct" | "indirect" {
-      return v === "direct" || v === "indirect" || v === "none" ? v : "none";
-    }
-
-    const rate = floatOrUndef((p as any).interestRatePct);
-
-    const amortPa = Math.trunc(Number((p as any).amortizationPaChf ?? 0));
-    let amortType = amortTypeOrDefault((p as any).amortizationType);
-    if (amortPa > 0 && amortType === "none") amortType = "direct";
-
-    const inst: any = {
-      id: String((p as any).dbId ?? p.id),
-
-      kind: "debt",
-      debtType: debtTypeV2FromForm(p.debtType, p.availability),
-      label: String(p.label ?? "Verpflichtung"),
-      balance: moneyFromIntCHF(bal),
-      interestRate: rate,
-      amortization:
-        amortType !== "none" || amortPa > 0
-          ? { type: amortType, amountAnnual: amortPa > 0 ? moneyFromIntCHF(amortPa) : undefined }
-          : undefined,
-
-      // NEW structured fields
-      ui_id: String(p.id),
-      availability: p.availability,
-
-      notes: typeof (p as any).notes === "string" ? (p as any).notes : "",
-      meta_json: { notes: typeof (p as any).notes === "string" ? (p as any).notes : "" },
-    };
-
-    instruments = upsertInstrument(instruments, inst);
-  }
-
-  next.instruments = instruments;
+  // ---- INSTRUMENTS --- mapping via mapping/positions/formStateToDtos.ts
 
   // ---- META ----
   const baseYear = (next.meta?.startYear ?? new Date().getFullYear()) as Year;

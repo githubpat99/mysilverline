@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { bootstrapProfileV2 } from "@/lib/bootstrapProfileV2";
 
 import { saveProfileV2Safe } from "@/lib/profileApiV2";
+import { savePositionsSafe } from "@/lib/positionsApi";
 import type { CompletionState, FormState, StepId } from "@/lib/types";
 import { validateStep } from "@/lib/validate";
 import { mapFormStateToProfileV2 } from "@/lib/mapping";
@@ -15,6 +16,7 @@ import type { ProfileV2 } from "@/lib/types/v2";
 import Step1Form from "@/app/finance/components/steps/Step1Form";
 import Step2Form from "@/app/finance/components/steps/Step2Form";
 import Step3Form from "@/app/finance/components/steps/Step3Form";
+import { mapFormStateToPositions } from "@/lib/mapping/mapFormStateToPositions";
 
 type Bucket = "LIQ" | "ST" | "LT" | "REAL";
 
@@ -119,9 +121,22 @@ export default function FinanceClientPage() {
       return { ok: false };
     }
 
-    const next = mapFormStateToProfileV2(form, profileV2);
-    const r = await saveProfileV2Safe(next);
+    const nextProfile = mapFormStateToProfileV2(form, profileV2);
 
+    console.log(
+  form.step1.positions.map(p => ({
+    id: p.id,
+    source: p.sourceAccountKey,
+    target: p.targetAccountKey,
+  }))
+);
+
+    const nextPositions = mapFormStateToPositions(form);
+
+    console.log("FinanceClient Page: nextProfile = ", nextProfile);
+    console.log("FinanceClient Page: nextPositions = ", nextPositions);
+
+    const r = await saveProfileV2Safe(nextProfile);
     if (!r.ok) {
       if (r.status === 401 || r.status === 403) {
         setSaveError("Nicht eingeloggt oder Nonce ungültig. Bitte neu anmelden.");
@@ -134,7 +149,19 @@ export default function FinanceClientPage() {
     }
 
     setSaveError("");
-    setProfileV2(r.profile ?? next);
+    setProfileV2(r.profile ?? nextProfile);
+
+    const pos = await savePositionsSafe(nextPositions);
+    if (!pos.ok) {
+      if (r.status === 401 || r.status === 403) {
+        setSaveError("Nicht eingeloggt oder Nonce ungültig. Bitte neu anmelden.");
+      } else if (r.status === 500) {
+        setSaveError("Serverfehler beim Speichern (500).");
+      } else {
+        setSaveError("Speichern fehlgeschlagen.");
+      }
+      return { ok: false };
+    }
     return { ok: true };
   }
 
@@ -174,6 +201,7 @@ export default function FinanceClientPage() {
             value={form.step2}
             onChange={setStep2}
             onCommit={handleAutosave}
+            assets={form.step1.positions ?? []}
           />
         );
       case 3:

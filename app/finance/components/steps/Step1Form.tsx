@@ -2,7 +2,14 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { FormState, AssetPosition, DebtPosition, Availability, AssetClass, Goal } from "@/lib/types";
+import type {
+  FormState,
+  AssetPosition,
+  DebtPosition,
+  Availability,
+  AssetClass,
+  Goal,
+} from "@/lib/types";
 import { Amount, InlineAmount } from "../Amount";
 import { FieldMoneyInt } from "../fields/FieldMoney";
 import { bucketFromAvailability, type Bucket } from "@/lib/forecast/buckets";
@@ -39,7 +46,7 @@ function bucketToAvailability(b: Bucket): Availability {
  * Gegenkonto-Regeln (targetAccountKey):
  * - NIE auf sich selber.
  * - goal="liq": Gegenkonto muss LIQ-Asset sein.
- * - goal="reinvest": Gegenkonto muss Nicht-LIQ-Asset sein.
+ * - goal="reinvest": Gegenkonto muss Nicht-LIQ-Asset sein (oder intern/self).
  * - Wenn kein Cashflow: Gegenkonto nicht erzwingen.
  */
 
@@ -73,7 +80,7 @@ function keyId(key: string) {
   return i >= 0 ? key.slice(i + 1) : key;
 }
 
-function hasCashflow(p: AssetPosition) {
+function hasCashflow(p: AssetPositionUI) {
   return typeof p.cashflowPa === "number" && Math.abs(p.cashflowPa) > 0;
 }
 
@@ -103,6 +110,7 @@ export default function Step1Form({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [entered, setEntered] = useState(false);
 
+  // lock body scroll when modal is open
   useEffect(() => {
     if (!isModalOpen) return;
     const prev = document.body.style.overflow;
@@ -120,7 +128,6 @@ export default function Step1Form({
     const t = window.setTimeout(() => setEntered(true), 20);
     return () => window.clearTimeout(t);
   }, [isModalOpen]);
-
 
   // "dirty per position id"
   const dirtyIdsRef = useRef<Set<string>>(new Set());
@@ -212,7 +219,7 @@ export default function Step1Form({
       dirtyIdsRef.current.clear();
     }
 
-    // Save-lock gegen parallele Saves (mobile taps, blur-flurry)
+    // Save-lock gegen parallele Saves
     if (committingRef.current) return;
     committingRef.current = true;
     try {
@@ -328,12 +335,11 @@ export default function Step1Form({
   // Prefer forecast-derived CF if available, else UI-derived sum
   const r0 = rows?.[0];
   const cfToLiq = (typeof r0?.assetCashflowToLiq === "number" ? r0.assetCashflowToLiq : totals.allCashflowToLiq) ?? 0;
-  const cfTotalUI =
-    sum(positions.map((p) => (typeof p.cashflowPa === "number" ? p.cashflowPa : 0)));
 
+  const cfTotalUI = sum(positions.map((p) => (typeof p.cashflowPa === "number" ? p.cashflowPa : 0)));
   const cfTotal =
-    (typeof r0?.assetCashflowReinvest === "number" && typeof r0?.assetCashflowToLiq === "number")
-      ? (r0.assetCashflowToLiq + r0.assetCashflowReinvest)
+    typeof r0?.assetCashflowReinvest === "number" && typeof r0?.assetCashflowToLiq === "number"
+      ? r0.assetCashflowToLiq + r0.assetCashflowReinvest
       : cfTotalUI;
 
   const missingPrereqs = useMemo(() => {
@@ -353,7 +359,6 @@ export default function Step1Form({
     // reinvest: self erlauben + alle Nicht-LIQ
     return accountOptions.filter((o) => o.kind === "asset" && (o.key === selfKey || o.bucket !== "LIQ"));
   }
-
 
   function counterError(p: AssetPositionUI) {
     const hasCf = typeof p.cashflowPa === "number" && Math.abs(p.cashflowPa) > 0;
@@ -377,47 +382,36 @@ export default function Step1Form({
     <div>
       {/* Header (ohne Kachel) */}
       <div className="px-5 pt-4 pb-3">
-
-        {/* KPI row */}
         <div className="mt-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <div className="text-[11px] uppercase tracking-wide text-slate-400">
-                Gesamtvermögen
-              </div>
+              <div className="text-[11px] uppercase tracking-wide text-slate-400">Gesamtvermögen</div>
               <div className="mt-1 text-lg font-semibold text-slate-50">
                 <Amount value={totals.allValue} size="lg" align="left" />
               </div>
             </div>
 
             <div className="text-right">
-              <div className="text-[11px] uppercase tracking-wide text-slate-400">
-                Cashflow gesamt p.a. (CHF)
-              </div>
+              <div className="text-[11px] uppercase tracking-wide text-slate-400">Cashflow gesamt p.a. (CHF)</div>
               <div className="mt-1 text-lg font-semibold text-slate-50">
                 <InlineAmount value={cfTotal} />
               </div>
 
-              <div className="mt-3 text-[11px] uppercase tracking-wide text-slate-400">
-                → Liquidität p.a. (CHF)
-              </div>
+              <div className="mt-3 text-[11px] uppercase tracking-wide text-slate-400">→ Liquidität p.a. (CHF)</div>
               <div className="mt-1 text-base font-semibold text-slate-100">
                 <InlineAmount value={cfToLiq} />
               </div>
-              <div className="mt-3 text-[11px] uppercase tracking-wide text-slate-400">
-                → Reinvest p.a. (CHF)
-              </div>
+
+              <div className="mt-3 text-[11px] uppercase tracking-wide text-slate-400">→ Reinvest p.a. (CHF)</div>
               <div className="mt-1 text-base font-semibold text-slate-100">
                 <InlineAmount value={Math.trunc(cfTotal - cfToLiq)} />
               </div>
             </div>
-
           </div>
         </div>
 
         <div className="mt-4 border-t border-slate-800/80" />
       </div>
-
 
       {/* Tiles */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">
@@ -473,12 +467,9 @@ export default function Step1Form({
       {isModalOpen && (
         <div className="fixed inset-0 z-50">
           {/* backdrop (kein button, sonst kann er Scroll/Pointer fressen) */}
-          <div
-            className="absolute inset-0 bg-slate-700/40"
-            onClick={closeModal}
-          />
+          <div className="absolute inset-0 bg-slate-700/40" onClick={closeModal} />
 
-           {/*panel */}
+          {/*panel */}
           <div
             className={[
               "rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl max-h-[calc(100vh-3rem)] flex flex-col overflow-hidden",
@@ -486,14 +477,13 @@ export default function Step1Form({
               entered ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-[0.985] translate-y-1",
             ].join(" ")}
           >
-            <div className="rounded-2xl border border-slate-700 bg-slate-950 shadow-2xl ring-1 ring-white/5">
-
+            <div className="rounded-2xl border border-slate-700 bg-slate-950 shadow-2xl ring-1 ring-white/5 max-h-[calc(100vh-3rem)] flex flex-col overflow-hidden">
               {/* Header bleibt fix */}
               <div className="flex items-start gap-4 border-b border-slate-800 p-4">
                 {/* Left: Title */}
                 <div className="min-w-0 flex-1">
                   <div className="font-semibold text-slate-100 truncate">
-                    {BUCKET_META[activeBucket].title}
+                    {BUCKET_META[activeBucket].title}.
                   </div>
 
                   {!missingPrereqs.hasLiqAsset && (
@@ -513,12 +503,11 @@ export default function Step1Form({
                   {/* Desktop */}
                   <button
                     onClick={() => addPosition(activeBucket)}
-                    className="hidden sm:inline-flex rounded-full border border-slate-700 px-4 py-2 text-sm hover:border-slate-600"
+                    className="hidden sm:inline-flex rounded-full border border-slate-700 px-4 py-2 text-sm hover:border-slate-600 whitespace-nowrap"
                     type="button"
                   >
                     + Position
                   </button>
-
                   <button
                     onClick={closeModal}
                     className="hidden sm:inline-flex rounded-full border border-slate-700 px-4 py-2 text-sm hover:border-slate-600"
@@ -527,28 +516,28 @@ export default function Step1Form({
                     Schliessen
                   </button>
 
-                  {/* Mobile Icons */}
+                  {/* Mobile icons */}
                   <button
                     onClick={() => addPosition(activeBucket)}
                     className="sm:hidden rounded-full border border-slate-700 p-2 hover:border-slate-600"
                     title="Position hinzufügen"
                     type="button"
                   >
-                    <Plus size={18} />
+                    <Plus size={18} className="text-sky-400" />
                   </button>
-
                   <button
                     onClick={closeModal}
                     className="sm:hidden rounded-full border border-slate-700 p-2 hover:border-slate-600"
                     title="Schliessen"
                     type="button"
                   >
-                    <X size={18} />
+                    <X size={18} className="text-slate-400 hover:text-slate-100 transition" />
                   </button>
                 </div>
               </div>
+
               {/* Content scrollt */}
-              <div className="p-5 overflow-y-auto overscroll-contain [webkit-overflow-scrolling:touch]">
+              <div className="p-5 overflow-y-auto overscroll-contain [webkit-overflow-scrolling:touch] overflow-x-hidden">
                 {/* Mobile: Cards */}
                 <div className="space-y-3 md:hidden">
                   {activeItems.map((p) => {
@@ -558,57 +547,30 @@ export default function Step1Form({
                       <div
                         key={p.id}
                         tabIndex={-1}
-                        className="rounded-xl border border-slate-800 bg-slate-950/40 p-4"
+                        className="rounded-2xl border border-slate-800 bg-slate-950 p-3 overflow-x-hidden"
                         onBlurCapture={(e) => {
                           const next = e.relatedTarget as Node | null;
                           if (next && e.currentTarget.contains(next)) return;
                           void commitIfDirty(p.id);
                         }}
                       >
-                        <div className="flex items-start justify-between gap-3">
-                          <input
-                            value={p.label}
-                            onChange={(e) => upsert(p.id, { label: e.target.value })}
-                            className="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm"
-                          />
-                          <button
-                            onClick={() => removePosition(p.id)}
-                            className="shrink-0 rounded-lg border border-red-900/60 bg-red-950/30 px-3 py-2 text-sm hover:border-red-800"
-                            type="button"
-                          >
-                            Löschen
-                          </button>
-                        </div>
-
-                        <div className="mt-3 grid grid-cols-2 gap-3">
+                        <div className="grid gap-3">
                           <div>
-                            <FieldMoneyInt label="Wert" valueChf={p.amountChf} onChangeChf={(n) => upsert(p.id, { amountChf: n })} />
+                            <label className="block text-xs text-slate-400 mb-1">Bezeichnung</label>
+                            <input
+                              value={p.label}
+                              onChange={(e) => upsert(p.id, { label: e.target.value })}
+                              placeholder="z.B. Sparkonto, ETF, Bargeld…"
+                              className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-600"
+                            />
                           </div>
 
                           <div>
-                            <FieldMoneyInt label="Cashflow p.a." valueChf={p.cashflowPa} onChangeChf={(n) => upsert(p.id, { cashflowPa: n })} />
-                          </div>
-
-                          <div>
-                            <div className="text-xs text-slate-400 mb-1">Verfügbarkeit</div>
-                            <select
-                              value={p.availability}
-                              onChange={(e) => upsert(p.id, { availability: e.target.value as Availability })}
-                              className="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm"
-                            >
-                              <option value="instant">sofort</option>
-                              <option value="3m_3y">3M–3J</option>
-                              <option value="gt_3y">&gt; 3J</option>
-                              <option value="locked">gebunden</option>
-                            </select>
-                          </div>
-
-                          <div>
-                            <div className="text-xs text-slate-400 mb-1">AssetClass</div>
+                            <label className="block text-xs text-slate-400 mb-1">AssetClass</label>
                             <select
                               value={p.assetClass}
                               onChange={(e) => upsert(p.id, { assetClass: e.target.value as AssetClass })}
-                              className="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm"
+                              className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100"
                             >
                               <option value="cash">cash</option>
                               <option value="bank">bank</option>
@@ -622,12 +584,38 @@ export default function Step1Form({
                             </select>
                           </div>
 
+                          <FieldMoneyInt
+                            label="Wert"
+                            valueChf={p.amountChf}
+                            onChangeChf={(n) => upsert(p.id, { amountChf: n })}
+                          />
+
                           <div>
-                            <div className="text-xs text-slate-400 mb-1">Ziel</div>
+                            <label className="block text-xs text-slate-400 mb-1">Verfügbarkeit</label>
+                            <select
+                              value={p.availability}
+                              onChange={(e) => upsert(p.id, { availability: e.target.value as Availability })}
+                              className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100"
+                            >
+                              <option value="instant">sofort</option>
+                              <option value="3m_3y">3M–3J</option>
+                              <option value="gt_3y">&gt; 3J</option>
+                              <option value="locked">gebunden</option>
+                            </select>
+                          </div>
+
+                          <FieldMoneyInt
+                            label="Cashflow p.a."
+                            valueChf={p.cashflowPa}
+                            onChangeChf={(n) => upsert(p.id, { cashflowPa: n })}
+                          />
+
+                          <div>
+                            <label className="block text-xs text-slate-400 mb-1">Ziel</label>
                             <select
                               value={p.goal}
                               onChange={(e) => upsert(p.id, { goal: e.target.value as Goal })}
-                              className="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm"
+                              className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100"
                             >
                               <option value="liq">liq</option>
                               <option value="reinvest">reinvest</option>
@@ -636,45 +624,58 @@ export default function Step1Form({
 
                           {hasCashflow(p) && (
                             <div>
-                              <div className="text-xs text-slate-400 mb-1">Gegenkonto</div>
+                              <label className="block text-xs text-slate-400 mb-1">Gegenkonto</label>
                               <select
                                 value={p.targetAccountKey ?? ""}
                                 onChange={(e) => upsert(p.id, { targetAccountKey: e.target.value || undefined })}
-                                className="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm"
+                                className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100"
                               >
                                 <option value="">Gegenkonto wählen…</option>
                                 {counterOptionsFor(p).map((o) => (
                                   <option key={o.key} value={o.key}>
-                                    {o.label}{o.key === makeKey("asset", p.id) ? " (intern)" : ""}
+                                    {o.label}
+                                    {o.key === makeKey("asset", p.id) ? " (intern)" : ""}
                                   </option>
                                 ))}
                               </select>
-                              {counterError(p) && <div className="mt-1 text-xs text-amber-400/90">{counterError(p)}</div>}
+
+                              {err && <div className="mt-1 text-xs text-amber-400/90">{err}</div>}
                             </div>
                           )}
 
                           <div>
-                            <div className="text-xs text-slate-400 mb-1">Bucket</div>
-                            <div className="rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-300">
-                              {bucketFromAvailability(p.availability)}
-                            </div>
+                            <label className="block text-xs text-slate-400 mb-1">Notiz</label>
+                            <input
+                              value={p.notes ?? ""}
+                              onChange={(e) => upsert(p.id, { notes: e.target.value })}
+                              className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-600"
+                              placeholder="optional"
+                            />
                           </div>
-                        </div>
 
-                        <div className="mt-3">
-                          <div className="text-xs text-slate-400 mb-1">Notiz</div>
-                          <input
-                            value={p.notes ?? ""}
-                            onChange={(e) => upsert(p.id, { notes: e.target.value })}
-                            className="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm"
-                            placeholder="optional"
-                          />
+                          <div className="mt-1 flex items-center justify-between gap-3">
+                            <div className="text-xs text-slate-500">
+                              Bucket: <span className="text-slate-300">{bucketFromAvailability(p.availability)}</span>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => removePosition(p.id)}
+                              className="rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-slate-300 hover:border-slate-700 hover:text-slate-100 transition"
+                            >
+                              Entfernen
+                            </button>
+                          </div>
                         </div>
                       </div>
                     );
                   })}
 
-                  {activeItems.length === 0 && <div className="py-6 text-center text-slate-500">Keine Positionen in diesem Bucket.</div>}
+                  {activeItems.length === 0 && (
+                    <div className="py-6 text-center text-slate-500">
+                      Keine Positionen in {BUCKET_META[activeBucket].title}.
+                    </div>
+                  )}
                 </div>
 
                 {/* Desktop: Table */}
@@ -735,15 +736,21 @@ export default function Step1Form({
                             </td>
 
                             <td className="py-2 pr-3">
-                              <FieldMoneyInt label="" valueChf={p.amountChf} onChangeChf={(n) => upsert(p.id, { amountChf: n })} />
+                              <FieldMoneyInt
+                                label=""
+                                valueChf={p.amountChf}
+                                onChangeChf={(n) => upsert(p.id, { amountChf: n })}
+                              />
                             </td>
 
-                            <td className="py-2 pr-3 text-slate-300">
-                              {bucketFromAvailability(p.availability)}
-                            </td>
+                            <td className="py-2 pr-3 text-slate-300">{bucketFromAvailability(p.availability)}</td>
 
                             <td className="py-2 pr-3">
-                              <FieldMoneyInt label="" valueChf={p.cashflowPa} onChangeChf={(n) => upsert(p.id, { cashflowPa: n })} />
+                              <FieldMoneyInt
+                                label=""
+                                valueChf={p.cashflowPa}
+                                onChangeChf={(n) => upsert(p.id, { cashflowPa: n })}
+                              />
                             </td>
 
                             <td className="py-2 pr-3">
@@ -792,11 +799,11 @@ export default function Step1Form({
 
                             <td className="py-2 text-right">
                               <button
-                                onClick={() => removePosition(p.id)}
-                                className="rounded-lg border border-red-900/60 bg-red-950/30 px-3 py-2 text-sm hover:border-red-800"
                                 type="button"
+                                onClick={() => removePosition(p.id)}
+                                className="rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-slate-300 hover:border-slate-700 hover:text-slate-100 transition"
                               >
-                                Löschen
+                                Entfernen
                               </button>
                             </td>
                           </tr>
@@ -806,7 +813,7 @@ export default function Step1Form({
                       {activeItems.length === 0 && (
                         <tr>
                           <td colSpan={10} className="py-6 text-center text-slate-500">
-                            Keine Positionen in diesem Bucket.
+                            Keine Positionen in {BUCKET_META[activeBucket].title}.
                           </td>
                         </tr>
                       )}
@@ -822,6 +829,7 @@ export default function Step1Form({
           </div>
         </div>
       )}
+
     </div>
   );
 }

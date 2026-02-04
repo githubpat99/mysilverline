@@ -76,7 +76,7 @@ export default function DonutChart({
                     </Pie>
 
                     <Tooltip
-                        formatter={(value: number) => formatCHFInput(value.toString())}
+                        formatter={(value) => formatCHFInput(String(value ?? 0))}
                         wrapperStyle={{ outline: "none" }}
                         contentStyle={{
                             background: "#e5e7eb",

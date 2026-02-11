@@ -110,7 +110,7 @@ export default function ForecastChartSummary({ rows = [] }: { rows?: YearRow[] }
     return safe.map((r) => {
       const end = endBucketsOf(r);
       const eNW = netWorth(end);
-      return { year: r.year, net: Math.max(0, eNW.assets - eNW.debts) };
+      return { year: r.year, net: eNW.assets - eNW.debts };
     });
   }, [rows]);
 
@@ -182,6 +182,7 @@ export default function ForecastChartSummary({ rows = [] }: { rows?: YearRow[] }
             />
             <YAxis hide domain={["auto", "auto"]} />
             <Tooltip content={<LineTooltipContent />} />
+            <ReferenceLine y={0} stroke="rgba(148,163,184,0.35)" strokeDasharray="4 4" strokeWidth={1} />
             {visibleLineData.length > 0 && (
               <ReferenceLine
                 y={visibleLineData[0].net}

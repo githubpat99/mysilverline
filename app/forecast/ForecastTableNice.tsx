@@ -34,6 +34,7 @@ export type YearRow = {
   // optional movement/detail fields (if present, we show them)
   assetCashflowToLiq?: number;
   assetCashflowReinvest?: number;
+  assetCashflowReinvestBreakdown?: { shortA: number; longA: number; realA: number };
   debtInterest?: number;
   debtAmort?: number;
 
@@ -58,6 +59,11 @@ export type YearRow = {
     realA: number
   };
 
+  /** Phase 4: Überzug erhöht (wenn Liquidität nicht reichte) */
+  overdraftAdded?: number;
+  /** Phase 5: Quelle pro Instrument (id → CHF) */
+  transferInterestFromByInstrument?: Record<string, number>;
+  transferAmortFromByInstrument?: Record<string, number>;
 };
 
 // ---------------- helpers ----------------
@@ -149,7 +155,13 @@ function MobileRow({
   );
 }
 
-export default function ForecastTableNice({ rows = [] }: { rows?: YearRow[] }) {
+export default function ForecastTableNice({
+  rows = [],
+  positions = [],
+}: {
+  rows?: YearRow[];
+  positions?: Array<{ id?: string; instrument_id?: string; label?: string }>;
+}) {
   const safeRows = rows ?? [];
 
   useEffect(() => {
@@ -212,13 +224,14 @@ export default function ForecastTableNice({ rows = [] }: { rows?: YearRow[] }) {
     return "";
   }
 
+  /** Sheet-Format: "LIQ 350, Kurzfr. 650" (Bucket-Split wie im Excel) */
   function splitLabelFromSrc(src?: { liq: number; shortA: number; longA: number; realA: number }) {
     if (!src) return "";
     const parts = [
       { label: "LIQ", amount: Math.trunc(n(src.liq)) },
-      { label: "ST", amount: Math.trunc(n(src.shortA)) },
-      { label: "LT", amount: Math.trunc(n(src.longA)) },
-      { label: "REAL", amount: Math.trunc(n(src.realA)) },
+      { label: "Kurzfr.", amount: Math.trunc(n(src.shortA)) },
+      { label: "Langfr.", amount: Math.trunc(n(src.longA)) },
+      { label: "Sachw.", amount: Math.trunc(n(src.realA)) },
     ].filter(x => x.amount !== 0);
     return parts.length ? parts.map(x => `${x.label} ${formatCHF(x.amount)}`).join(", ") : "";
   }
@@ -414,9 +427,9 @@ export default function ForecastTableNice({ rows = [] }: { rows?: YearRow[] }) {
                           if (src) {
                             split = [
                               { label: "LIQ", amount: Math.trunc(n(src.liq)) },
-                              { label: "ST", amount: Math.trunc(n(src.shortA)) },
-                              { label: "LT", amount: Math.trunc(n(src.longA)) },
-                              { label: "REAL", amount: Math.trunc(n(src.realA)) },
+                              { label: "Kurzfr.", amount: Math.trunc(n(src.shortA)) },
+                              { label: "Langfr.", amount: Math.trunc(n(src.longA)) },
+                              { label: "Sachw.", amount: Math.trunc(n(src.realA)) },
                             ].filter((x) => x.amount !== 0);
                           } else {
                             // 2) Fallback: alte Heuristik (nur solange alte Rows existieren)
@@ -439,11 +452,13 @@ export default function ForecastTableNice({ rows = [] }: { rows?: YearRow[] }) {
                           }
                           const splitLabel = split.length > 0 ? split.map((x) => `${x.label} ${formatCHF(x.amount)}`).join(", ") : "";
                           const interestSrcLabel = splitLabelFromSrc(r.transferInterestFrom);
+                          const overdraftAdded = Math.trunc(n((r as any).overdraftAdded));
                           const showMovements =
                             n(r.assetCashflowToLiq) !== 0 ||
                             n(r.assetCashflowReinvest) !== 0 ||
                             n(r.debtInterest) !== 0 ||
-                            amort !== 0;
+                            amort !== 0 ||
+                            overdraftAdded !== 0;
 
                           return (
                             <>
@@ -516,10 +531,11 @@ export default function ForecastTableNice({ rows = [] }: { rows?: YearRow[] }) {
                                         <MovementLine label="Cashflow → Liquidität" value={n(r.assetCashflowToLiq)} kind="pos" />
                                         <MovementLine label="Cashflow → ReInvest" value={n(r.assetCashflowReinvest)} kind="pos" />
                                         <MovementLine label="Zinsen" value={n(r.debtInterest)} kind="neg" />
-                                        {interestSrcLabel &&
+                                        {interestSrcLabel && (
                                           <div className="mt-1 text-xs text-slate-400">
                                             Quelle: {interestSrcLabel}
-                                          </div>}
+                                          </div>
+                                        )}
 
                                         {/* dünne Linie vor Tilgung */}
                                         {amort !== 0 && <div className="my-2 border-t border-slate-800/60" />}
@@ -532,13 +548,160 @@ export default function ForecastTableNice({ rows = [] }: { rows?: YearRow[] }) {
                                               value={amort}
                                               kind="neutral"
                                             />
-                                            {splitLabel && (
+                                            {(splitLabel || splitLabelFromSrc(r.transferAmortFrom)) && (
                                               <div className="mt-1 text-xs text-slate-400">
-                                                Quelle: {splitLabel}
+                                                Quelle: {splitLabel || splitLabelFromSrc(r.transferAmortFrom)}
                                               </div>
                                             )}
                                           </>
                                         )}
+                                        {overdraftAdded > 0 && (
+                                          <div className="mt-1 text-xs text-amber-400/90">
+                                            Überzug erhöht: +{formatCHF(overdraftAdded)}
+                                          </div>
+                                        )}
+
+                                        {/* Herleitung Aktiven: erklärt Δ pro Bucket */}
+                                        {(() => {
+                                          const breakdown = r.assetCashflowReinvestBreakdown;
+                                          const intFrom = r.transferInterestFrom;
+                                          const amortFrom = r.transferAmortFrom;
+                                          const coverFrom = r.coverDeficitFrom;
+                                          const hasLiqFlow =
+                                            (intFrom && n(intFrom.liq) !== 0) ||
+                                            (amortFrom && n(amortFrom.liq) !== 0);
+                                          const hasShortFlow =
+                                            (breakdown && n(breakdown.shortA) !== 0) ||
+                                            (intFrom && n(intFrom.shortA) !== 0) ||
+                                            (amortFrom && n(amortFrom.shortA) !== 0) ||
+                                            (coverFrom && n(coverFrom.shortA) !== 0);
+                                          const hasLongFlow =
+                                            (breakdown && n(breakdown.longA) !== 0) ||
+                                            (intFrom && n(intFrom.longA) !== 0) ||
+                                            (amortFrom && n(amortFrom.longA) !== 0) ||
+                                            (coverFrom && n(coverFrom.longA) !== 0);
+                                          const hasRealFlow =
+                                            (breakdown && n(breakdown.realA) !== 0) ||
+                                            (intFrom && n(intFrom.realA) !== 0) ||
+                                            (amortFrom && n(amortFrom.realA) !== 0) ||
+                                            (coverFrom && n(coverFrom.realA) !== 0);
+
+                                          if (!hasLiqFlow && !hasShortFlow && !hasLongFlow && !hasRealFlow) return null;
+
+                                          const line = (
+                                            label: string,
+                                            delta: number,
+                                            items: { label: string; val: number; sign: "+" | "-" }[],
+                                          ) => {
+                                            const nonZero = items.filter((x) => x.val !== 0);
+                                            if (nonZero.length === 0) return null;
+                                            const parts = nonZero
+                                              .map((x) => `${x.sign}${formatCHF(x.val)} ${x.label}`)
+                                              .join(", ");
+                                            return (
+                                              <div
+                                                key={label}
+                                                className="mt-2 flex flex-wrap items-baseline gap-x-1 text-xs"
+                                              >
+                                                <span className="text-slate-400 shrink-0">{label} ({fmtDelta(delta)}):</span>
+                                                <span className="text-slate-300">{parts}</span>
+                                              </div>
+                                            );
+                                          };
+
+                                          return (
+                                            <div className="mt-3 rounded-lg border border-slate-800/80 bg-slate-900/30 px-3 py-2">
+                                              <div className="text-xs uppercase tracking-wide text-slate-400 mb-2">
+                                                Herleitung Aktiven
+                                              </div>
+                                              {hasLiqFlow &&
+                                                line("Liquidität", r._deltaBuckets.liq, [
+                                                  {
+                                                    label: "Zinsen",
+                                                    val: Math.trunc(n(intFrom?.liq)),
+                                                    sign: "-",
+                                                  },
+                                                  {
+                                                    label: "Tilgung",
+                                                    val: Math.trunc(n(amortFrom?.liq)),
+                                                    sign: "-",
+                                                  },
+                                                ])}
+                                              {hasShortFlow &&
+                                                line("Kurzfristig", r._deltaBuckets.shortA, [
+                                                  {
+                                                    label: "Cashflow Reinvest",
+                                                    val: Math.trunc(n(breakdown?.shortA)),
+                                                    sign: "+",
+                                                  },
+                                                  {
+                                                    label: "Zinsen",
+                                                    val: Math.trunc(n(intFrom?.shortA)),
+                                                    sign: "-",
+                                                  },
+                                                  {
+                                                    label: "Tilgung",
+                                                    val: Math.trunc(n(amortFrom?.shortA)),
+                                                    sign: "-",
+                                                  },
+                                                  {
+                                                    label: "Defizitdeckung",
+                                                    val: Math.trunc(n(coverFrom?.shortA)),
+                                                    sign: "-",
+                                                  },
+                                                ])}
+                                              {hasLongFlow &&
+                                                line("Langfristig", r._deltaBuckets.longA, [
+                                                  {
+                                                    label: "Cashflow Reinvest",
+                                                    val: Math.trunc(n(breakdown?.longA)),
+                                                    sign: "+",
+                                                  },
+                                                  {
+                                                    label: "Zinsen",
+                                                    val: Math.trunc(n(intFrom?.longA)),
+                                                    sign: "-",
+                                                  },
+                                                  {
+                                                    label: "Tilgung",
+                                                    val: Math.trunc(n(amortFrom?.longA)),
+                                                    sign: "-",
+                                                  },
+                                                  {
+                                                    label: "Defizitdeckung",
+                                                    val: Math.trunc(n(coverFrom?.longA)),
+                                                    sign: "-",
+                                                  },
+                                                ])}
+                                              {hasRealFlow &&
+                                                line("Sachwerte", r._deltaBuckets.realA, [
+                                                  {
+                                                    label: "Cashflow Reinvest",
+                                                    val: Math.trunc(n(breakdown?.realA)),
+                                                    sign: "+",
+                                                  },
+                                                  {
+                                                    label: "Zinsen",
+                                                    val: Math.trunc(n(intFrom?.realA)),
+                                                    sign: "-",
+                                                  },
+                                                  {
+                                                    label: "Tilgung",
+                                                    val: Math.trunc(n(amortFrom?.realA)),
+                                                    sign: "-",
+                                                  },
+                                                  {
+                                                    label: "Defizitdeckung",
+                                                    val: Math.trunc(n(coverFrom?.realA)),
+                                                    sign: "-",
+                                                  },
+                                                ])}
+                                              <div className="mt-2 text-[10px] text-slate-500">
+                                                Summe der Bewegungen kann von Δ abweichen (Rendite, Rundung).
+                                              </div>
+                                            </div>
+                                          );
+                                        })()}
                                       </>
                                     )}
                                   </div>
@@ -627,14 +790,11 @@ export default function ForecastTableNice({ rows = [] }: { rows?: YearRow[] }) {
                                             </div>
                                           </div>
 
-                                          {(() => {
-                                            const srcLabel = splitLabelFromSrc(r.transferInterestFrom);
-                                            return srcLabel ? (
-                                              <div className="pl-2 text-xs text-slate-400">
-                                                Quelle: {srcLabel}
-                                              </div>
-                                            ) : null;
-                                          })()}
+                                          {splitLabelFromSrc(r.transferInterestFrom) && (
+                                            <div className="pl-2 text-xs text-slate-400">
+                                              Quelle: {splitLabelFromSrc(r.transferInterestFrom)}
+                                            </div>
+                                          )}
                                         </>
                                       )}
 
@@ -647,20 +807,64 @@ export default function ForecastTableNice({ rows = [] }: { rows?: YearRow[] }) {
                                             <div className="text-slate-200 tabular-nums">{formatCHF(amort)}</div>
                                           </div>
 
-                                          {splitLabel && (
+                                          {(splitLabel || splitLabelFromSrc(r.transferAmortFrom)) && (
                                             <div className="mt-1 text-xs text-slate-400">
-                                              Quelle: {splitLabel}
+                                              Quelle: {splitLabel || splitLabelFromSrc(r.transferAmortFrom)}
                                             </div>
                                           )}
                                         </>
                                       )}
+                                      {overdraftAdded > 0 && (
+                                        <div className="mt-2 text-xs text-amber-400/90">
+                                          Überzug erhöht: +{formatCHF(overdraftAdded)}
+                                        </div>
+                                      )}
+
+                                      {/* Herleitung Aktiven (Mobile) */}
+                                      {(() => {
+                                        const breakdown = r.assetCashflowReinvestBreakdown;
+                                        const intFrom = r.transferInterestFrom;
+                                        const amortFrom = r.transferAmortFrom;
+                                        const coverFrom = r.coverDeficitFrom;
+                                        const hasAny =
+                                          (intFrom && (n(intFrom.liq) !== 0 || n(intFrom.shortA) !== 0)) ||
+                                          (amortFrom && (n(amortFrom.liq) !== 0 || n(amortFrom.shortA) !== 0)) ||
+                                          (breakdown && n(breakdown.shortA) !== 0) ||
+                                          (coverFrom && n(coverFrom.shortA) !== 0);
+                                        if (!hasAny) return null;
+                                        const liqParts: string[] = [];
+                                        if (n(intFrom?.liq)) liqParts.push(`−${formatCHF(n(intFrom.liq))} Zinsen`);
+                                        if (n(amortFrom?.liq)) liqParts.push(`−${formatCHF(n(amortFrom.liq))} Tilgung`);
+                                        const shortParts: string[] = [];
+                                        if (n(breakdown?.shortA)) shortParts.push(`+${formatCHF(n(breakdown.shortA))} Reinvest`);
+                                        if (n(intFrom?.shortA)) shortParts.push(`−${formatCHF(n(intFrom.shortA))} Zinsen`);
+                                        if (n(amortFrom?.shortA)) shortParts.push(`−${formatCHF(n(amortFrom.shortA))} Tilgung`);
+                                        if (n(coverFrom?.shortA)) shortParts.push(`−${formatCHF(n(coverFrom.shortA))} Defizitdeckung`);
+                                        return (
+                                          <div className="mt-3 rounded-lg border border-slate-800/80 bg-slate-900/30 p-2">
+                                            <div className="text-xs uppercase tracking-wide text-slate-400 mb-2">
+                                              Herleitung Aktiven
+                                            </div>
+                                            {liqParts.length > 0 && (
+                                              <div className="text-xs text-slate-300">
+                                                Liquidität ({fmtDelta(r._deltaBuckets.liq)}): {liqParts.join(", ")}
+                                              </div>
+                                            )}
+                                            {shortParts.length > 0 && (
+                                              <div className="mt-1 text-xs text-slate-300">
+                                                Kurzfristig ({fmtDelta(r._deltaBuckets.shortA)}): {shortParts.join(", ")}
+                                              </div>
+                                            )}
+                                          </div>
+                                        );
+                                      })()}
                                     </>
                                   )}
                                 </div>
                               </div>
 
                               <div className="mt-4 text-xs text-slate-500">
-                                Cashflow und Zinsen erklären die Eigenkapitalveränderung. Tilgung ist ein Transfer (Aktiven ↓, Schulden ↓) und wird neutral dargestellt; die Quelle wird aus den Asset-Bucket-Deltas inferiert.
+                                Cashflow und Zinsen erklären die Eigenkapitalveränderung. Tilgung ist ein Transfer (Aktiven ↓, Schulden ↓); Quellen werden aus den angegebenen Gegenkonten ermittelt. Wenn Liquidität nicht reicht, steigt der Überzug.
                               </div>
                             </>
                           );

@@ -186,29 +186,16 @@ export default function Step2Form({
 
 
   function ensureSourceForShortBuckets(p: DebtPosition): DebtPosition {
-    const b = bucketFromAvailability(p.availability);
     if (!defaultLiquidityAccountKey) return p;
 
     const cur = p.sourceAccountKey;
 
-    // Nur für LIQ/ST erzwingen
-    if (isShortBucket(b)) {
-      // wenn User bereits eine gültige Quelle gewählt hat -> NICHT überschreiben
-      if (cur && isValidSourceKey(cur)) return p;
+    // Immer: wenn keine gültige Quelle → Default = Liquidität (is_system Konto)
+    if (cur && isValidSourceKey(cur)) return p;
 
-      // sonst Default setzen
-      return cur !== defaultLiquidityAccountKey
-        ? { ...p, sourceAccountKey: defaultLiquidityAccountKey }
-        : p;
-    }
-
-    // Für LT/REAL: NICHT automatisch überschreiben (User soll wählen dürfen)
-    // Optional: Wenn du wenigstens "ungültig" bereinigen willst:
-    if (cur && !isValidSourceKey(cur)) {
-      return { ...p, sourceAccountKey: undefined };
-    }
-
-    return p;
+    return cur !== defaultLiquidityAccountKey
+      ? { ...p, sourceAccountKey: defaultLiquidityAccountKey }
+      : p;
   }
 
   function addPosition(bucket: Bucket) {
@@ -224,8 +211,8 @@ export default function Step2Form({
 
       interestRatePct: undefined,
 
-      // neu: Quelle/Gegenkonto (Bucket LIQ/ST = immer LIQ-Konto)
-      sourceAccountKey: isShortBucket(bucket) ? defaultLiquidityAccountKey : undefined,
+      // neu: Quelle/Gegenkonto = immer Liquidität (is_system Konto)
+      sourceAccountKey: defaultLiquidityAccountKey ?? undefined,
 
       amortizationPaChf: 0,
       notes: "",

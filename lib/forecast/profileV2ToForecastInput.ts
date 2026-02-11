@@ -182,7 +182,11 @@ function sumAssetCashflows(positions: Array<AssetDTO | DebtDTO>) {
 // Debts for forecast (positions)
 // -----------------------------
 function mapDebtsForForecast(positions: Array<AssetDTO | DebtDTO>): any[] {
-    const debts = positions.filter((p: any) => p.kind === "debt") as any[];
+    const debts = positions.filter((p: any) => p.kind === "debt" || String(p?.kind ?? "").startsWith("debt")) as any[];
+
+    const defaultLiqId = positions.some((p: any) => String(p?.id ?? p?.instrument_id) === "sys_liq_main")
+        ? "sys_liq_main"
+        : "liquidity";
 
     return debts.map((d) => {
         const principalToday = safeInt(d.valueCHF ?? d.balanceCHF ?? d.balance_chf ?? 0);
@@ -193,7 +197,7 @@ function mapDebtsForForecast(positions: Array<AssetDTO | DebtDTO>): any[] {
 
         // amortization object (DTO uses amountAnnualCHF in your mapper)
         const amortObj = (d as any).amortization as
-            | { type?: string; amountAnnualCHF?: number; amountAnnual?: number }
+            | { type?: string; amountAnnualCHF?: number; amountAnnual?: number; sourceInstrumentId?: string }
             | null
             | undefined;
 
@@ -204,7 +208,7 @@ function mapDebtsForForecast(positions: Array<AssetDTO | DebtDTO>): any[] {
         const amort = amortType === "direct" ? amortAnnual : 0;
 
         return {
-            id: (d as any).id,
+            id: (d as any).id ?? (d as any).instrument_id ?? (d as any).ui_id,
             label: (d as any).label,
             principalToday,
             annualInterestRate,
@@ -216,6 +220,10 @@ function mapDebtsForForecast(positions: Array<AssetDTO | DebtDTO>): any[] {
             availability: posAvailability(d),
 
             payoffImmediately: false,
+
+            // source accounts for payments (Phase 4)
+            interestSourceInstrumentId: (d as any).interestSourceInstrumentId ?? (d as any).interest_source_instrument_id ?? defaultLiqId,
+            amortizationSourceInstrumentId: amortObj?.sourceInstrumentId ?? (amortObj as any)?.source_instrument_id ?? defaultLiqId,
         };
     });
 }
@@ -291,6 +299,9 @@ export type ForecastInputWithStart = ForecastInput & {
 
     // optional debug
     positionsCount?: number;
+
+    /** Phase 4: positions for instrument-based payment sources */
+    positions?: Array<AssetDTO | DebtDTO>;
 };
 
 // -----------------------------
@@ -425,13 +436,16 @@ export function profileV2ToForecastInput(
         },
 
         assetCashflowToLiq: assetCF.toLiq,
-        assetCashflowReinvest: assetCF.reinvest,
+        assetCashflowReinvest: assetCF.reinvest, 
 
         liquidityToday,
         shortDebtToday,
         availabilityToday,
 
         positionsCount: positions.length,
+
+        // Phase 4: positions for instrument-based payment sources
+        positions,
 
         ...(overrides ?? {}),
     };

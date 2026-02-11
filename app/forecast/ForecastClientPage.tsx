@@ -9,24 +9,24 @@ import { loadPositions } from "@/lib/load/types";
 
 export default function ForecastClientPage() {
     const [rows, setRows] = useState<YearRow[]>([]);
+    const [positions, setPositions] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         async function run() {
             try {
-                const resp = await loadProfileV2();        // <- Wrapper
-                const profile = resp.profile;              // <- echtes ProfileV2 | null
-                const positions = await loadPositions(); // dein /positions API call
+                const resp = await loadProfileV2();
+                const profile = resp.profile;
+                const pos = await loadPositions();
 
                 if (!profile) {
-                    console.log("NO PROFILE");
                     setRows([]);
+                    setPositions([]);
                     return;
                 }
-                const out = computeForecastFromProfileV2(profile, positions);
-                const rows = (out as any).rows ?? [];
-
-                setRows(rows);
+                const out = computeForecastFromProfileV2(profile, pos);
+                setRows((out as any).rows ?? []);
+                setPositions(pos ?? []);
 
             } finally {
                 setLoading(false);
@@ -41,5 +41,5 @@ export default function ForecastClientPage() {
     }
 
 
-    return <ForecastTableNice rows={rows} />;
+    return <ForecastTableNice rows={rows} positions={positions} />;
 }

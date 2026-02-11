@@ -227,8 +227,13 @@ export function mapPositionDtosToSteps(positionDtos: PositionDTO[] | null | unde
         interestRatePct,
         amortizationPaChf,
         notes,
-      // NEW
-        sourceAccountKey: typeof d.source_account_key === "string" ? d.source_account_key : undefined,
+      // NEW: Quelle – wenn Backend leer, bleibt undefined → Step2Form setzt Default Liquidität
+        sourceAccountKey: (() => {
+          const raw = typeof d.source_account_key === "string" ? d.source_account_key : (d as any).interest_source_instrument_id;
+          if (!raw || !String(raw).trim()) return undefined;
+          const s = String(raw).trim();
+          return s.startsWith("asset:") ? s : `asset:${s}`;
+        })(),
         targetAccountKey: typeof d.target_account_key === "string" ? d.target_account_key : undefined,
         isSystem: !!(d.isSystem ?? d.is_system ?? isSystemAccountId(String(d.id ?? d.instrument_id ?? ""))),
       };

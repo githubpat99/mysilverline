@@ -52,6 +52,7 @@ type ForecastRow = {
   // NEW
   assetCashflowToLiq: number;
   assetCashflowReinvest: number;
+  assetCashflowReinvestBreakdown?: { shortA: number; longA: number; realA: number };
 
   // NEW: transfers (explicit, for UI)
   transferAmortFrom: { liq: number; shortA: number; longA: number; realA: number };
@@ -59,6 +60,12 @@ type ForecastRow = {
   coverDeficitFrom: { shortA: number; longA: number; realA: number };
   transferInterestFrom: { liq: number; shortA: number; longA: number; realA: number };
 
+  /** Phase 4: wenn Liquidität nicht reicht, Überzug erhöht */
+  overdraftAdded?: number;
+
+  /** Phase 5: pro Instrument (id → CHF) für UI-Labels */
+  transferInterestFromByInstrument?: Record<string, number>;
+  transferAmortFromByInstrument?: Record<string, number>;
 };
 
 // Assets/Debts buckets used by the UI
@@ -142,6 +149,86 @@ function payFromAssetsTracked(a: AssetBuckets, amountCHF: number): AssetDraw {
   draw("realA");
 
   return drawRec;
+}
+
+type BucketKey = "liq" | "shortA" | "longA" | "realA";
+
+/** instrumentId -> bucket (LIQ/ST/LT/REAL -> liq/shortA/longA/realA) */
+function buildInstrumentToBucket(positions: any[]): Map<string, BucketKey> {
+  const m = new Map<string, BucketKey>();
+  const ps = Array.isArray(positions) ? positions : [];
+  for (const p of ps) {
+    const id = String(p?.id ?? p?.instrument_id ?? p?.ui_id ?? "");
+    if (!id) continue;
+    const av = String(p?.availability ?? p?.bucket ?? "").toLowerCase();
+    const key: BucketKey =
+      av === "instant" ? "liq"
+      : av === "3m_3y" ? "shortA"
+      : av === "gt_3y" ? "longA"
+      : av === "locked" ? "realA"
+      : av === "short" ? "shortA"
+      : "liq";
+    if (p.kind === "asset" || String(p?.kind ?? "").startsWith("asset")) {
+      m.set(id, key);
+    }
+  }
+  // defaults for system accounts
+  if (!m.has("sys_liq_main")) m.set("sys_liq_main", "liq");
+  if (!m.has("liquidity")) m.set("liquidity", "liq");
+  return m;
+}
+
+type PayResult = { draw: AssetDraw; overdraftAdded: number };
+
+/**
+ * Pay amount from source bucket; if insufficient, add remainder to overdraft.
+ * sourceInstrumentId maps to bucket (default liq). Overdraft increases shortD via debtState.
+ */
+function payFromSourceWithOverdraft(
+  amountCHF: number,
+  sourceInstrumentId: string | null | undefined,
+  assets: AssetBuckets,
+  instrumentToBucket: Map<string, BucketKey>,
+  overdraftDebt: { id: string; principal: number } | null,
+  debtState: { id: string; principal: number }[]
+): PayResult {
+  const drawRec = emptyDraw();
+  let remaining = Math.max(0, Math.trunc(amountCHF));
+  if (remaining <= 0) return { draw: drawRec, overdraftAdded: 0 };
+
+  const defaultBucket: BucketKey = "liq";
+  const sourceBucket =
+    sourceInstrumentId && instrumentToBucket.has(sourceInstrumentId)
+      ? instrumentToBucket.get(sourceInstrumentId)!
+      : (sourceInstrumentId === "sys_liq_main" || sourceInstrumentId === "liquidity" ? "liq" : defaultBucket);
+
+  // Zinsen/Tilgung: NUR aus LIQ und Kurzfristig. Wenn beide leer → Überzug.
+  // Nie aus Langfristig oder Sachwerten (illiquide).
+  const order: BucketKey[] =
+    sourceBucket === "liq" ? ["liq", "shortA"]
+    : sourceBucket === "shortA" ? ["shortA", "liq"]
+    : sourceBucket === "longA" ? ["liq", "shortA"]
+    : ["liq", "shortA"];
+
+  for (const key of order) {
+    if (remaining <= 0) break;
+    const avail = Math.max(0, n(assets[key]));
+    const take = Math.min(avail, remaining);
+    if (take > 0) {
+      assets[key] = avail - take;
+      remaining -= take;
+      (drawRec as any)[key] += take;
+    }
+  }
+
+  let overdraftAdded = 0;
+  if (remaining > 0 && overdraftDebt) {
+    overdraftAdded = remaining;
+    const idx = debtState.findIndex((d) => d.id === overdraftDebt.id);
+    if (idx >= 0) debtState[idx].principal = n(debtState[idx].principal) + overdraftAdded;
+  }
+
+  return { draw: drawRec, overdraftAdded };
 }
 
 // cover negative liquidity by drawing down other asset buckets
@@ -238,8 +325,10 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
   type DebtState = {
     id: string;
     term: DebtTerm;
-    principal: number; // remaining principal
-    ratePct: number; // annual interest rate in percent, e.g. 2.5 (=2.5%), 0.1 (=10% per your current data)
+    principal: number;
+    ratePct: number;
+    interestSourceInstrumentId?: string;
+    amortizationSourceInstrumentId?: string;
   };
 
   const inferDebtTerm = (d: any): DebtTerm => {
@@ -280,12 +369,19 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
     return n(r, 0); // 0.1 => 10%
   };
 
+  const defaultLiqId = "sys_liq_main";
   const debtState: DebtState[] = (Array.isArray(debts) ? debts : []).map((d: any, idx: number) => ({
     id: String(d?.id ?? d?.ui_id ?? `debt_${idx}`),
     term: inferDebtTerm(d),
     principal: extractPrincipal(d),
-    ratePct: extractRateDecimal(d), // actually decimal rate
+    ratePct: extractRateDecimal(d),
+    interestSourceInstrumentId: d?.interestSourceInstrumentId ?? d?.interest_source_instrument_id ?? defaultLiqId,
+    amortizationSourceInstrumentId: d?.amortizationSourceInstrumentId ?? (d?.amortization as any)?.sourceInstrumentId ?? defaultLiqId,
   }));
+
+  const positions = (input as any).positions ?? [];
+  const instrumentToBucket = buildInstrumentToBucket(positions);
+  const overdraftDebt = debtState.find((d) => String(d.id) === "sys_overdraft" || String(d.id) === "debt") ?? null;
 
   const recomputeDebtBucketsFromState = () => {
     debtBuckets.shortD = Math.trunc(
@@ -310,16 +406,15 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
     return Math.trunc(sum);
   };
 
-  const applyAmortToState = (term: DebtTerm, amountCHF: number): number => {
+  /** Returns total paid and per-debt breakdown for source-based payment */
+  const applyAmortToStateWithBreakdown = (term: DebtTerm, amountCHF: number): { total: number; perDebt: { debtId: string; amount: number }[] } => {
     let remaining = Math.max(0, Math.trunc(amountCHF));
-    if (remaining <= 0) return 0;
+    const perDebt: { debtId: string; amount: number }[] = [];
 
-    // strategy: pay highest rate first (reduces future interest)
     const list = debtState
       .filter((d) => d.term === term && n(d.principal) > 0)
       .sort((a, b) => n(b.ratePct) - n(a.ratePct));
 
-    let paid = 0;
     for (const d of list) {
       if (remaining <= 0) break;
       const avail = Math.max(0, Math.trunc(n(d.principal)));
@@ -327,10 +422,10 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
       if (pay > 0) {
         d.principal = avail - pay;
         remaining -= pay;
-        paid += pay;
+        perDebt.push({ debtId: d.id, amount: pay });
       }
     }
-    return paid;
+    return { total: perDebt.reduce((s, x) => s + x.amount, 0), perDebt };
   };
 
   // keep a "net worth" for compatibility with previous logic
@@ -394,12 +489,6 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
     // amort plan etc. (schedule)
     const debtYear = applyDebtsDetailed({ debts });
 
-    if (t === 0) {
-      console.log("[FC] debts mapped", debts);
-      console.log("[FC] debtYear plan", debtYear);
-      console.log("[FC] debtState init", debtState);
-    }
-
     const eventResult = sumEventsForYearDetailed({
       events,
       baseYear,
@@ -413,8 +502,12 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
 
     const expensesTotal = n(expensesBase + eventsExpense);
 
-    // --- interest based on remaining principal at START of year ---
+    // --- interest based on remaining principal at START of year (before amort reduces it) ---
     const interest = computeInterestFromState();
+    const interestPerDebt = debtState.map((ds) => ({
+      id: ds.id,
+      amount: Math.trunc(Math.max(0, n(ds.principal)) * n(ds.ratePct)),
+    }));
 
     // totalExpenses excludes amort (amort is balance-sheet transfer)
     const totalExpenses = expensesTotal + interest;
@@ -424,16 +517,13 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
     const wantShort = Math.max(0, n(debtYear.amortShort));
     const wantLong = Math.max(0, n(debtYear.amortLong));
 
-    // keep split within total
     const plannedShort = Math.min(wantShort, amortTotalPlanned);
     const plannedLong = Math.min(wantLong, Math.max(0, amortTotalPlanned - plannedShort));
 
-    // apply amort to debtState (per term), capped by actual remaining principal
-    const paidShort = applyAmortToState("short", plannedShort);
-    const paidLong = applyAmortToState("long", plannedLong);
-    const actualAmort = Math.trunc(paidShort + paidLong);
+    const amortShortResult = applyAmortToStateWithBreakdown("short", plannedShort);
+    const amortLongResult = applyAmortToStateWithBreakdown("long", plannedLong);
+    const actualAmort = Math.trunc(amortShortResult.total + amortLongResult.total);
 
-    // sync bucket totals from state (avoid drift)
     if (debtState.length > 0) recomputeDebtBucketsFromState();
 
     // totals (ohne interest)
@@ -447,11 +537,52 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
     // falls LIQ < 0: decken (Rebalancing)
     const coverDraw = coverLiquidityDeficitTracked(assets);
 
-    // 2) Zinsen zahlen (tracked)
-    const interestDraw = payFromAssetsTracked(assets, interest);
+    // 2) Zinsen zahlen – pro Schuld aus angegebener Quelle; Fehlbetrag → Überzug (Phase 4)
+    // use interestPerDebt (principal at START of year), not mutated debtState
+    let interestDraw = emptyDraw();
+    let overdraftFromInterest = 0;
+    const interestByInstrument: Record<string, number> = {};
+    for (const { id, amount } of interestPerDebt) {
+      const amt = amount;
+      if (amt <= 0) continue;
+      const ds = debtState.find((d) => d.id === id);
+      if (!ds) continue;
+      const src = ds.interestSourceInstrumentId ?? defaultLiqId;
+      const res = payFromSourceWithOverdraft(amt, src, assets, instrumentToBucket, overdraftDebt, debtState);
+      interestDraw.liq += res.draw.liq;
+      interestDraw.shortA += res.draw.shortA;
+      interestDraw.longA += res.draw.longA;
+      interestDraw.realA += res.draw.realA;
+      overdraftFromInterest += res.overdraftAdded;
+      const paidFromAssets = amt - res.overdraftAdded;
+      if (paidFromAssets > 0) {
+        interestByInstrument[src] = (interestByInstrument[src] ?? 0) + paidFromAssets;
+      }
+    }
 
-    // 3) Tilgung zahlen (tracked) – debts wurden vorher reduziert
-    const amortDraw = payFromAssetsTracked(assets, actualAmort);
+    // 3) Tilgung zahlen – pro Schuld aus angegebener Quelle; Fehlbetrag → Überzug (Phase 4)
+    let amortDraw = emptyDraw();
+    let overdraftFromAmort = 0;
+    const amortByInstrument: Record<string, number> = {};
+    const amortItems = [...amortShortResult.perDebt, ...amortLongResult.perDebt];
+    for (const { debtId, amount } of amortItems) {
+      if (amount <= 0) continue;
+      const ds = debtState.find((d) => d.id === debtId);
+      const src = ds?.amortizationSourceInstrumentId ?? defaultLiqId;
+      const res = payFromSourceWithOverdraft(amount, src, assets, instrumentToBucket, overdraftDebt, debtState);
+      amortDraw.liq += res.draw.liq;
+      amortDraw.shortA += res.draw.shortA;
+      amortDraw.longA += res.draw.longA;
+      amortDraw.realA += res.draw.realA;
+      overdraftFromAmort += res.overdraftAdded;
+      const paidFromAssets = amount - res.overdraftAdded;
+      if (paidFromAssets > 0) {
+        amortByInstrument[src] = (amortByInstrument[src] ?? 0) + paidFromAssets;
+      }
+    }
+
+    const overdraftAdded = overdraftFromInterest + overdraftFromAmort;
+    if (debtState.length > 0) recomputeDebtBucketsFromState();
 
     // net (wie bisher) fürs Reporting:
     const net = n(incomeTotal - (expensesNoInterest + interest));
@@ -577,6 +708,11 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
 
       assetCashflowToLiq,
       assetCashflowReinvest: assetCashflowReinvestTotal,
+      assetCashflowReinvestBreakdown: {
+        shortA: n(assetCashflowReinvest.shortA),
+        longA: n(assetCashflowReinvest.longA),
+        realA: n(assetCashflowReinvest.realA),
+      },
 
       netFlow: net,
       assetCF,
@@ -598,6 +734,9 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
         longA: coverDraw.longA,
         realA: coverDraw.realA,
       },
+      overdraftAdded,
+      transferInterestFromByInstrument: Object.keys(interestByInstrument).length > 0 ? interestByInstrument : undefined,
+      transferAmortFromByInstrument: Object.keys(amortByInstrument).length > 0 ? amortByInstrument : undefined,
     });
   }
 

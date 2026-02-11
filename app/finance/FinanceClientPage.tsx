@@ -223,7 +223,7 @@ export default function FinanceClientPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50">
+    <main className=" bg-slate-950 text-slate-50">
       <div className="mx-auto max-w-6xl px-4 py-8">
 
         <div className="space-y-6">

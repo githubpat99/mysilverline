@@ -12,7 +12,7 @@ import type {
 } from "@/lib/types";
 import { Amount, InlineAmount } from "../Amount";
 import { FieldMoneyInt } from "../fields/FieldMoney";
-import { bucketFromAvailability, type Bucket } from "@/lib/forecast/buckets";
+import { bucketFromAvailability, bucketLabel, type Bucket } from "@/lib/forecast/buckets";
 import { Plus, X } from "lucide-react";
 
 type Step1Data = FormState["step1"];
@@ -33,8 +33,8 @@ function makeId() {
 
 const BUCKET_META: Record<Bucket, { title: string; subtitle: string; pill: string }> = {
   LIQ: { title: "Liquidität", subtitle: "Sicherheit", pill: "sofort" },
-  ST: { title: "Kurzfristige Anlagen", subtitle: "Parkieren", pill: "3M–3J" },
-  LT: { title: "Langfristige Anlagen", subtitle: "Wachstum", pill: "> 3 Jahre" },
+  ST: { title: "Kurzfristig", subtitle: "Parkieren", pill: "3 Monate – 3 Jahre" },
+  LT: { title: "Langfristig", subtitle: "Wachstum", pill: "> 3 Jahre" },
   REAL: { title: "Sachwerte", subtitle: "Substanz", pill: "gebunden" },
 };
 
@@ -275,7 +275,7 @@ export default function Step1Form({
       (() => {
         const id = keyId(nextKey);
         const opt = accountOptions.find((o) => o.kind === "asset" && o.id === id);
-        // erlaubt: self (intern) ODER Nicht-LIQ
+        // erlaubt: self (intern) ODER Nicht-Liquidität
         return nextKey === selfKey || opt?.bucket !== "LIQ";
       })();
 
@@ -378,6 +378,11 @@ export default function Step1Form({
     return "";
   }
 
+  function n(x: any) {
+    return typeof x === "number" && Number.isFinite(x) ? x : 0;
+  }
+
+
   return (
     <div>
       {/* Header (ohne Kachel) */}
@@ -392,20 +397,29 @@ export default function Step1Form({
             </div>
 
             <div className="text-right">
-              <div className="text-[11px] uppercase tracking-wide text-slate-400">Cashflow gesamt p.a. (CHF)</div>
+              <div className="text-[11px] uppercase tracking-wide text-slate-400">Cashflow p.a.</div>
               <div className="mt-1 text-lg font-semibold text-slate-50">
                 <InlineAmount value={cfTotal} />
               </div>
 
-              <div className="mt-3 text-[11px] uppercase tracking-wide text-slate-400">→ Liquidität p.a. (CHF)</div>
-              <div className="mt-1 text-base font-semibold text-slate-100">
-                <InlineAmount value={cfToLiq} />
-              </div>
-
-              <div className="mt-3 text-[11px] uppercase tracking-wide text-slate-400">→ Reinvest p.a. (CHF)</div>
-              <div className="mt-1 text-base font-semibold text-slate-100">
-                <InlineAmount value={Math.trunc(cfTotal - cfToLiq)} />
-              </div>
+              {n(cfToLiq) !== 0 && (
+                <div className="mt-3">
+                  <div className="text-[11px] uppercase tracking-wide text-slate-400">
+                    → Liquidität p.a.
+                  </div>
+                  <div className="mt-1 text-base font-semibold text-slate-100">
+                    <InlineAmount value={cfToLiq} />
+                  </div>
+                </div>
+              )}
+              {n(cfTotal - cfToLiq) !== 0 && (
+                <div className="mt-3">
+                  <div className="mt-3 text-[11px] uppercase tracking-wide text-slate-400">→ Reinvest p.a.</div>
+                  <div className="mt-1 text-base font-semibold text-slate-100">
+                    <InlineAmount value={Math.trunc(cfTotal - cfToLiq)} />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -429,35 +443,53 @@ export default function Step1Form({
               ].join(" ")}
             >
               <button type="button" onClick={() => openDetails(b)} className="block w-full text-left">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="text-sm font-semibold text-slate-100">{meta.title}</div>
-                    <div className="text-xs text-slate-400">{meta.subtitle}</div>
+                {/* Top row: left = Frist + Titel, right = Betrag + CHF */}
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    {/* Frist (wie Step2Form links oben) */}
+                    <div className="text-xs font-semibold text-slate-100">
+                      {meta.pill}
+                    </div>
+
+                    {/* Titel darunter */}
+                    <div className="mt-1 text-xs text-slate-400">
+                      {meta.title}
+                    </div>
                   </div>
-                  <span className="text-xs rounded-full border border-slate-700 px-2 py-1 text-slate-200">{meta.pill}</span>
+
+                  {/* Betrag rechts (wie Step2Form) */}
+                  <div className="min-w-0 text-right">
+                    <Amount value={t.totalValue} size="sm" align="right" />
+                    {/* Falls Amount bereits CHF anzeigt, kannst du diese Zeile weglassen.
+                      Wenn Amount nur die Zahl zeigt, dann CHF ergänzen: */}
+                    {/* <div className="text-xs text-slate-400">CHF</div> */}
+                  </div>
                 </div>
 
-                <div className="mt-3">
-                  <Amount value={t.totalValue} size="sm" align="left" />
+                {/* Cashflow rows */}
+                <div className="mt-4 space-y-2 text-sm">
+                  {n(t.cashflowLiq) !== 0 && (
+                    <div className="flex items-baseline justify-between gap-3">
+                      <span className="text-slate-500">→ Liquidität</span>
+                      <span className="text-slate-200 text-right">
+                        <InlineAmount value={t.cashflowLiq} />{" "}
+                      </span>
+                    </div>
+                  )}
+                  {n(t.cashflowReinvest) !== 0 && (
+                    <div className="flex items-baseline justify-between gap-3">
+                      <span className="text-slate-500">→ Reinvest</span>
+                      <span className="text-slate-200 text-right">
+                        <InlineAmount value={t.cashflowReinvest} />{" "}
+                      </span>
+                    </div>
+                  )}
                 </div>
-
-                <div className="mt-3 text-sm text-slate-400 space-y-1">
-                  <div>Cashflow p.a.</div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">→ Liquidität</span>
-                    <span className="text-slate-200">
-                      <InlineAmount value={t.cashflowLiq} />
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">→ Reinvest</span>
-                    <span className="text-slate-200">
-                      <InlineAmount value={t.cashflowReinvest} />
-                    </span>
-                  </div>
-                  <div className="pt-2 text-xs text-slate-500">Positionen: {t.positions}</div>
+                <div className="mt-4 text-xs text-slate-500">
+                  Positionen: {t.positions}
                 </div>
               </button>
+
             </div>
           );
         })}
@@ -481,6 +513,8 @@ export default function Step1Form({
               {/* Header bleibt fix */}
               <div className="flex items-start gap-4 border-b border-slate-800 p-4">
                 {/* Left: Title */}
+
+
                 <div className="min-w-0 flex-1">
                   <div className="font-semibold text-slate-100 truncate">
                     {BUCKET_META[activeBucket].title}.
@@ -566,21 +600,20 @@ export default function Step1Form({
                           </div>
 
                           <div>
-                            <label className="block text-xs text-slate-400 mb-1">AssetClass</label>
+                            <label className="block text-xs text-slate-400 mb-1">Typ</label>
                             <select
                               value={p.assetClass}
                               onChange={(e) => upsert(p.id, { assetClass: e.target.value as AssetClass })}
                               className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100"
                             >
-                              <option value="cash">cash</option>
-                              <option value="bank">bank</option>
-                              <option value="securities">securities</option>
-                              <option value="pension">pension</option>
-                              <option value="real_estate">real_estate</option>
-                              <option value="gold">gold</option>
-                              <option value="crypto">crypto</option>
-                              <option value="p2p">p2p</option>
-                              <option value="other">other</option>
+                              <option value="cash">Cash</option>
+                              <option value="bank">Bank</option>
+                              <option value="securities">Wertschriften</option>
+                              <option value="pension">Vorsorge</option>
+                              <option value="real_estate">Immobilien</option>
+                              <option value="gold">Gold</option>
+                              <option value="crypto">Kryptowährungen</option>
+                              <option value="other">Sonstiges</option>
                             </select>
                           </div>
 
@@ -615,7 +648,7 @@ export default function Step1Form({
                             <select
                               value={p.goal}
                               onChange={(e) => upsert(p.id, { goal: e.target.value as Goal })}
-                              className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100"
+                              className="w-full rounded-xl border border-slate-800 bg-slate-950 px-1 py-2 text-sm text-slate-100"
                             >
                               <option value="liq">liq</option>
                               <option value="reinvest">reinvest</option>
@@ -628,7 +661,7 @@ export default function Step1Form({
                               <select
                                 value={p.targetAccountKey ?? ""}
                                 onChange={(e) => upsert(p.id, { targetAccountKey: e.target.value || undefined })}
-                                className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100"
+                                className="w-full rounded-xl border border-slate-800 bg-slate-950 px-2 py-2 text-sm text-slate-100"
                               >
                                 <option value="">Gegenkonto wählen…</option>
                                 {counterOptionsFor(p).map((o) => (
@@ -684,13 +717,13 @@ export default function Step1Form({
                     <thead className="text-slate-400">
                       <tr className="border-b border-slate-800">
                         <th className="text-left py-2 px-3 w-[15%]">Bezeichnung</th>
-                        <th className="text-left py-2 px-3 w-[15%]">Typ</th>
+                        <th className="text-left py-2 px-3 w-[11%]">Typ</th>
                         <th className="text-left py-2 px-3 w-[12%]">Wert</th>
-                        <th className="text-left py-2 px-3 w-[8%]">Bucket</th>
+                        <th className="text-left py-2 px-3 w-[12%]">Verf.</th>
                         <th className="text-left py-2 px-3 w-[12%]">Cashflow</th>
-                        <th className="text-left py-2 px-3 w-[8%]">Ziel</th>
+                        <th className="text-left py-2 px-3 w-[12%]">Ziel</th>
                         <th className="text-left py-2 px-3 w-[15%]">Gegenkonto</th>
-                        <th className="text-left py-2 px-3 w-[15%]">Notiz</th>
+                        <th className="text-left py-2 px-3 w-[11%]">Notiz</th>
                         <th className="text-right py-2 w-[10%]"> </th>
                       </tr>
                     </thead>
@@ -723,15 +756,14 @@ export default function Step1Form({
                                 onChange={(e) => upsert(p.id, { assetClass: e.target.value as AssetClass })}
                                 className="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2"
                               >
-                                <option value="cash">cash</option>
-                                <option value="bank">bank</option>
-                                <option value="securities">securities</option>
-                                <option value="pension">pension</option>
-                                <option value="real_estate">real_estate</option>
-                                <option value="gold">gold</option>
-                                <option value="crypto">crypto</option>
-                                <option value="p2p">p2p</option>
-                                <option value="other">other</option>
+                                <option value="cash">Cash</option>
+                                <option value="bank">Bank</option>
+                                <option value="securities">Wertschriften</option>
+                                <option value="pension">Vorsorge</option>
+                                <option value="real_estate">Immobilien</option>
+                                <option value="gold">Gold</option>
+                                <option value="crypto">Kryptowährungen</option>
+                                <option value="other">Sonstiges</option>
                               </select>
                             </td>
 
@@ -743,7 +775,18 @@ export default function Step1Form({
                               />
                             </td>
 
-                            <td className="py-2 pr-3 text-slate-300">{bucketFromAvailability(p.availability)}</td>
+                            <td className="py-2 pr-3" >
+                              <select
+                                value={p.availability}
+                                onChange={(e) => upsert(p.id, { availability: e.target.value as Availability })}
+                                className="w-full rounded-xl border border-slate-800 bg-slate-950 px-1.5 py-2 text-sm text-slate-100"
+                              >
+                                <option value="instant">sofort</option>
+                                <option value="3m_3y">3M–3J</option>
+                                <option value="gt_3y">&gt; 3J</option>
+                                <option value="locked">gebunden</option>
+                              </select>
+                            </td>
 
                             <td className="py-2 pr-3">
                               <FieldMoneyInt
@@ -757,10 +800,10 @@ export default function Step1Form({
                               <select
                                 value={p.goal}
                                 onChange={(e) => upsert(p.id, { goal: e.target.value as Goal })}
-                                className="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2"
+                                className="w-full rounded-lg border border-slate-800 bg-slate-950 px-1.5 py-2"
                               >
-                                <option value="liq">liq</option>
-                                <option value="reinvest">reinvest</option>
+                                <option value="liq">Liquidität</option>
+                                <option value="reinvest">Reinvestition</option>
                               </select>
                             </td>
 
@@ -784,7 +827,7 @@ export default function Step1Form({
                                   {err && <div className="mt-1 text-xs text-amber-400/90">{err}</div>}
                                 </>
                               ) : (
-                                <div className="text-xs text-slate-500 italic">–</div>
+                                <div className="text-xs text-slate-500 italic"></div>
                               )}
                             </td>
 

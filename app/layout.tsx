@@ -13,7 +13,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="de">
       <body className="bg-slate-950 text-slate-50 antialiased">
         <Header />
-        <main className="min-h-screen">{children}</main>
+        <main>{children}</main>
       </body>
     </html>
   );

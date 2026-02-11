@@ -53,6 +53,12 @@ type ForecastRow = {
   assetCashflowToLiq: number;
   assetCashflowReinvest: number;
 
+  // NEW: transfers (explicit, for UI)
+  transferAmortFrom: { liq: number; shortA: number; longA: number; realA: number };
+  // optional: falls du Rebalancing separat zeigen willst
+  coverDeficitFrom: { shortA: number; longA: number; realA: number };
+  transferInterestFrom: { liq: number; shortA: number; longA: number; realA: number };
+
 };
 
 // Assets/Debts buckets used by the UI
@@ -71,6 +77,71 @@ function sumAssets(a: AssetBuckets): number {
 }
 function sumDebts(d: DebtBuckets): number {
   return n(d.shortD) + n(d.longD);
+}
+
+type AssetDraw = { liq: number; shortA: number; longA: number; realA: number };
+
+function emptyDraw(): AssetDraw {
+  return { liq: 0, shortA: 0, longA: 0, realA: 0 };
+}
+
+// deckt NUR ein negatives liq (Rebalancing), tracked die Quelle
+function coverLiquidityDeficitTracked(a: AssetBuckets): AssetDraw {
+  const drawRec = emptyDraw();
+  if (a.liq >= 0) return drawRec;
+
+  let deficit = -a.liq;
+
+  const draw = (key: keyof AssetBuckets) => {
+    if (deficit <= 0) return;
+    const avail = Math.max(0, n(a[key]));
+    const take = Math.min(avail, deficit);
+    if (take > 0) {
+      a[key] = avail - take;
+      deficit -= take;
+      a.liq += take;
+      (drawRec as any)[key] += take;
+    }
+  };
+
+  draw("shortA");
+  draw("longA");
+  draw("realA");
+  return drawRec;
+}
+
+// “Payment” aus Assets: zuerst LIQ, dann short/long/real; liq wird nie negativ
+function payFromAssetsTracked(a: AssetBuckets, amountCHF: number): AssetDraw {
+  const drawRec = emptyDraw();
+  let remaining = Math.max(0, Math.trunc(amountCHF));
+  if (remaining <= 0) return drawRec;
+
+  // 1) LIQ
+  const liqAvail = Math.max(0, n(a.liq));
+  const takeLiq = Math.min(liqAvail, remaining);
+  if (takeLiq > 0) {
+    a.liq = liqAvail - takeLiq;
+    remaining -= takeLiq;
+    drawRec.liq += takeLiq;
+  }
+
+  // 2) dann short/long/real
+  const draw = (key: keyof AssetBuckets) => {
+    if (remaining <= 0) return;
+    const avail = Math.max(0, n(a[key]));
+    const take = Math.min(avail, remaining);
+    if (take > 0) {
+      a[key] = avail - take;
+      remaining -= take;
+      (drawRec as any)[key] += take;
+    }
+  };
+
+  draw("shortA");
+  draw("longA");
+  draw("realA");
+
+  return drawRec;
 }
 
 // cover negative liquidity by drawing down other asset buckets
@@ -128,7 +199,7 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
 
     // NEW (optional, recommended): explicit buckets from profile mapping
     assetsToday, // { liq, shortA, longA, realA }
-    debtsToday,  // { shortD, longD }
+    debtsToday, // { shortD, longD }
   } = input as any;
 
   // ---- numeric guards ----
@@ -162,25 +233,128 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
     longD: n(debtsToday?.longD, 0),
   };
 
+  // ---------------- debt state (per debt, different rates inside buckets) ----------------
+  type DebtTerm = "short" | "long";
+  type DebtState = {
+    id: string;
+    term: DebtTerm;
+    principal: number; // remaining principal
+    ratePct: number; // annual interest rate in percent, e.g. 2.5 (=2.5%), 0.1 (=10% per your current data)
+  };
+
+  const inferDebtTerm = (d: any): DebtTerm => {
+    const term = String(d?.term ?? "").toLowerCase();
+    if (term === "short" || term === "long") return term as DebtTerm;
+
+    const av = String(d?.availability ?? d?.bucket ?? d?.termBucket ?? "").toLowerCase();
+    if (av.includes("instant") || av.includes("3m") || av.includes("short")) return "short";
+    if (av.includes("gt_3y") || av.includes("long")) return "long";
+    return "long";
+  };
+
+  const extractPrincipal = (d: any): number => {
+    const p =
+      d?.principalToday ??
+      d?.balance ??
+      d?.principal ??
+      d?.valueCHF ??
+      d?.value ??
+      d?.amount ??
+      d?.chf ??
+      0;
+    return Math.trunc(n(p, 0));
+  };
+
+  // IMPORTANT: keep CURRENT semantics:
+  // - your interest rate is stored as a decimal rate (0.1 means 10%) in the debt objects (as seen in logs)
+  // - but users might enter 2.5 meaning 2.5% (=> 0.025) in the UI, and that should already be converted upstream.
+  // Therefore: treat the stored value as DECIMAL RATE (0.1 => 10%) and DO NOT divide by 100 here.
+  const extractRateDecimal = (d: any): number => {
+    const r =
+      d?.annualInterestRate ??
+      d?.interestRate ??
+      d?.interestRatePct ??
+      d?.rate ??
+      d?.ratePct ??
+      0;
+    return n(r, 0); // 0.1 => 10%
+  };
+
+  const debtState: DebtState[] = (Array.isArray(debts) ? debts : []).map((d: any, idx: number) => ({
+    id: String(d?.id ?? d?.ui_id ?? `debt_${idx}`),
+    term: inferDebtTerm(d),
+    principal: extractPrincipal(d),
+    ratePct: extractRateDecimal(d), // actually decimal rate
+  }));
+
+  const recomputeDebtBucketsFromState = () => {
+    debtBuckets.shortD = Math.trunc(
+      debtState.filter((x) => x.term === "short").reduce((s, x) => s + n(x.principal), 0)
+    );
+    debtBuckets.longD = Math.trunc(
+      debtState.filter((x) => x.term === "long").reduce((s, x) => s + n(x.principal), 0)
+    );
+  };
+
+  if (debtState.length > 0) recomputeDebtBucketsFromState();
+
+  const computeInterestFromState = (): number => {
+    // interest based on principal at BEGINNING of year
+    // ratePct is actually a DECIMAL RATE here (0.1 => 10%), matching your current debt objects
+    let sum = 0;
+    for (const ds of debtState) {
+      const principal = Math.max(0, n(ds.principal));
+      const r = n(ds.ratePct); // decimal rate
+      sum += principal * r;
+    }
+    return Math.trunc(sum);
+  };
+
+  const applyAmortToState = (term: DebtTerm, amountCHF: number): number => {
+    let remaining = Math.max(0, Math.trunc(amountCHF));
+    if (remaining <= 0) return 0;
+
+    // strategy: pay highest rate first (reduces future interest)
+    const list = debtState
+      .filter((d) => d.term === term && n(d.principal) > 0)
+      .sort((a, b) => n(b.ratePct) - n(a.ratePct));
+
+    let paid = 0;
+    for (const d of list) {
+      if (remaining <= 0) break;
+      const avail = Math.max(0, Math.trunc(n(d.principal)));
+      const pay = Math.min(avail, remaining);
+      if (pay > 0) {
+        d.principal = avail - pay;
+        remaining -= pay;
+        paid += pay;
+      }
+    }
+    return paid;
+  };
+
   // keep a "net worth" for compatibility with previous logic
   let wealth = Math.trunc(sumAssets(assets) - sumDebts(debtBuckets));
 
   const points: ForecastPoint[] = [];
   const breakdowns: YearBreakdown[] = [];
-
-  // rows for ForecastTableNice (added property; returned via `as any` to avoid type churn)
   const rows: ForecastRow[] = [];
-
 
   for (let t = 0; t <= horizonYears; t++) {
     const age = selfAgeTodayN + t;
-    const year = n(baseYear, 0) > 0 ? n(baseYear) + t : (input as any)?.meta?.startYear
-      ? n((input as any).meta.startYear) + t
-      : (n((input as any).startYear, 0) > 0 ? n((input as any).startYear) + t : 0);
+    const year =
+      n(baseYear, 0) > 0
+        ? n(baseYear) + t
+        : (input as any)?.meta?.startYear
+          ? n((input as any).meta.startYear) + t
+          : n((input as any).startYear, 0) > 0
+            ? n((input as any).startYear) + t
+            : 0;
 
     // snapshot start states
     const assetsStart = cloneAssets(assets);
     const debtsStart = cloneDebts(debtBuckets);
+
     const assetCashflowToLiq = n((input as any).assetCashflowToLiq, 0);
     const assetCashflowReinvest =
       ((input as any).assetCashflowReinvest as { shortA: number; longA: number; realA: number }) ?? {
@@ -190,7 +364,6 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
       };
     const assetCashflowReinvestTotal =
       n(assetCashflowReinvest.shortA) + n(assetCashflowReinvest.longA) + n(assetCashflowReinvest.realA);
-
 
     const wealthStart = wealth;
 
@@ -218,15 +391,14 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
       })
     );
 
+    // amort plan etc. (schedule)
     const debtYear = applyDebtsDetailed({ debts });
 
     if (t === 0) {
       console.log("[FC] debts mapped", debts);
-      console.log("[FC] debtYear", debtYear);
+      console.log("[FC] debtYear plan", debtYear);
+      console.log("[FC] debtState init", debtState);
     }
-
-
-
 
     const eventResult = sumEventsForYearDetailed({
       events,
@@ -239,54 +411,56 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
     const eventsExpense = n(eventResult.expenseCHF);
     const eventsNet = eventsIncome - eventsExpense;
 
-
     const expensesTotal = n(expensesBase + eventsExpense);
-    const totalExpenses =
-      expensesTotal +
-      debtYear.interest +
-      debtYear.amort;
 
-    const amortTotal = Math.max(0, n(debtYear.amort));
+    // --- interest based on remaining principal at START of year ---
+    const interest = computeInterestFromState();
+
+    // totalExpenses excludes amort (amort is balance-sheet transfer)
+    const totalExpenses = expensesTotal + interest;
+
+    // --- planned amort split (cap via state) ---
+    const amortTotalPlanned = Math.max(0, n(debtYear.amort));
     const wantShort = Math.max(0, n(debtYear.amortShort));
     const wantLong = Math.max(0, n(debtYear.amortLong));
 
-    const payShort = Math.min(n(debtBuckets.shortD), Math.min(wantShort, amortTotal));
-    const remaining = Math.max(0, amortTotal - payShort);
-    const payLong = Math.min(n(debtBuckets.longD), Math.min(wantLong, remaining));
+    // keep split within total
+    const plannedShort = Math.min(wantShort, amortTotalPlanned);
+    const plannedLong = Math.min(wantLong, Math.max(0, amortTotalPlanned - plannedShort));
 
-    debtBuckets.shortD = Math.max(0, n(debtBuckets.shortD) - payShort);
-    debtBuckets.longD = Math.max(0, n(debtBuckets.longD) - payLong);
+    // apply amort to debtState (per term), capped by actual remaining principal
+    const paidShort = applyAmortToState("short", plannedShort);
+    const paidLong = applyAmortToState("long", plannedLong);
+    const actualAmort = Math.trunc(paidShort + paidLong);
 
+    // sync bucket totals from state (avoid drift)
+    if (debtState.length > 0) recomputeDebtBucketsFromState();
 
-
-    if (t === 0) console.log("[FC] debtYear after map", debtYear);
-
-
-    // Reinvest erhöht Asset-Buckets (nicht LIQ)
-    assets.shortA = n(assets.shortA) + n(assetCashflowReinvest.shortA);
-    assets.longA = n(assets.longA) + n(assetCashflowReinvest.longA);
-    assets.realA = n(assets.realA) + n(assetCashflowReinvest.realA);
-
-    // To LIQ ist Income (geht in net)
+    // totals (ohne interest)
+    const expensesNoInterest = expensesTotal; // base+events (ohne interest)
     const incomeTotal = n(incomeBase + eventsIncome + assetCashflowToLiq);
 
+    // 1) Income/Expenses (ohne interest) -> LIQ
+    const netNoInterest = n(incomeTotal - expensesNoInterest);
+    assets.liq = n(assets.liq) + netNoInterest;
 
-    const net = n(incomeTotal - totalExpenses);
+    // falls LIQ < 0: decken (Rebalancing)
+    const coverDraw = coverLiquidityDeficitTracked(assets);
 
-    // ---- cashflow routing ----
-    // default: all net flow hits liquidity
-    assets.liq = n(assets.liq) + net;
+    // 2) Zinsen zahlen (tracked)
+    const interestDraw = payFromAssetsTracked(assets, interest);
 
-    // if liquidity < 0: fund it from short/long/real
-    coverLiquidityDeficit(assets);
+    // 3) Tilgung zahlen (tracked) – debts wurden vorher reduziert
+    const amortDraw = payFromAssetsTracked(assets, actualAmort);
+
+    // net (wie bisher) fürs Reporting:
+    const net = n(incomeTotal - (expensesNoInterest + interest));
 
     // ---- asset return (apply to invested/locked buckets) ----
-    // 1) Reinvest addieren (wie jetzt)
     assets.shortA += n(assetCashflowReinvest.shortA);
     assets.longA += n(assetCashflowReinvest.longA);
     assets.realA += n(assetCashflowReinvest.realA);
 
-    // 2) Rendite nur auf Basis NACH Reinvest rechnen, aber assetCF als reiner Rendite-Effekt:
     const investBeforeReturn = n(assets.shortA) + n(assets.longA) + n(assets.realA);
 
     assets.shortA = Math.trunc(n(assets.shortA) * (1 + g));
@@ -294,8 +468,7 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
     assets.realA = Math.trunc(n(assets.realA) * (1 + g));
 
     const investAfterReturn = n(assets.shortA) + n(assets.longA) + n(assets.realA);
-    const assetCF = investAfterReturn - investBeforeReturn; // jetzt wirklich “Rendite”
-
+    const assetCF = investAfterReturn - investBeforeReturn;
 
     // ---- recompute wealth ----
     wealth = Math.trunc(sumAssets(assets) - sumDebts(debtBuckets));
@@ -332,7 +505,7 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
 
     const debtLines = buildDebtLines({
       debts,
-      totalCHF: debtYear.interest, // Lines zeigen Zinsen (wie bisher)
+      totalCHF: interest,
     }).lines;
 
     // ---- points (keep compatible shape) ----
@@ -355,19 +528,16 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
       debts: debtLines,
       totals: {
         income: incomeTotal,
-        expenses: expensesTotal, // base+events (without debt interest)
-        debts: debtYear.interest, // Zinsen
-        debtsAmort: debtYear.amort, // neu (optional, aber sinnvoll)
+        expenses: expensesTotal, // base+events (without interest)
+        debts: interest,
+        debtsAmort: actualAmort,
         net,
         eventsIncome,
         eventsExpense,
         eventsNet,
         assetCF,
         assetCashflowToLiq,
-        assetCashflowReinvest:
-          n(assetCashflowReinvest.shortA) +
-          n(assetCashflowReinvest.longA) +
-          n(assetCashflowReinvest.realA),
+        assetCashflowReinvest: assetCashflowReinvestTotal,
       } as any,
       events: {
         incomeLines: eventResult.incomeLines,
@@ -402,8 +572,8 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
         longD: n(debtsStart.longD),
       },
 
-      debtInterest: debtYear.interest,
-      debtAmort: debtYear.amort,
+      debtInterest: interest,
+      debtAmort: actualAmort,
 
       assetCashflowToLiq,
       assetCashflowReinvest: assetCashflowReinvestTotal,
@@ -411,8 +581,24 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
       netFlow: net,
       assetCF,
       events: eventsNet,
+      transferInterestFrom: {
+        liq: interestDraw.liq,
+        shortA: interestDraw.shortA,
+        longA: interestDraw.longA,
+        realA: interestDraw.realA,
+      },
+      transferAmortFrom: {
+        liq: amortDraw.liq,
+        shortA: amortDraw.shortA,
+        longA: amortDraw.longA,
+        realA: amortDraw.realA,
+      },
+      coverDeficitFrom: {
+        shortA: coverDraw.shortA,
+        longA: coverDraw.longA,
+        realA: coverDraw.realA,
+      },
     });
-
   }
 
   return { points, breakdowns, rows } as any;

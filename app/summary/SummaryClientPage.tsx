@@ -1,3 +1,4 @@
+// app/summary/page.tsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -16,8 +17,25 @@ type Item = {
   term: Term;
 };
 
+// Minimal-DTO (robust; wir nehmen nur Felder, die wir wirklich brauchen)
+type PositionDTO = {
+  id?: string;
+  kind: "asset" | "debt";
+  label?: string | null;
+  bucket?: string | null;
+
+  // assets
+  assetType?: string | null;
+  valueCHF?: number | string | null;
+
+  // debts
+  debtType?: string | null;
+  // je nach Version: valueCHF oder balanceCHF / balance
+  balanceCHF?: number | string | null;
+  balance?: number | string | null;
+};
+
 function toNumberCHF(v: unknown): number {
-  // MoneySchema bei dir: kommt i.d.R. als number ODER string rein – wir machen beides robust
   if (typeof v === "number") return Number.isFinite(v) ? v : 0;
   if (typeof v === "string") {
     const n = Number(v.replace(/[^0-9.-]/g, "").replace(/,/g, "."));
@@ -33,29 +51,123 @@ function toNumberCHF(v: unknown): number {
   return 0;
 }
 
-// ✅ Dein gewünschtes Bilanz-Layout (Kurz/Lang) ergibt sich hier:
-function assetTerm(assetType: "cash" | "bank" | "securities" | "other"): Term {
-  // In deinem alten Summary war "otherInvest" langfristig.
-  // cash/bank/securities = kurzfristig, other = langfristig
-  return assetType === "other" ? "long" : "short";
+function norm(s: unknown): string {
+  return String(s ?? "").trim().toLowerCase();
 }
 
-function debtTerm(
-  debtType:
-    | "mortgage"
-    | "consumer"
-    | "creditcard"
-    | "other"
-    | "other_short"
-    | "loan"
-    | "other_long"
-): Term {
-  // alt: Kurz: creditcard, consumerLoan, otherShort
-  //      Lang: mortgage, loan, otherLong
-  if (debtType === "mortgage" || debtType === "loan" || debtType === "other_long") return "long";
-  if (debtType === "creditcard" || debtType === "consumer" || debtType === "other_short") return "short";
-  // "other" ist unklar → ich setze es auf short, damit es eher im Kurzblock auftaucht
+function termFromBucket(bucket: unknown): Term | null {
+  const b = norm(bucket);
+
+  // Assets: instant/liq/short => short, long/real => long
+  if (
+    b === "instant" ||
+    b === "liq" ||
+    b === "liquidity" ||
+    b === "short" ||
+    b === "shorta" ||
+    b === "st" ||
+    b === "lt_3y" ||
+    b === "3m_3y"
+  ) {
+    return "short";
+  }
+  if (
+    b === "long" ||
+    b === "longa" ||
+    b === "lt" ||
+    b === "gt_3y" ||
+    b === "real" ||
+    b === "reala" ||
+    b === "real_estate" ||
+    b === "realestate"
+  ) {
+    return "long";
+  }
+
+  // Debts (falls ihr bucket so heisst)
+  if (b === "shortd") return "short";
+  if (b === "longd") return "long";
+
+  return null;
+}
+
+function assetTerm(assetType: unknown, bucket: unknown): Term {
+  // zuerst bucket (wenn vorhanden, ist das bei dir die sauberste Quelle)
+  const tb = termFromBucket(bucket);
+  if (tb) return tb;
+
+  // Fallback: alte Logik (cash/bank/securities = short, other = long)
+  const t = norm(assetType);
+  if (t === "other" || t === "otherinvest" || t === "investment" || t === "real_estate") return "long";
   return "short";
+}
+
+function debtTerm(debtType: unknown, bucket: unknown): Term {
+  const tb = termFromBucket(bucket);
+  if (tb) return tb;
+
+  const t = norm(debtType);
+  // alt: Lang: mortgage, loan, other_long
+  if (t === "mortgage" || t === "loan" || t === "other_long") return "long";
+  // Kurz: creditcard, consumer, other_short
+  if (t === "creditcard" || t === "consumer" || t === "other_short") return "short";
+
+  return "short";
+}
+
+function getNonce(): string | null {
+  // je nachdem wie du es speicherst – wir versuchen mehrere Keys
+  const keys = ["sl_nonce", "silverline_nonce", "nonce"];
+  for (const k of keys) {
+    const v = typeof window !== "undefined" ? window.sessionStorage.getItem(k) : null;
+    if (v && v.length > 10) return v;
+  }
+  return null;
+}
+
+async function loadPositionsV2(): Promise<PositionDTO[]> {
+  const nonce = getNonce();
+
+  // probiere beide URL-Varianten (je nach Deployment / Rewrites)
+  const urls = ["/api/silverline/v1/positions", "/wp-json/silverline/v1/positions"];
+
+  let lastErr: unknown = null;
+
+  for (const url of urls) {
+    try {
+      const res = await fetch(url, {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          ...(nonce ? { "X-SL-Nonce": nonce } : {}),
+          Accept: "application/json",
+        },
+      });
+
+      if (!res.ok) throw new Error(`GET ${url} -> ${res.status}`);
+
+      const data = await res.json();
+
+      // unwrap: { positions: [...] } oder { data: { positions: [...] } } oder direkt [...]
+      const positions =
+        (data && (data.positions as any)) ??
+        (data && (data.data?.positions as any)) ??
+        (data && (data.profile?.positions as any)) ??
+        data;
+
+      if (Array.isArray(positions)) return positions as PositionDTO[];
+
+      // manchmal: { ok: true, positions: [...] }
+      if (positions && Array.isArray((positions as any).positions)) return (positions as any).positions;
+
+      return [];
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+
+  // wenn gar nichts ging: Fehler weiterwerfen, damit UI "nicht eingeloggt / keine Daten" zeigt
+  throw lastErr ?? new Error("positions load failed");
 }
 
 export default function SummaryPage() {
@@ -65,45 +177,70 @@ export default function SummaryPage() {
   useEffect(() => {
     (async () => {
       try {
-        const r = await loadProfileV2();
-        const p = (r as any)?.profile ?? r;     // ✅ unwrap
-        const instruments = (p as any)?.instruments ?? [];
-        if (!p) {
+        // wichtig: triggert bei dir i.d.R. Nonce/Session-Setup (und Login-Check)
+        // wir brauchen das Ergebnis hier nicht zwingend, aber es stabilisiert Auth.
+        try {
+          await loadProfileV2();
+        } catch {
+          // egal – positions kann trotzdem gehen (Cookie-Fallback)
+        }
+
+        const positions = await loadPositionsV2();
+
+        if (!positions) {
           setItems(null);
           return;
         }
 
-        const mapped: Item[] = instruments.map((ins: any) => {
-          if (ins.kind === "asset") {
+        const mapped: Item[] = positions.map((p) => {
+          const label = String(p.label ?? "Unbenannt");
+
+          if (p.kind === "asset") {
             return {
               kind: "asset",
-              label: String(ins.label ?? "Unbenannt"),
-              value: toNumberCHF(ins.value),
-              term: assetTerm(ins.assetType),
+              label,
+              value: toNumberCHF(p.valueCHF),
+              term: assetTerm(p.assetType, p.bucket),
             };
           }
 
-          // debt
+          // debt: je nach API-Version valueCHF oder balanceCHF/balance
+          const debtValue =
+            p.balanceCHF ?? p.balance ?? (p as any).valueCHF ?? (p as any).principalCHF ?? (p as any).principal;
+
           return {
             kind: "debt",
-            label: String(ins.label ?? "Unbenannt"),
-            value: toNumberCHF(ins.balance),
-            term: debtTerm(ins.debtType),
+            label,
+            value: toNumberCHF(debtValue),
+            term: debtTerm(p.debtType, p.bucket),
           };
         });
 
-        // optional: 0-Werte raus
         setItems(mapped.filter((x) => Math.abs(x.value) > 0.0001));
+      } catch {
+        setItems(null);
       } finally {
         setLoading(false);
       }
     })();
   }, []);
 
-  const aktivenKurz = useMemo(() => (items ?? []).filter((x) => x.kind === "asset" && x.term === "short"), [items]);
-  const aktivenLang = useMemo(() => (items ?? []).filter((x) => x.kind === "asset" && x.term === "long"), [items]);
-  const passivKurz = useMemo(() => (items ?? []).filter((x) => x.kind === "debt" && x.term === "short"), [items]);
-  const passivLang = useMemo(() => (items ?? []).filter((x) => x.kind === "debt" && x.term === "long"), [items]);
+  const aktivenKurz = useMemo(
+    () => (items ?? []).filter((x) => x.kind === "asset" && x.term === "short"),
+    [items]
+  );
+  const aktivenLang = useMemo(
+    () => (items ?? []).filter((x) => x.kind === "asset" && x.term === "long"),
+    [items]
+  );
+  const passivKurz = useMemo(
+    () => (items ?? []).filter((x) => x.kind === "debt" && x.term === "short"),
+    [items]
+  );
+  const passivLang = useMemo(
+    () => (items ?? []).filter((x) => x.kind === "debt" && x.term === "long"),
+    [items]
+  );
 
   const sum = (arr: Item[]) => arr.reduce((acc, x) => acc + (Number.isFinite(x.value) ? x.value : 0), 0);
 
@@ -143,14 +280,14 @@ export default function SummaryPage() {
             <p className="text-lg text-green-300 mt-1 mb-6">Total: {formatCHF(aktivenTotal)}</p>
 
             <Section title="Kurzfristig">
-              {aktivenKurz.map((item) => (
-                <Row key={`${item.kind}-${item.label}`} label={item.label} value={item.value} color="green" />
+              {aktivenKurz.map((item, idx) => (
+                <Row key={`${item.kind}-${item.label}-${idx}`} label={item.label} value={item.value} color="green" />
               ))}
             </Section>
 
             <Section title="Langfristig">
-              {aktivenLang.map((item) => (
-                <Row key={`${item.kind}-${item.label}`} label={item.label} value={item.value} color="green" />
+              {aktivenLang.map((item, idx) => (
+                <Row key={`${item.kind}-${item.label}-${idx}`} label={item.label} value={item.value} color="green" />
               ))}
             </Section>
           </div>
@@ -160,14 +297,14 @@ export default function SummaryPage() {
             <p className="text-lg text-red-300 mt-1 mb-6">Total: {formatCHF(passivenTotal)}</p>
 
             <Section title="Kurzfristig">
-              {passivKurz.map((item) => (
-                <Row key={`${item.kind}-${item.label}`} label={item.label} value={item.value} color="red" />
+              {passivKurz.map((item, idx) => (
+                <Row key={`${item.kind}-${item.label}-${idx}`} label={item.label} value={item.value} color="red" />
               ))}
             </Section>
 
             <Section title="Langfristig">
-              {passivLang.map((item) => (
-                <Row key={`${item.kind}-${item.label}`} label={item.label} value={item.value} color="red" />
+              {passivLang.map((item, idx) => (
+                <Row key={`${item.kind}-${item.label}-${idx}`} label={item.label} value={item.value} color="red" />
               ))}
             </Section>
           </div>

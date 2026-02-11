@@ -8,7 +8,7 @@ export function FieldMoney({
   suffix,
   value,
   onChange,
-  placeholder = "z.B. 8'500",
+  placeholder = "z.B. 850",
 }: {
   label: string;
   suffix?: string;

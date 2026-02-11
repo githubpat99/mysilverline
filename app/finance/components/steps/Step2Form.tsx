@@ -6,7 +6,7 @@ import type { FormState, DebtPosition, AssetPosition } from "@/lib/types";
 import { FieldMoneyInt } from "../fields/FieldMoney";
 import { Amount, InlineAmount } from "../Amount";
 import { bucketFromAvailability, availabilityFromBucket } from "@/lib/forecast/buckets";
-import type { Bucket } from "@/lib/forecast/buckets";
+import type { Availability, Bucket } from "@/lib/forecast/buckets";
 import { Plus, X } from "lucide-react";
 
 /**
@@ -28,8 +28,8 @@ const buckets: Bucket[] = ["LIQ", "ST", "LT", "REAL"];
 
 const BUCKET_META: Record<Bucket, { title: string; subtitle: string; hint: string }> = {
   LIQ: { title: "Sofort", subtitle: "kurz fällig", hint: "z.B. Kreditkarte, offene Rechnungen" },
-  ST: { title: "3m–3y", subtitle: "mittelfristig", hint: "z.B. Konsumkredit, kurzfristige Darlehen" },
-  LT: { title: ">3y", subtitle: "langfristig", hint: "z.B. Hypothek, langfristige Darlehen" },
+  ST: { title: "3 Monate – 3 Jahre", subtitle: "mittelfristig", hint: "z.B. Konsumkredit, kurzfristige Darlehen" },
+  LT: { title: "> 3 Jahre", subtitle: "langfristig", hint: "z.B. Hypothek, langfristige Darlehen" },
   REAL: { title: "Gebunden", subtitle: "nicht disponibel", hint: "z.B. verpfändet/gebunden (falls relevant)" },
 };
 
@@ -362,8 +362,6 @@ export default function Step2Form({
                   <div className="text-xs text-slate-400">Positionen: {count}</div>
                 </div>
               </div>
-
-              <div className="mt-3 text-xs text-slate-500">Klick für Details</div>
             </div>
           );
         })}
@@ -378,7 +376,7 @@ export default function Step2Form({
             onClick={closeModal}
           />
 
-           {/*panel */}
+          {/*panel */}
           <div
             className={[
               "rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl max-h-[calc(100vh-3rem)] flex flex-col overflow-hidden",
@@ -483,11 +481,26 @@ export default function Step2Form({
                             </select>
                           </div>
 
+
                           <FieldMoneyInt
-                            label="Saldo"
+                            label="Wert"
                             valueChf={it.balanceChf}
                             onChangeChf={(n) => updatePosition(it.id, { balanceChf: n })}
                           />
+
+                          <div>
+                            <label className="block text-xs text-slate-400 mb-1">Verfügbarkeit</label>
+                            <select
+                              value={it.availability}
+                              onChange={(e) => updatePosition(it.id, { availability: e.target.value as Availability })}
+                              className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100"
+                            >
+                              <option value="instant">sofort</option>
+                              <option value="3m_3y">3M–3J</option>
+                              <option value="gt_3y">&gt; 3J</option>
+                              <option value="locked">gebunden</option>
+                            </select>
+                          </div>
 
                           <div>
                             <label className="block text-xs text-slate-400 mb-1">%</label>
@@ -570,13 +583,13 @@ export default function Step2Form({
                     <thead className="text-slate-400">
                       <tr className="border-b border-slate-800">
                         <th className="text-left py-2 px-3 w-[15%]">Bezeichnung</th>
-                        <th className="text-left py-2 px-3 w-[15%]">Typ</th>
+                        <th className="text-left py-2 px-3 w-[11%]">Typ</th>
                         <th className="text-left py-2 px-3 w-[12%]">Wert</th>
-                        <th className="text-left py-2 px-3 w-[8%]">Bucket</th>
-                        <th className="text-left py-2 px-3 w-[12%]">Amort. p.a.</th>
-                        <th className="text-left py-2 px-3 w-[8%]">%</th>
+                        <th className="text-left py-2 px-3 w-[12%]">Verf.</th>
+                        <th className="text-left py-2 px-3 w-[12%]">Amort.</th>
+                        <th className="text-left py-2 px-3 w-[10%]">%</th>
                         <th className="text-left py-2 px-3 w-[15%]">Quelle</th>
-                        <th className="text-left py-2 px-3 w-[15%]">Notiz</th>
+                        <th className="text-left py-2 px-3 w-[13%]">Notiz</th>
                         <th className="text-right py-2 w-[10%]"> </th>
                       </tr>
                     </thead>
@@ -612,7 +625,7 @@ export default function Step2Form({
                               <select
                                 value={it.debtType}
                                 onChange={(e) => updatePosition(it.id, { debtType: e.target.value as DebtType })}
-                                className="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2"
+                                className="w-full rounded-lg border border-slate-800 bg-slate-950 px-1.5 py-2"
                               >
                                 <option value="mortgage">{typeLabel("mortgage")}</option>
                                 <option value="loan">{typeLabel("loan")}</option>
@@ -633,7 +646,16 @@ export default function Step2Form({
 
                             {/* Bucket (read-only, aus availability) */}
                             <td className="py-2 pr-3 text-slate-300">
-                              {bucketFromAvailability(it.availability)}
+                              <select
+                                value={it.availability}
+                                onChange={(e) => updatePosition(it.id, { availability: e.target.value as Availability })}
+                                className="w-full rounded-xl border border-slate-800 bg-slate-950 px-1.5 py-2 text-sm text-slate-100"
+                              >
+                                <option value="instant">sofort</option>
+                                <option value="3m_3y">3M–3J</option>
+                                <option value="gt_3y">&gt; 3J</option>
+                                <option value="locked">gebunden</option>
+                              </select>
                             </td>
 
                             {/* Amortisation p.a. */}
@@ -665,7 +687,7 @@ export default function Step2Form({
                                     interestRatePct: typeof n === "number" && Number.isFinite(n) ? n : undefined,
                                   });
                                 }}
-                                className="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-right"
+                                className="w-full rounded-lg border border-slate-800 bg-slate-950 px-1.5 py-2 text-right"
                                 placeholder="1.80"
                               />
                             </td>

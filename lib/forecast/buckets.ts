@@ -27,3 +27,18 @@ export function availabilityFromBucket(b: Bucket): Availability {
       return "locked";
   }
 }
+
+export function bucketLabel(b: Bucket): string {
+  switch (b) {
+    case "LIQ":
+      return "Liquidität";
+    case "ST":
+      return "Kurzfristig";
+    case "LT":
+      return "Langfristig";
+    case "REAL":
+      return "Sachwerte";
+    default:
+      return b;
+  }
+}

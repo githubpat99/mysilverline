@@ -435,7 +435,7 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
   const breakdowns: YearBreakdown[] = [];
   const rows: ForecastRow[] = [];
 
-  for (let t = 0; t <= horizonYears; t++) {
+  for (let t = 0; t < horizonYears; t++) {
     const age = selfAgeTodayN + t;
     const year =
       n(baseYear, 0) > 0

@@ -3,16 +3,16 @@
 // ===================================
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   ResponsiveContainer,
-  ComposedChart,
+  AreaChart,
+  Area,
   XAxis,
+  YAxis,
   Tooltip,
-  Bar,
-  Rectangle,
+  ReferenceLine,
 } from "recharts";
-import type { RectangleProps } from "recharts";
 
 export type Buckets = {
   liq: number;
@@ -73,140 +73,153 @@ function formatCHF(v: number) {
   return Math.trunc(n(v)).toLocaleString("de-CH");
 }
 
-/**
- * Custom shapes: keep original props (fill!) and only change radius.
- */
-function NetShape(props: any) {
-  const p = props as RectangleProps & { payload?: any };
-  const r = 10;
-  const hasDebt = (p.payload?.debtSeg ?? 0) > 0;
-  const radius = hasDebt ? ([0, 0, r, r] as any) : ([r, r, r, r] as any);
-  return <Rectangle {...p} radius={radius} />;
-}
-
-function DebtShape(props: any) {
-  const p = props as RectangleProps & { payload?: any };
-  const r = 10;
-  const hasNet = (p.payload?.netSeg ?? 0) > 0;
-  const radius = hasNet ? ([r, r, 0, 0] as any) : ([r, r, r, r] as any);
-  return <Rectangle {...p} radius={radius} />;
-}
-
-function TooltipContent({ active, label, payload }: any) {
+function LineTooltipContent({ active, label, payload }: any) {
   if (!active || !payload?.length) return null;
   const p = payload[0]?.payload;
   if (!p) return null;
-
   return (
     <div
       style={{
-        background: "rgba(2,6,23,0.92)",
-        border: "1px solid rgba(148,163,184,0.18)", // softer than slate-700
-        padding: 12,
-        borderRadius: 14,
-        boxShadow: "0 18px 45px rgba(0,0,0,0.55)",
-        backdropFilter: "blur(8px)",
+        background: "rgba(2,6,23,0.95)",
+        border: "1px solid rgba(148,163,184,0.2)",
+        padding: "10px 14px",
+        borderRadius: 12,
+        boxShadow: "0 12px 40px rgba(0,0,0,0.4)",
       }}
     >
-      <div style={{ color: "rgba(226,232,240,0.85)", marginBottom: 10, letterSpacing: 0.2 }}>
-        Jahr {label}
-      </div>
-
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 18, marginBottom: 8 }}>
-        <span style={{ color: "rgba(148,163,184,0.85)" }}>Aktiven</span>
-        <span style={{ color: "#22c55e" }}>{formatCHF(p.assets)} CHF</span>
-      </div>
-
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 18, marginBottom: 8 }}>
-        <span style={{ color: "rgba(148,163,184,0.85)" }}>Passiven</span>
-        <span style={{ color: "#ef4444" }}>{formatCHF(p.debts)} CHF</span>
-      </div>
-
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 18 }}>
-        <span style={{ color: "rgba(148,163,184,0.85)" }}>Netto</span>
-        <span style={{ color: "rgba(255,255,255,0.95)" }}>{formatCHF(p.net)} CHF</span>
+      <div style={{ color: "rgba(148,163,184,0.9)", fontSize: 12 }}>Jahr {label}</div>
+      <div style={{ color: "#38bdf8", fontSize: 15, fontWeight: 600, marginTop: 4 }}>
+        {formatCHF(p.net)} CHF
       </div>
     </div>
   );
 }
 
+const PERIOD_OPTIONS = [
+  { key: "3J", label: "3 Jahre", n: 3 },
+  { key: "5J", label: "5 Jahre", n: 5 },
+  { key: "10J", label: "10 Jahre", n: 10 },
+  { key: "Gesamt", label: "Gesamt", n: 0 },
+] as const;
+
 export default function ForecastChartSummary({ rows = [] }: { rows?: YearRow[] }) {
-  const data = useMemo(() => {
+  const [period, setPeriod] = useState<(typeof PERIOD_OPTIONS)[number]["key"]>("Gesamt");
+
+  const lineData = useMemo(() => {
     const safe = rows ?? [];
     return safe.map((r) => {
       const end = endBucketsOf(r);
       const eNW = netWorth(end);
-
-      const assets = Math.max(0, eNW.assets);
-      const debts = Math.max(0, eNW.debts);
-
-      // within ONE assets bar: hatched "debt overlay" + green net remainder
-      const debtSeg = Math.min(debts, assets);
-      const netSeg = Math.max(0, assets - debtSeg);
-
-      return {
-        year: r.year,
-        assets,
-        debts,
-        net: eNW.assets - eNW.debts, // signed (tooltip)
-        netSeg,
-        debtSeg,
-      };
+      return { year: r.year, net: Math.max(0, eNW.assets - eNW.debts) };
     });
   }, [rows]);
 
-  if (!data.length) return null;
+  const visiblePeriodOptions = useMemo(() => {
+    const n = lineData.length;
+    if (n < 4) return [];
+    return PERIOD_OPTIONS.filter((o) => {
+      if (o.key === "Gesamt") return true;
+      if (o.key === "3J") return n >= 4 && n < 6;
+      if (o.key === "5J") return n > 5; // erst wenn Basis > 5 (wie 10J erst bei > 10)
+      if (o.key === "10J") return n > 10;
+      return true;
+    });
+  }, [lineData.length]);
+
+  const periodOpt = PERIOD_OPTIONS.find((o) => o.key === period) ?? PERIOD_OPTIONS[3];
+  const visibleLineData = useMemo(() => {
+    if (periodOpt.n <= 0) return lineData;
+    return lineData.slice(0, periodOpt.n);
+  }, [lineData, periodOpt.n]);
+
+  const lineKpi = useMemo(() => {
+    if (visibleLineData.length < 2) return { delta: 0, pct: 0, end: visibleLineData[0]?.net ?? 0 };
+    const start = visibleLineData[0].net;
+    const end = visibleLineData[visibleLineData.length - 1].net;
+    const delta = end - start;
+    const pct = start !== 0 ? (delta / start) * 100 : 0;
+    return { delta, pct, end };
+  }, [visibleLineData]);
+
+  if (!lineData.length) return null;
 
   return (
     <div className="rounded-2xl bg-slate-900/35 p-4 shadow-xl ring-1 ring-white/5">
-      <div className="mb-3 flex items-end justify-between gap-3">
+      <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <div className="text-sm font-semibold text-slate-100">Aktiven / Passiven / Netto</div>
-          <div className="mt-0.5 text-xs text-slate-400">
-            Passiven schraffiert innerhalb der Aktiven.
+          <div className="text-xs text-slate-400">Δ Eigenkapital im Zeitraum</div>
+          <div
+            className={`text-lg font-semibold tabular-nums ${
+              lineKpi.delta >= 0 ? "text-emerald-400" : "text-rose-400"
+            }`}
+          >
+            {lineKpi.delta >= 0 ? "+" : ""}
+            {formatCHF(lineKpi.delta)} CHF
+            {lineKpi.pct !== 0 && (
+              <span className="ml-2 text-sm font-normal text-slate-400">
+                ({lineKpi.pct >= 0 ? "+" : ""}
+                {lineKpi.pct.toFixed(1)} %)
+              </span>
+            )}
           </div>
         </div>
-
-        <div className="text-[11px] text-slate-400">
-          Tooltip: Jahr, Aktiven, Passiven, Netto
-        </div>
       </div>
 
-      <div className="h-64 w-full rounded-xl bg-slate-950/25 ring-1 ring-white/5">
+      <div className="h-56 w-full rounded-xl bg-slate-950/25 ring-1 ring-white/5">
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data} margin={{ top: 14, right: 14, bottom: 0, left: 10 }} barCategoryGap="25%">
+          <AreaChart data={visibleLineData} margin={{ top: 12, right: 12, bottom: 4, left: 4 }}>
             <defs>
-              {/* Elegant hatch: softer, less "black lines" */}
-              <pattern
-                id="debtHatchElegant"
-                patternUnits="userSpaceOnUse"
-                width="14"
-                height="14"
-                patternTransform="rotate(45)"
-              >
-                {/* base is green (assets) */}
-                <rect width="14" height="14" fill="#22c55e" />
-                {/* subtle dark glass overlay */}
-                <rect width="14" height="14" fill="rgba(2,6,23,0.22)" />
-                {/* wide, soft hatch lines (greyed, not black) */}
-                <line x1="0" y1="0" x2="0" y2="14" stroke="rgba(226,232,240,0.18)" strokeWidth="4" />
-              </pattern>
+              <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#38bdf8" stopOpacity={0.4} />
+                <stop offset="100%" stopColor="#38bdf8" stopOpacity={0.02} />
+              </linearGradient>
             </defs>
-
-            <XAxis dataKey="year" tick={{ fill: "rgba(148,163,184,0.9)" }} axisLine={false} tickLine={false} />
-            <Tooltip content={<TooltipContent />} />
-
-            <Bar dataKey="netSeg" stackId="one" fill="#22c55e" shape={<NetShape />} isAnimationActive={false} />
-            <Bar
-              dataKey="debtSeg"
-              stackId="one"
-              fill="url(#debtHatchElegant)"
-              shape={<DebtShape />}
-              isAnimationActive={false}
+            <XAxis
+              dataKey="year"
+              tick={{ fill: "rgba(148,163,184,0.85)", fontSize: 11 }}
+              axisLine={false}
+              tickLine={false}
             />
-          </ComposedChart>
+            <YAxis hide domain={["auto", "auto"]} />
+            <Tooltip content={<LineTooltipContent />} />
+            {visibleLineData.length > 0 && (
+              <ReferenceLine
+                y={visibleLineData[0].net}
+                stroke="rgba(148,163,184,0.25)"
+                strokeDasharray="4 4"
+                strokeWidth={1}
+              />
+            )}
+            <Area
+              type="monotone"
+              dataKey="net"
+              stroke="#38bdf8"
+              strokeWidth={2}
+              fill="url(#areaGrad)"
+              isAnimationActive={true}
+            />
+          </AreaChart>
         </ResponsiveContainer>
       </div>
+
+      {visiblePeriodOptions.length > 0 && (
+        <div className="mt-3 flex gap-1">
+          {visiblePeriodOptions.map((opt) => (
+            <button
+              key={opt.key}
+              type="button"
+              onClick={() => setPeriod(opt.key)}
+              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+                period === opt.key
+                  ? "bg-slate-100 text-slate-900"
+                  : "bg-slate-800/60 text-slate-400 hover:bg-slate-800 hover:text-slate-200"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -32,6 +32,20 @@ function isAvailability(v: any): v is Availability {
   return v === "instant" || v === "3m_3y" || v === "gt_3y" || v === "locked";
 }
 
+function isSystemAccountId(id: string): boolean {
+  const s = String(id ?? "");
+  return s.startsWith("sys_") || s === "liquidity" || s === "debt";
+}
+
+/** Normalize backend values (e.g. "short") to our Availability */
+function normalizeAvailability(v: any): Availability {
+  if (isAvailability(v)) return v;
+  const s = String(v ?? "").toLowerCase();
+  if (s === "short") return "3m_3y"; // short = kurzfristig (3m_3y)
+  if (s === "long") return "gt_3y";
+  return "3m_3y";
+}
+
 function isGoal(v: any): v is Goal {
   return v === "liq" || v === "reinvest";
 }
@@ -98,11 +112,38 @@ export function mapProfileV2ToFormStateBase(profile: ProfileV2): Pick<FormState,
 }
 
 // ---------- 2) POSITIONS ONLY (step1 + step2) ----------
-export function mapPositionDtosToSteps(positionDtos: PositionDTO[] | null | undefined): Pick<FormState, "step1" | "step2"> {
-  const dtos = Array.isArray(positionDtos) ? positionDtos : [];
+/** Migration-on-read: ensure sys_overdraft exists when sys_liq_main is present */
+function ensureSystemDebtIfNeeded(dtos: PositionDTO[]): PositionDTO[] {
+  const hasLiq = dtos.some((x: any) => x?.kind === "asset" && String(x?.id) === "sys_liq_main");
+  const hasOverdraft = dtos.some((x: any) => x?.kind === "debt" && String(x?.id) === "sys_overdraft");
+  if (hasLiq && !hasOverdraft) {
+    return [
+      ...dtos,
+      {
+        id: "sys_overdraft",
+        kind: "debt",
+        label: "Überzug",
+        bucket: "3m_3y",
+        debtType: "overdraft",
+        valueCHF: 0,
+        interestRatePct: 10,
+        amortization: { type: "none" },
+        interestSourceInstrumentId: "sys_liq_main",
+      } as PositionDTO,
+    ];
+  }
+  return dtos;
+}
 
-  const assetDtos = dtos.filter((x): x is Extract<PositionDTO, { kind: "asset" }> => x?.kind === "asset");
-  const debtDtos  = dtos.filter((x): x is Extract<PositionDTO, { kind: "debt"  }> => x?.kind === "debt");
+export function mapPositionDtosToSteps(positionDtos: PositionDTO[] | null | undefined): Pick<FormState, "step1" | "step2"> {
+  const rawDtos = Array.isArray(positionDtos) ? positionDtos : [];
+  const dtos = ensureSystemDebtIfNeeded(rawDtos);
+
+  // Backend kann kind als "asset", "asset:other", "debt", "debt:other" liefern
+  const isAsset = (x: any) => x?.kind === "asset" || String(x?.kind ?? "").startsWith("asset");
+  const isDebt = (x: any) => x?.kind === "debt" || String(x?.kind ?? "").startsWith("debt");
+  const assetDtos = dtos.filter((x): x is Extract<PositionDTO, { kind: "asset" }> => isAsset(x));
+  const debtDtos  = dtos.filter((x): x is Extract<PositionDTO, { kind: "debt"  }> => isDebt(x));
 
   const step1Positions: AssetPosition[] = assetDtos.map((a: any) => {
     const meta = parseMeta(a.meta_json);
@@ -111,7 +152,7 @@ export function mapPositionDtosToSteps(positionDtos: PositionDTO[] | null | unde
     const assetType = a.assetType ?? a.asset_type;
 
     const availability: Availability =
-      isAvailability(rawAvail) ? rawAvail : defaultAvailabilityFromAssetType(assetType);
+      isAvailability(rawAvail) ? rawAvail : normalizeAvailability(rawAvail) ?? defaultAvailabilityFromAssetType(assetType);
 
     const rawGoal = a.goal ?? meta.goal;
     const goal: Goal = isGoal(rawGoal) ? rawGoal : "liq";
@@ -130,9 +171,9 @@ export function mapPositionDtosToSteps(positionDtos: PositionDTO[] | null | unde
       "";
 
     return {
-      id: String(a.id),
+      id: String(a.id ?? a.instrument_id ?? a.ui_id),
       dbId: undefined, // optional; you can add if your DTO has dbId later
-      label: String(a.label ?? "Position"),
+      label: String(a.label ?? "").trim() || (String(a.id ?? a.instrument_id) === "liquidity" ? "Liquidität" : "Position"),
       amountChf: toInt(a.valueCHF),
       currency: "CHF",
       availability,
@@ -144,6 +185,7 @@ export function mapPositionDtosToSteps(positionDtos: PositionDTO[] | null | unde
       // NEW: routing keys (snake_case DTO -> camelCase FormState)
       sourceAccountKey: typeof a.source_account_key === "string" ? a.source_account_key : undefined,
       targetAccountKey: typeof a.target_account_key === "string" ? a.target_account_key : undefined,
+      isSystem: !!(a.isSystem ?? a.is_system ?? isSystemAccountId(String(a.id ?? a.instrument_id ?? ""))),
     };
   });
 
@@ -151,7 +193,8 @@ export function mapPositionDtosToSteps(positionDtos: PositionDTO[] | null | unde
     .map((d: any): DebtPosition => {
       const meta = parseMeta(d.meta_json);
 
-      const mapped = debtTypeToForm(String(d.debtType ?? d.debt_type ?? "other"));
+      const rawType = String(d.debtType ?? d.debt_type ?? "other");
+      const mapped = debtTypeToForm(rawType === "overdraft" ? "other_short" : rawType);
 
       const interestRatePct =
         typeof d.interestRatePct === "number" && Number.isFinite(d.interestRatePct)
@@ -166,7 +209,7 @@ export function mapPositionDtosToSteps(positionDtos: PositionDTO[] | null | unde
       const amortizationPaChf =
         a && typeof a.amountAnnualCHF === "number" && Number.isFinite(a.amountAnnualCHF)
           ? Math.trunc(a.amountAnnualCHF)
-          : 0;
+          : 0; 
 
       const notes =
         typeof d.note === "string" ? d.note :
@@ -175,11 +218,11 @@ export function mapPositionDtosToSteps(positionDtos: PositionDTO[] | null | unde
         "";
 
       return {
-        id: String(d.id),
-        label: String(d.label ?? ""),
-        balanceChf: toInt(d.valueCHF),
+        id: String(d.id ?? d.instrument_id ?? d.ui_id),
+        label: (String(d.label ?? "").trim() || (String(d.id ?? d.instrument_id) === "debt" ? "Überzug" : "")) || "Schuld",
+        balanceChf: toInt(d.valueCHF ?? d.amount_chf ?? d.balanceCHF),
         currency: "CHF",
-        availability: (d.bucket ?? mapped.availability) as any,
+        availability: normalizeAvailability(d.bucket ?? d.availability),
         debtType: mapped.debtType,
         interestRatePct,
         amortizationPaChf,
@@ -187,9 +230,14 @@ export function mapPositionDtosToSteps(positionDtos: PositionDTO[] | null | unde
       // NEW
         sourceAccountKey: typeof d.source_account_key === "string" ? d.source_account_key : undefined,
         targetAccountKey: typeof d.target_account_key === "string" ? d.target_account_key : undefined,
+        isSystem: !!(d.isSystem ?? d.is_system ?? isSystemAccountId(String(d.id ?? d.instrument_id ?? ""))),
       };
     })
-    .filter((p) => p.balanceChf !== 0 || p.label.trim().length > 0);
+    .filter((p) => {
+      // Systemkonten (sys_*) immer anzeigen
+      if (String(p.id).startsWith("sys_")) return true;
+      return p.balanceChf !== 0 || p.label.trim().length > 0;
+    });
 
   return {
     step1: { positions: step1Positions },

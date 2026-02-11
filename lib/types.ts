@@ -54,6 +54,8 @@ export type AssetPosition = {
   sourceAccountKey?: AccountKey;
   targetAccountKey?: AccountKey;
 
+  /** Systemkonto (Liquidität) – nicht löschbar */
+  isSystem?: boolean;
   dbId?: number;
 };
 
@@ -76,6 +78,8 @@ export type DebtPosition = {
   amortizationPaChf?: number; // CHF pro Jahr (int)
   notes?: string;
 
+  /** Systemkonto (Überzug) – nicht löschbar */
+  isSystem?: boolean;
   dbId?: number;
 };
 

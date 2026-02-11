@@ -691,13 +691,15 @@ export default function Step1Form({
                               Bucket: <span className="text-slate-300">{bucketFromAvailability(p.availability)}</span>
                             </div>
 
-                            <button
-                              type="button"
-                              onClick={() => removePosition(p.id)}
-                              className="rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-slate-300 hover:border-slate-700 hover:text-slate-100 transition"
-                            >
-                              Entfernen
-                            </button>
+                            {!p.isSystem && (
+                              <button
+                                type="button"
+                                onClick={() => removePosition(p.id)}
+                                className="rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-slate-300 hover:border-slate-700 hover:text-slate-100 transition"
+                              >
+                                Entfernen
+                              </button>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -841,13 +843,15 @@ export default function Step1Form({
                             </td>
 
                             <td className="py-2 text-right">
-                              <button
-                                type="button"
-                                onClick={() => removePosition(p.id)}
-                                className="rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-slate-300 hover:border-slate-700 hover:text-slate-100 transition"
-                              >
-                                Entfernen
-                              </button>
+                              {!p.isSystem && (
+                                <button
+                                  type="button"
+                                  onClick={() => removePosition(p.id)}
+                                  className="rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-slate-300 hover:border-slate-700 hover:text-slate-100 transition"
+                                >
+                                  Entfernen
+                                </button>
+                              )}
                             </td>
                           </tr>
                         );

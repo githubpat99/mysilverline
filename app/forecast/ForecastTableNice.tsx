@@ -137,18 +137,18 @@ function MobileRow({
     <div className="py-2 border-b border-slate-800/60 last:border-b-0">
       <div className={titleCls}>{label}</div>
 
-      <div className={`${indent ? "pl-3" : ""} mt-1 grid grid-cols-3 gap-2 text-xs`}>
-        <div className="rounded-md border border-slate-800 bg-slate-950/40 p-2">
-          <div className="text-slate-400">Start</div>
-          <div className="text-slate-50 tabular-nums mt-1">{formatCHF(start)}</div>
+      <div className={`${indent ? "pl-3" : ""} mt-1 grid grid-cols-3 gap-2 text-xs min-w-0`}>
+        <div className="min-w-0 rounded-md border border-slate-800 bg-slate-950/40 p-2">
+          <div className="text-slate-400 truncate">Start</div>
+          <div className="text-slate-50 tabular-nums mt-1 truncate">{formatCHF(start)}</div>
         </div>
-        <div className="rounded-md border border-slate-800 bg-slate-950/40 p-2">
-          <div className="text-slate-400">Ende</div>
-          <div className="text-slate-50 tabular-nums mt-1">{formatCHF(end)}</div>
+        <div className="min-w-0 rounded-md border border-slate-800 bg-slate-950/40 p-2">
+          <div className="text-slate-400 truncate">Ende</div>
+          <div className="text-slate-50 tabular-nums mt-1 truncate">{formatCHF(end)}</div>
         </div>
-        <div className="rounded-md border border-slate-800 bg-slate-950/40 p-2">
-          <div className="text-slate-400">Δ</div>
-          <div className={`tabular-nums mt-1 ${deltaCls}`}>{fmtDelta(delta)}</div>
+        <div className="min-w-0 rounded-md border border-slate-800 bg-slate-950/40 p-2">
+          <div className="text-slate-400 truncate">Δ</div>
+          <div className={`tabular-nums mt-1 truncate ${deltaCls}`}>{fmtDelta(delta)}</div>
         </div>
       </div>
     </div>
@@ -359,7 +359,7 @@ export default function ForecastTableNice({
                   <button
                     type="button"
                     onClick={() => toggleYear(r.year)}
-                    className="w-full text-left px-4 py-3 hover:bg-slate-900/40 transition"
+                    className="w-full min-h-11 text-left px-4 py-3 hover:bg-slate-900/40 transition touch-manipulation"
                     aria-expanded={isOpen}
                   >
                     {/* DESKTOP/TABLET */}
@@ -385,20 +385,20 @@ export default function ForecastTableNice({
                         </div>
                       </div>
 
-                      <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
-                        <div className="rounded-lg border border-slate-800 bg-slate-950/40 p-2">
-                          <div className="text-slate-400">Aktiven</div>
-                          <div className="text-slate-50 tabular-nums mt-1">{formatCHF(r._endNW.assets)}</div>
+                      <div className="mt-2 grid grid-cols-3 gap-2 text-xs min-w-0">
+                        <div className="min-w-0 rounded-lg border border-slate-800 bg-slate-950/40 p-2">
+                          <div className="text-slate-400 truncate">Aktiven</div>
+                          <div className="text-slate-50 tabular-nums mt-1 truncate">{formatCHF(r._endNW.assets)}</div>
                         </div>
 
-                        <div className="rounded-lg border border-slate-800 bg-slate-950/40 p-2">
-                          <div className="text-slate-400">Passiven</div>
-                          <div className="text-slate-50 tabular-nums mt-1">{formatCHF(r._endNW.debts)}</div>
+                        <div className="min-w-0 rounded-lg border border-slate-800 bg-slate-950/40 p-2">
+                          <div className="text-slate-400 truncate">Passiven</div>
+                          <div className="text-slate-50 tabular-nums mt-1 truncate">{formatCHF(r._endNW.debts)}</div>
                         </div>
 
-                        <div className="rounded-lg border border-slate-800 bg-slate-950/40 p-2">
-                          <div className="text-slate-400">Δ Eigenkapital</div>
-                          <div className={`tabular-nums mt-1 ${r._deltaNet >= 0 ? "text-emerald-300" : "text-rose-300"}`}>
+                        <div className="min-w-0 rounded-lg border border-slate-800 bg-slate-950/40 p-2">
+                          <div className="text-slate-400 truncate">Δ EK</div>
+                          <div className={`tabular-nums mt-1 truncate ${r._deltaNet >= 0 ? "text-emerald-300" : "text-rose-300"}`}>
                             {fmtDelta(r._deltaNet)}
                           </div>
                         </div>

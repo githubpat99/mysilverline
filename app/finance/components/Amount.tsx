@@ -15,19 +15,19 @@ export function Amount({
 }) {
   const numClass =
     size === "lg"
-      ? "text-2xl sm:text-3xl font-semibold text-slate-100 leading-none tabular-nums"
-      : "text-sm font-semibold text-slate-100 leading-none tabular-nums";
+      ? "text-2xl sm:text-3xl font-semibold text-slate-100 tabular-nums"
+      : "text-sm font-semibold text-slate-100 tabular-nums";
 
   const curClass =
     size === "lg"
-      ? "text-base sm:text-xl font-semibold text-slate-100"
-      : "text-xs text-slate-300";
+      ? "text-base sm:text-lg font-medium text-slate-400"
+      : "text-xs text-slate-400";
 
   return (
-    <div className={align === "right" ? "text-right" : "text-left"}>
-      <div className={numClass}>{formatCHF(value)}</div>
-      <div className={curClass}>{currency}</div>
-    </div>
+    <span className="inline-flex items-baseline gap-1">
+      <span className={numClass}>{formatCHF(value)}</span>
+      <span className={curClass}>{currency}</span>
+    </span>
   );
 }
 

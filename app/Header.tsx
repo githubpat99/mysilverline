@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { whoAmI, ensureNonce, clearNonce } from "@/lib/profileApi";
+import { BASE_PATH } from "@/lib/config";
 import { API_LOGOUT } from "@/lib/endpoints";
 
 type WhoAmI = {
@@ -41,6 +42,7 @@ export default function Header() {
   const [me, setMe] = useState<WhoAmI | null>(null);
 
   const pathname = usePathname();
+  const isLanding = pathname === "/" || pathname === "";
   const isBase = pathname?.startsWith("/base");
   const isFinance = pathname?.startsWith("/finance");
   const isSummary = pathname?.startsWith("/summary");
@@ -85,17 +87,31 @@ export default function Header() {
       </button>
     ) : null;
 
+  if (isLanding) return null;
+
+  const isMinimal = !me?.logged_in;
+
   return (
     <header className="sticky top-0 z-50 border-b border-slate-800 bg-slate-900/80 backdrop-blur">
       <div className="mx-auto max-w-6xl px-4 py-4 flex items-center justify-between gap-4">
         <Link
-          href="/finance"
+          href={me?.logged_in ? "/finance" : "/"}
           prefetch={false}
-          className="text-xl font-semibold tracking-tight"
+          className="flex items-center gap-2 text-xl font-semibold tracking-tight"
         >
+          <img
+            src={`${BASE_PATH}/SL.png`}
+            alt=""
+            className="h-7 w-7 object-contain"
+          />
           <span className="text-sky-400">Silverline</span>
         </Link>
 
+        {isMinimal ? (
+          <span className="rounded-full border border-slate-700 bg-slate-950/30 px-3 py-1 text-xs text-slate-300">
+            {userLabel}
+          </span>
+        ) : (
         <div className="hidden md:flex items-center gap-6">
           <nav className="flex items-center gap-4 text-sm">
             <Link href="/base" prefetch={false} className={linkClass(!!isBase)}>
@@ -131,29 +147,32 @@ export default function Header() {
             {userLabel}
           </span>
         </div>
+        )}
 
-        <button
-          className="md:hidden text-slate-300 hover:text-sky-400"
-          onClick={() => setMenuOpen((v) => !v)}
-          aria-label="Menü öffnen"
-        >
-          <svg
-            className="w-7 h-7"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            viewBox="0 0 24 24"
+        {!isMinimal && (
+          <button
+            className="md:hidden text-slate-300 hover:text-sky-400"
+            onClick={() => setMenuOpen((v) => !v)}
+            aria-label="Menü öffnen"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M4 6h16M4 12h16M4 18h16"
-            />
-          </svg>
-        </button>
+            <svg
+              className="w-7 h-7"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M4 6h16M4 12h16M4 18h16"
+              />
+            </svg>
+          </button>
+        )}
       </div>
 
-      {menuOpen && (
+      {!isMinimal && menuOpen && (
         <div className="md:hidden border-t border-slate-800 bg-slate-900 px-4 py-4">
           <div className="rounded-lg border border-slate-800 bg-slate-950/30 px-3 py-2 text-sm text-slate-200 mb-4">
             {userLabel}

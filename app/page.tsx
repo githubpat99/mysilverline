@@ -1,6 +1,5 @@
-// app/page.tsx
-import { redirect } from "next/navigation";
+import LandingContent from "./components/LandingContent";
 
 export default function Home() {
-  redirect("/finance");
+  return <LandingContent />;
 }

@@ -291,8 +291,8 @@ export default function Step2Form({
 
         {/* KPI row */}
         <div className="mt-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+            <div className="min-w-0">
               <div className="text-[11px] uppercase tracking-wide text-slate-400">
                 Gesamtverpflichtungen
               </div>
@@ -301,7 +301,7 @@ export default function Step2Form({
               </div>
             </div>
 
-            <div className="text-right">
+            <div className="min-w-0 sm:text-right">
               <div className="text-[11px] uppercase tracking-wide text-slate-400">
                 Zinsen p.a.
               </div>
@@ -403,28 +403,28 @@ export default function Step2Form({
                     Schliessen
                   </button>
 
-                  {/* Mobile icons */}
+                  {/* Mobile icons (min 44px Touch-Target) */}
                   <button
                     onClick={() => addPosition(activeBucket)}
-                    className="sm:hidden rounded-full border border-slate-700 p-2 hover:border-slate-600"
+                    className="sm:hidden flex size-11 items-center justify-center rounded-full border border-slate-700 hover:border-slate-600 touch-manipulation"
                     title="Position hinzufügen"
                     type="button"
                   >
-                    <Plus size={18} className="text-sky-400" />
+                    <Plus size={20} className="text-sky-400" />
                   </button>
                   <button
                     onClick={closeModal}
-                    className="sm:hidden rounded-full border border-slate-700 p-2 hover:border-slate-600"
+                    className="sm:hidden flex size-11 items-center justify-center rounded-full border border-slate-700 hover:border-slate-600 touch-manipulation"
                     title="Schliessen"
                     type="button"
                   >
-                    <X size={18} className="text-slate-400 hover:text-slate-100 transition" />
+                    <X size={20} className="text-slate-400 hover:text-slate-100 transition" />
                   </button>
                 </div>
               </div>
 
               {/* Content scrollt */}
-              <div className="p-5 overflow-y-auto overscroll-contain [webkit-overflow-scrolling:touch]">
+              <div className="p-5 overflow-y-auto overflow-x-hidden overscroll-contain [webkit-overflow-scrolling:touch]">
                 {/* Mobile: Cards */}
                 <div className="space-y-3 md:hidden">
                   {activeItems.map((it) => {

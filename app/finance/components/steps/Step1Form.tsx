@@ -388,15 +388,15 @@ export default function Step1Form({
       {/* Header (ohne Kachel) */}
       <div className="px-5 pt-4 pb-3">
         <div className="mt-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+            <div className="min-w-0">
               <div className="text-[11px] uppercase tracking-wide text-slate-400">Gesamtvermögen</div>
               <div className="mt-1 text-lg font-semibold text-slate-50">
                 <Amount value={totals.allValue} size="lg" align="left" />
               </div>
             </div>
 
-            <div className="text-right">
+            <div className="min-w-0 sm:text-right">
               <div className="text-[11px] uppercase tracking-wide text-slate-400">Cashflow p.a.</div>
               <div className="mt-1 text-lg font-semibold text-slate-50">
                 <InlineAmount value={cfTotal} />
@@ -550,22 +550,22 @@ export default function Step1Form({
                     Schliessen
                   </button>
 
-                  {/* Mobile icons */}
+                  {/* Mobile icons (min 44px Touch-Target) */}
                   <button
                     onClick={() => addPosition(activeBucket)}
-                    className="sm:hidden rounded-full border border-slate-700 p-2 hover:border-slate-600"
+                    className="sm:hidden flex size-11 items-center justify-center rounded-full border border-slate-700 hover:border-slate-600 touch-manipulation"
                     title="Position hinzufügen"
                     type="button"
                   >
-                    <Plus size={18} className="text-sky-400" />
+                    <Plus size={20} className="text-sky-400" />
                   </button>
                   <button
                     onClick={closeModal}
-                    className="sm:hidden rounded-full border border-slate-700 p-2 hover:border-slate-600"
+                    className="sm:hidden flex size-11 items-center justify-center rounded-full border border-slate-700 hover:border-slate-600 touch-manipulation"
                     title="Schliessen"
                     type="button"
                   >
-                    <X size={18} className="text-slate-400 hover:text-slate-100 transition" />
+                    <X size={20} className="text-slate-400 hover:text-slate-100 transition" />
                   </button>
                 </div>
               </div>

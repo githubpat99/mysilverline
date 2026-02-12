@@ -19,3 +19,19 @@ svg,
 svg * {
   outline: none !important;
 }
+
+/* PWA vs Browser: sofort korrekt ohne JavaScript/Refresh */
+.landing-pwa {
+  display: none;
+}
+.landing-browser {
+  display: block;
+}
+@media (display-mode: standalone), (display-mode: fullscreen), (display-mode: minimal-ui) {
+  .landing-pwa {
+    display: flex;
+  }
+  .landing-browser {
+    display: none;
+  }
+}

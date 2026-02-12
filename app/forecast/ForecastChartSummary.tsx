@@ -204,13 +204,13 @@ export default function ForecastChartSummary({ rows = [] }: { rows?: YearRow[] }
       </div>
 
       {visiblePeriodOptions.length > 0 && (
-        <div className="mt-3 flex gap-1">
+        <div className="mt-3 flex flex-wrap gap-2">
           {visiblePeriodOptions.map((opt) => (
             <button
               key={opt.key}
               type="button"
               onClick={() => setPeriod(opt.key)}
-              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+              className={`min-h-11 min-w-11 rounded-lg px-3 py-2 text-xs font-medium transition touch-manipulation ${
                 period === opt.key
                   ? "bg-slate-100 text-slate-900"
                   : "bg-slate-800/60 text-slate-400 hover:bg-slate-800 hover:text-slate-200"

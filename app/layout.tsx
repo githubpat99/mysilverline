@@ -8,7 +8,7 @@ export const metadata = {
   title: "Silverline Demo",
   description: "Next.js + Tailwind Übung",
   icons: {
-    icon: `${BASE_PATH}/SL.png`,
+    icon: `${BASE_PATH}/SL-logo.png`,
   },
 };
 

@@ -573,7 +573,7 @@ export default function Step1Form({
               {/* Content scrollt */}
               <div className="p-5 overflow-y-auto overscroll-contain [webkit-overflow-scrolling:touch] overflow-x-hidden">
                 {/* Mobile: Cards */}
-                <div className="space-y-3 md:hidden">
+                <div className="space-y-3 lg:hidden">
                   {activeItems.map((p) => {
                     const err = counterError(p);
 
@@ -713,8 +713,8 @@ export default function Step1Form({
                   )}
                 </div>
 
-                {/* Desktop: Table */}
-                <div className="hidden md:block overflow-x-auto">
+                {/* Desktop: Table (nur ab lg, sonst Karten ohne Scrollbalken) */}
+                <div className="hidden lg:block overflow-hidden">
                   <table className="w-full text-sm table-fixed">
                     <thead className="text-slate-400">
                       <tr className="border-b border-slate-800">

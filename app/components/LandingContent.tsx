@@ -61,7 +61,7 @@ export default function LandingContent() {
       {/* PWA: Logo + Button, sofort sichtbar via CSS media query */}
       <div className="landing-pwa flex flex-col items-center justify-center py-16 sm:py-24">
         <img
-          src={`${BASE_PATH}/SL.png`}
+          src={`${BASE_PATH}/SL-logo.png`}
           alt="Silverline"
           width={96}
           height={96}
@@ -93,7 +93,7 @@ export default function LandingContent() {
 
       <div className="flex flex-col items-center text-center">
         <img
-          src={`${BASE_PATH}/SL.png`}
+          src={`${BASE_PATH}/SL-logo.png`}
           alt="Silverline"
           width={80}
           height={80}

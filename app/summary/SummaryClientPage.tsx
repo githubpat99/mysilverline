@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
-import DonutChart from "@/app/components/DonutChart";
+import BalanceSummaryChart from "@/app/components/DonutChart";
 import { loadProfileV2 } from "@/lib/profileApiV2";
 import { formatCHF } from "@/lib/format";
 
@@ -310,8 +310,11 @@ export default function SummaryPage() {
           </div>
         </div>
 
-        <div className="mt-12 rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-lg">
-          <DonutChart aktiven={aktivenTotal} passiven={passivenTotal} />
+        <div className="mt-12">
+          <BalanceSummaryChart
+            totalAssets={aktivenTotal}
+            totalLiabilities={passivenTotal}
+          />
         </div>
       </div>
     </main>

@@ -102,7 +102,13 @@ const PERIOD_OPTIONS = [
   { key: "Gesamt", label: "Gesamt", n: 0 },
 ] as const;
 
-export default function ForecastChartSummary({ rows = [] }: { rows?: YearRow[] }) {
+export default function ForecastChartSummary({
+  rows = [],
+  retirementYear,
+}: {
+  rows?: YearRow[];
+  retirementYear?: number;
+}) {
   const [period, setPeriod] = useState<(typeof PERIOD_OPTIONS)[number]["key"]>("Gesamt");
 
   const lineData = useMemo(() => {
@@ -167,7 +173,7 @@ export default function ForecastChartSummary({ rows = [] }: { rows?: YearRow[] }
 
       <div className="h-56 w-full rounded-xl bg-slate-950/25 ring-1 ring-white/5">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={visibleLineData} margin={{ top: 12, right: 12, bottom: 4, left: 4 }}>
+          <AreaChart data={visibleLineData} margin={{ top: 28, right: 12, bottom: 4, left: 4 }}>
             <defs>
               <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#38bdf8" stopOpacity={0.4} />
@@ -191,6 +197,22 @@ export default function ForecastChartSummary({ rows = [] }: { rows?: YearRow[] }
                 strokeWidth={1}
               />
             )}
+            {retirementYear != null &&
+              visibleLineData.some((d) => d.year === retirementYear) && (
+                <ReferenceLine
+                  x={retirementYear}
+                  stroke="rgba(148,163,184,0.6)"
+                  strokeDasharray="6 4"
+                  strokeWidth={2}
+                  label={{
+                    value: "Pensionierung",
+                    position: "top",
+                    fill: "rgba(148,163,184,0.9)",
+                    fontSize: 11,
+                    offset: 8,
+                  }}
+                />
+              )}
             <Area
               type="monotone"
               dataKey="net"

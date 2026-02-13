@@ -11,6 +11,7 @@ export type ForecastOut = ForecastResult & {
   liquidityToday: number;
   shortDebtToday: number;
   availabilityToday: number;
+  retirementYear?: number;
 };
 
 export function computeForecastFromProfileV2(
@@ -21,10 +22,16 @@ export function computeForecastFromProfileV2(
 
   const out = computeForecastWithBreakdown(input);
 
+  const baseYear = (input as any).baseYear ?? new Date().getFullYear();
+  const retireAtAge = (input as any).retireAtAge ?? 65;
+  const selfAgeToday = (input as any).selfAgeToday ?? 0;
+  const retirementYear = baseYear + Math.max(0, retireAtAge - selfAgeToday);
+
   return {
     ...out,
     liquidityToday: (input as any).liquidityToday ?? 0,
     shortDebtToday: (input as any).shortDebtToday ?? 0,
     availabilityToday: (input as any).availabilityToday ?? 0,
+    retirementYear,
   };
 }

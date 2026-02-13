@@ -1,95 +1,85 @@
 "use client";
 
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
-import { formatCHFInput, parseCHF } from "@/lib/format";
+import { useMemo } from "react";
+import { formatCHF } from "@/lib/format";
 
-export default function DonutChart({
-    aktiven,
-    passiven,
-}: {
-    aktiven: number;
-    passiven: number;
-}) {
-    const netto = aktiven - passiven;
+type Props = {
+  totalAssets: number;
+  totalLiabilities: number;
+};
 
-    const data = [
-        { name: "Aktiven", value: aktiven },
-        { name: "Passiven", value: passiven },
-    ];
+export default function BalanceSummaryChart({
+  totalAssets,
+  totalLiabilities,
+}: Props) {
+  const { saldo, passiven, aktiven, boundaryPct } = useMemo(() => {
+    const a = Math.max(0, Math.trunc(totalAssets));
+    const p = Math.max(0, Math.trunc(totalLiabilities));
+    const s = Math.max(0, a - p);
+    const pct = a > 0 ? (s / a) * 100 : 0;
+    return { saldo: s, passiven: p, aktiven: a, boundaryPct: pct };
+  }, [totalAssets, totalLiabilities]);
 
-    const COLORS = ["#22c55e", "#ef4444"];
-
-    return (
-        <div
-            className="relative w-full h-72 sm:h-80 lg:h-96 bg-slate-900/60 border 
-                 border-slate-800 rounded-2xl p-6 shadow-lg select-none"
-            style={{ WebkitTapHighlightColor: "transparent" }}
+  return (
+    <div className="rounded-2xl bg-slate-900/35 p-4 shadow-xl ring-1 ring-white/5">
+      <div className="relative aspect-[900/110] w-full min-h-[88px]">
+        {/* SVG: nur die Linie */}
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 900 110"
+          className="absolute inset-0 h-full w-full"
+          preserveAspectRatio="xMidYMid meet"
         >
-            <h3 className="text-xl font-semibold mb-4 text-center">
-                Vermögensstruktur
-            </h3>
-
-            {/* Nettovermögen in der Mitte – kleiner auf Mobile */}
-            <div
-                className="
-                    absolute inset-0 
-                    flex flex-col items-center justify-center 
-                    pointer-events-none 
-                    px-4
-
-                    translate-y-[14px]     /* Mobile: weiter nach unten */
-                    sm:translate-y-[4px]   /* Tablet: leichte Korrektur */
-                    md:translate-y-0       /* Desktop: perfekt mittig */
-                "
+          <defs>
+            <linearGradient
+              id="lineBlue"
+              x1="40"
+              y1="0"
+              x2="860"
+              y2="0"
+              gradientUnits="userSpaceOnUse"
             >
-                <span className="text-[11px] sm:text-xs md:text-sm text-slate-300 text-center">
-                    Nettovermögen
-                </span>
+              <stop offset="0" stopColor="#3B82F6" />
+              <stop offset="1" stopColor="#60A5FA" />
+            </linearGradient>
+          </defs>
+          <line
+            x1="40"
+            y1="55"
+            x2="860"
+            y2="55"
+            stroke="url(#lineBlue)"
+            strokeWidth="4"
+            strokeLinecap="round"
+          />
+        </svg>
 
-                <span
-                    className={`mt-1 font-bold 
-                        text-xl sm:text-2xl md:text-3xl 
-                        text-center 
-                        ${netto >= 0 ? "text-green-400" : "text-red-400"}
-                        `}
-                >
-                    {formatCHFInput(netto.toString())}
-                </span>
-            </div>
+        {/* Labels als HTML – exakt wie Total (text-lg), responsive */}
+        <div className="absolute inset-0">
+          {/* Netto links */}
+          <div className="absolute left-[4.4%] top-[28%] -translate-y-1/2 text-lg font-normal text-white tabular-nums">
+            {formatCHF(saldo)}
+          </div>
 
-            <ResponsiveContainer width="100%" height="80%">
-                <PieChart>
-                    <Pie
-                        data={data}
-                        // dünnerer Ring, mehr Innenfläche
-                        innerRadius="72%"
-                        outerRadius="90%"
-                        paddingAngle={3}
-                        dataKey="value"
-                        isAnimationActive
-                        animationDuration={900}
-                        animationEasing="ease-out"
-                    >
-                        {data.map((_, index) => (
-                            <Cell key={index} fill={COLORS[index]} />
-                        ))}
-                    </Pie>
+          {/* ▼ – grösser auf Mobile */}
+          <div
+            className="absolute top-[50%] -translate-x-1/2 -translate-y-1/2 w-4 h-4 sm:w-3 sm:h-3"
+            style={{ left: `${4.4 + (boundaryPct / 100) * 91.1}%` }}
+          >
+            <div className="w-full h-full [clip-path:polygon(0%_0%,100%_0%,50%_100%)] bg-white" />
+          </div>
 
-                    <Tooltip
-                        formatter={(value) => formatCHFInput(String(value ?? 0))}
-                        wrapperStyle={{ outline: "none" }}
-                        contentStyle={{
-                            background: "#e5e7eb",
-                            border: "1px solid #d1d5db",
-                            borderRadius: "8px",
-                            color: "#111827",
-                            fontSize: "0.85rem",
-                        }}
-                        itemStyle={{ color: "#111827" }}
-                        labelStyle={{ color: "#374151" }}
-                    />
-                </PieChart>
-            </ResponsiveContainer>
+          {/* Passiven rechts */}
+          <div className="absolute top-[28%] right-[4.4%] -translate-y-1/2 text-right text-lg font-normal text-red-300 tabular-nums">
+            {formatCHF(passiven)}
+          </div>
+
+          {/* Aktiven unten mittig */}
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-center text-lg font-normal text-green-300 tabular-nums">
+            {formatCHF(aktiven)}
+          </div>
         </div>
-    );
+      </div>
+    </div>
+  );
 }

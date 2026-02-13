@@ -10,6 +10,7 @@ import { loadPositions } from "@/lib/load/types";
 export default function ForecastClientPage() {
     const [rows, setRows] = useState<YearRow[]>([]);
     const [positions, setPositions] = useState<any[]>([]);
+    const [retirementYear, setRetirementYear] = useState<number | undefined>();
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -22,11 +23,13 @@ export default function ForecastClientPage() {
                 if (!profile) {
                     setRows([]);
                     setPositions([]);
+                    setRetirementYear(undefined);
                     return;
                 }
                 const out = computeForecastFromProfileV2(profile, pos);
                 setRows((out as any).rows ?? []);
                 setPositions(pos ?? []);
+                setRetirementYear((out as any).retirementYear);
 
             } finally {
                 setLoading(false);
@@ -41,5 +44,5 @@ export default function ForecastClientPage() {
     }
 
 
-    return <ForecastTableNice rows={rows} positions={positions} />;
+    return <ForecastTableNice rows={rows} positions={positions} retirementYear={retirementYear} />;
 }

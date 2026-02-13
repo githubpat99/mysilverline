@@ -158,9 +158,11 @@ function MobileRow({
 export default function ForecastTableNice({
   rows = [],
   positions = [],
+  retirementYear,
 }: {
   rows?: YearRow[];
   positions?: Array<{ id?: string; instrument_id?: string; label?: string }>;
+  retirementYear?: number;
 }) {
   const safeRows = rows ?? [];
 
@@ -238,7 +240,7 @@ export default function ForecastTableNice({
 
   return (
     <div className="space-y-4">
-      <ForecastChartSummary rows={safeRows} />
+      <ForecastChartSummary rows={safeRows} retirementYear={retirementYear} />
 
       <div className="rounded-2xl border border-slate-800 bg-slate-950/40 overflow-hidden">
         {/* Header (nur Desktop/Tablet) */}

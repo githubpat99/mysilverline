@@ -102,7 +102,7 @@ export default function Header() {
           className="flex items-center gap-2 text-xl font-semibold tracking-tight"
         >
           <img
-            src={`${BASE_PATH}/SL.png`}
+            src={`${BASE_PATH}/SL-logo.png`}
             alt=""
             className="h-7 w-7 object-contain"
           />

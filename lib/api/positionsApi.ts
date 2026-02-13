@@ -1,4 +1,5 @@
 import type { PositionDTO } from "@/lib/types/v2/positions.dto";
+import { getApiHeaders } from "@/lib/profileApi";
 
 const NS = "/wp-json/silverline/v1";
 
@@ -10,7 +11,7 @@ export async function getPositions(): Promise<PositionDTO[]> {
   const res = await fetch(`${NS}/positions`, {
     method: "GET",
     credentials: "include",
-    headers: { "Accept": "application/json" },
+    headers: { Accept: "application/json", ...getApiHeaders() },
   });
   if (!res.ok) throw new Error(`positions_get_failed:${res.status}`);
   const json = (await res.json()) as GetOut;

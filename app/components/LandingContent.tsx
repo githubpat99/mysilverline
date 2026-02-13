@@ -3,7 +3,7 @@
 import { BASE_PATH } from "@/lib/config";
 import InstallHint from "./InstallHint";
 
-const WEBSITE_URL = "https://mysilverline.it-pin.ch";
+const LOGIN_URL = "https://mysilverline.it-pin.ch/login/";
 
 function ChromeInstallIcon({ className = "h-8 w-8 shrink-0 text-slate-400" }: { className?: string }) {
   return (
@@ -46,7 +46,7 @@ function ArrowRightIcon({ className = "h-5 w-5" }: { className?: string }) {
 function ContinueButton() {
   return (
     <a
-      href={WEBSITE_URL}
+      href={LOGIN_URL}
       className="inline-flex min-h-12 min-w-[220px] items-center justify-center gap-2 rounded-lg bg-sky-500 px-8 font-medium text-white transition hover:bg-sky-400 touch-manipulation"
     >
       Weiter zur Anmeldung

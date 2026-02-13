@@ -7,6 +7,7 @@
 import { parseProfileV2 } from "@/lib/validation/v2/profile.schema";
 import type { ProfileV2 } from "@/lib/types/v2";
 import type { StepId, FormState } from "@/lib/types";
+import { getApiHeaders } from "@/lib/profileApi";
 
 // ---- Endpoints (relativ, da du im WP-Kontext läufst)
 const API_WHOAMI = "/wp-json/silverline/v1/whoami";
@@ -96,6 +97,7 @@ export async function fetchJson(
   try {
     const hasBody = typeof init?.body !== "undefined";
     const headers: Record<string, string> = {
+      ...getApiHeaders(),
       ...(init?.headers as any),
       ...(hasBody ? { "content-type": "application/json" } : {}),
     };

@@ -2,6 +2,7 @@ import { SL_API_BASE } from "./config";
 
 export const API_NONCE = `${SL_API_BASE}/nonce`;
 export const API_WHOAMI = `${SL_API_BASE}/whoami`;
+export const API_AUTH_TOKEN = `${SL_API_BASE}/auth-token`;
 export const API_ME = `${SL_API_BASE}/me`;
 export const API_PROFILE = `${SL_API_BASE}/profile`;
 export const API_POSITIONS_GET = `${SL_API_BASE}/positions`;

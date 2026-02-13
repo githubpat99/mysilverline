@@ -397,7 +397,7 @@ export default function Step1Form({
             </div>
 
             <div className="min-w-0 sm:text-right">
-              <div className="text-[11px] uppercase tracking-wide text-slate-400">Cashflow p.a.</div>
+              <div className="text-[11px] uppercase tracking-wide text-slate-400">Ertrag p.a.</div>
               <div className="mt-1 text-lg font-semibold text-slate-50">
                 <InlineAmount value={cfTotal} />
               </div>
@@ -414,7 +414,7 @@ export default function Step1Form({
               )}
               {n(cfTotal - cfToLiq) !== 0 && (
                 <div className="mt-3">
-                  <div className="mt-3 text-[11px] uppercase tracking-wide text-slate-400">→ Reinvest p.a.</div>
+                  <div className="mt-3 text-[11px] uppercase tracking-wide text-slate-400">→ Wiederanlage p.a.</div>
                   <div className="mt-1 text-base font-semibold text-slate-100">
                     <InlineAmount value={Math.trunc(cfTotal - cfToLiq)} />
                   </div>
@@ -478,7 +478,7 @@ export default function Step1Form({
                   )}
                   {n(t.cashflowReinvest) !== 0 && (
                     <div className="flex items-baseline justify-between gap-3">
-                      <span className="text-slate-500">→ Reinvest</span>
+                      <span className="text-slate-500">→ Wiederanlage</span>
                       <span className="text-slate-200 text-right">
                         <InlineAmount value={t.cashflowReinvest} />{" "}
                       </span>
@@ -638,7 +638,7 @@ export default function Step1Form({
                           </div>
 
                           <FieldMoneyInt
-                            label="Cashflow p.a."
+                            label="Ertrag p.a."
                             valueChf={p.cashflowPa}
                             onChangeChf={(n) => upsert(p.id, { cashflowPa: n })}
                           />
@@ -651,7 +651,7 @@ export default function Step1Form({
                               className="w-full rounded-xl border border-slate-800 bg-slate-950 px-1 py-2 text-sm text-slate-100"
                             >
                               <option value="liq">liq</option>
-                              <option value="reinvest">reinvest</option>
+                              <option value="reinvest">Wiederanlage</option>
                             </select>
                           </div>
 
@@ -714,19 +714,19 @@ export default function Step1Form({
                 </div>
 
                 {/* Desktop: Table */}
-                <div className="hidden md:block overflow-x-hidden">
+                <div className="hidden md:block overflow-x-auto">
                   <table className="w-full text-sm table-fixed">
                     <thead className="text-slate-400">
                       <tr className="border-b border-slate-800">
-                        <th className="text-left py-2 px-3 w-[15%]">Bezeichnung</th>
-                        <th className="text-left py-2 px-3 w-[11%]">Typ</th>
-                        <th className="text-left py-2 px-3 w-[12%]">Wert</th>
-                        <th className="text-left py-2 px-3 w-[12%]">Verf.</th>
-                        <th className="text-left py-2 px-3 w-[12%]">Cashflow</th>
-                        <th className="text-left py-2 px-3 w-[12%]">Ziel</th>
-                        <th className="text-left py-2 px-3 w-[15%]">Gegenkonto</th>
-                        <th className="text-left py-2 px-3 w-[11%]">Notiz</th>
-                        <th className="text-right py-2 w-[10%]"> </th>
+                        <th className="text-left py-2 px-3 w-[14%]">Bezeichnung</th>
+                        <th className="text-left py-2 px-3 w-[10%]">Typ</th>
+                        <th className="text-left py-2 px-3 w-[10%]">Wert</th>
+                        <th className="text-left py-2 px-3 w-[9%]">Verf.</th>
+                        <th className="text-left py-2 px-3 w-[10%]">Ertrag</th>
+                        <th className="text-left py-2 px-3 min-w-[7.5rem] w-[14%]">Ziel</th>
+                        <th className="text-left py-2 px-3 w-[16%]">Gegenkonto</th>
+                        <th className="text-left py-2 px-3 w-[10%]">Notiz</th>
+                        <th className="text-right py-2 w-[7%]"> </th>
                       </tr>
                     </thead>
 
@@ -798,14 +798,14 @@ export default function Step1Form({
                               />
                             </td>
 
-                            <td className="py-2 pr-3">
+                            <td className="py-2 pr-3 min-w-[7.5rem]">
                               <select
                                 value={p.goal}
                                 onChange={(e) => upsert(p.id, { goal: e.target.value as Goal })}
-                                className="w-full rounded-lg border border-slate-800 bg-slate-950 px-1.5 py-2"
+                                className="w-full rounded-lg border border-slate-800 bg-slate-950 px-2 py-2"
                               >
                                 <option value="liq">Liquidität</option>
-                                <option value="reinvest">Reinvestition</option>
+                                <option value="reinvest">Wiederanlage</option>
                               </select>
                             </td>
 
@@ -869,7 +869,7 @@ export default function Step1Form({
                 </div>
 
                 <div className="mt-3 text-xs text-slate-500">
-                  Regeln: Ziel=liq → LIQ-Konto (nicht identisch). Ziel=reinvest → intern (identisch) oder Nicht-LIQ-Konto.
+                  Regeln: Ziel=liq → LIQ-Konto (nicht identisch). Ziel=Wiederanlage → intern (identisch) oder Nicht-LIQ-Konto.
                 </div>
               </div>
             </div>

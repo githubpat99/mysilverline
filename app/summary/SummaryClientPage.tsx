@@ -248,12 +248,12 @@ export default function SummaryPage() {
   const passivenTotal = useMemo(() => sum(passivKurz) + sum(passivLang), [passivKurz, passivLang]);
 
   if (loading) {
-    return <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">Lade Bilanz…</main>;
+    return <main className="bg-slate-950 text-slate-50 px-6 py-10">Lade Bilanz…</main>;
   }
 
   if (!items) {
     return (
-      <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
+      <main className="bg-slate-950 text-slate-50 px-6 py-10">
         <div className="mx-auto max-w-4xl">
           <h1 className="text-3xl font-bold text-sky-400">Bilanzübersicht</h1>
           <p className="mt-4 text-slate-300">
@@ -270,7 +270,7 @@ export default function SummaryPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 px-4 py-10 sm:px-6 lg:px-8">
+    <main className="bg-slate-950 text-slate-50 px-4 py-10 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl">
         <h1 className="text-3xl font-bold text-sky-400 mb-10">Bilanzübersicht</h1>
 

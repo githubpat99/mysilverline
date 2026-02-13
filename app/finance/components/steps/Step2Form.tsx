@@ -173,6 +173,25 @@ export default function Step2Form({
     });
   }, [defaultLiquidityAccountKey]);
 
+  // Sofort: Default Amortisation = Gesamtbetrag (nur beim Öffnen des Modals)
+  useEffect(() => {
+    if (!isModalOpen || activeBucket !== "LIQ") return;
+    setPositions(prev => {
+      let changed = false;
+      const next = prev.map(p => {
+        if (p.availability !== "instant") return p;
+        const bal = typeof p.balanceChf === "number" ? p.balanceChf : 0;
+        const amort = typeof p.amortizationPaChf === "number" ? p.amortizationPaChf : 0;
+        if (bal > 0 && amort === 0) {
+          changed = true;
+          return { ...p, amortizationPaChf: bal };
+        }
+        return p;
+      });
+      return changed ? next : prev;
+    });
+  }, [isModalOpen, activeBucket]);
+
   const [entered, setEntered] = useState(false);
 
   useEffect(() => {
@@ -473,6 +492,11 @@ export default function Step2Form({
                             label="Wert"
                             valueChf={it.balanceChf}
                             onChangeChf={(n) => updatePosition(it.id, { balanceChf: n })}
+                            onBlurChf={(n) => {
+                              if (it.availability !== "instant") return;
+                              const amort = typeof it.amortizationPaChf === "number" ? it.amortizationPaChf : 0;
+                              if (n > 0 && amort === 0) updatePosition(it.id, { amortizationPaChf: n });
+                            }}
                           />
 
                           <div>
@@ -537,13 +561,11 @@ export default function Step2Form({
                             )}
                           </div>
 
-                          {(it.debtType === "mortgage" || it.debtType === "loan") && (
-                            <FieldMoneyInt
-                              label="Amortisation p.a."
-                              valueChf={typeof it.amortizationPaChf === "number" ? it.amortizationPaChf : 0}
-                              onChangeChf={(n) => updatePosition(it.id, { amortizationPaChf: n })}
-                            />
-                          )}
+                          <FieldMoneyInt
+                            label="Amortisation p.a."
+                            valueChf={typeof it.amortizationPaChf === "number" ? it.amortizationPaChf : 0}
+                            onChangeChf={(n) => updatePosition(it.id, { amortizationPaChf: n })}
+                          />
 
                           <div className="mt-1 flex items-center justify-between gap-3">
                             <div className="text-xs text-slate-500">
@@ -630,6 +652,11 @@ export default function Step2Form({
                                 label=""
                                 valueChf={it.balanceChf}
                                 onChangeChf={(n) => updatePosition(it.id, { balanceChf: n })}
+                                onBlurChf={(n) => {
+                                  if (it.availability !== "instant") return;
+                                  const amort = typeof it.amortizationPaChf === "number" ? it.amortizationPaChf : 0;
+                                  if (n > 0 && amort === 0) updatePosition(it.id, { amortizationPaChf: n });
+                                }}
                               />
                             </td>
 

@@ -141,7 +141,7 @@ export default function FinanceClientPage() {
 
     const pos = await savePositionsSafe(nextPositions);
     if (!pos.ok) {
-      if (r.status === 401 || r.status === 403) {
+      if (pos.status === 401 || pos.status === 403) {
         setSaveError("Nicht eingeloggt oder Nonce ungültig. Bitte neu anmelden.");
       } else if (r.status === 500) {
         setSaveError("Serverfehler beim Speichern (500).");

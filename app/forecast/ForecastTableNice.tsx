@@ -38,7 +38,7 @@ export type YearRow = {
   debtInterest?: number;
   debtAmort?: number;
 
-  // NEW: explizite Tilgungsquelle (Transfer: Assets -> Debts)
+  // NEW: explizite Amortisationsquelle (Transfer: Assets -> Debts)
   transferAmortFrom?: {
     liq: number;
     shortA: number;
@@ -413,7 +413,7 @@ export default function ForecastTableNice({
                       <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-3">
                         {/* ---------------- helpers (lokal im Render ok, oder oben im file) ---------------- */}
                         {/*
-                          Tilgung ist Transfer: Schulden sinken (good), aber Finanzierung kommt aus Asset-Buckets.
+                          Amortisation ist Transfer: Schulden sinken (good), aber Finanzierung kommt aus Asset-Buckets.
                           Wir inferieren “Quelle” aus den NEGATIVEN Asset-Deltas des Jahres.
                         */}
                         {(() => {
@@ -527,9 +527,9 @@ export default function ForecastTableNice({
                                           →  Eigenkapitalveränderung
                                         </div>
 
-                                        {/* Cashflow + Zinsen erklären Eigenkapitalveränderung */}
-                                        <MovementLine label="Cashflow → Liquidität" value={n(r.assetCashflowToLiq)} kind="pos" />
-                                        <MovementLine label="Cashflow → ReInvest" value={n(r.assetCashflowReinvest)} kind="pos" />
+                                        {/* Ertrag + Zinsen erklären Eigenkapitalveränderung */}
+                                        <MovementLine label="Ertrag → Liquidität" value={n(r.assetCashflowToLiq)} kind="pos" />
+                                        <MovementLine label="Ertrag → Wiederanlage" value={n(r.assetCashflowReinvest)} kind="pos" />
                                         <MovementLine label="Zinsen" value={n(r.debtInterest)} kind="neg" />
                                         {interestSrcLabel && (
                                           <div className="mt-1 text-xs text-slate-400">
@@ -537,14 +537,14 @@ export default function ForecastTableNice({
                                           </div>
                                         )}
 
-                                        {/* dünne Linie vor Tilgung */}
+                                        {/* dünne Linie vor Amortisation */}
                                         {amort !== 0 && <div className="my-2 border-t border-slate-800/60" />}
 
-                                        {/* Tilgung als Transfer + Split */}
+                                        {/* Amortisation als Transfer + Split */}
                                         {amort !== 0 && (
                                           <>
                                             <MovementLine
-                                              label="Tilgung (Transfer)"
+                                              label="Amortisation (Transfer)"
                                               value={amort}
                                               kind="neutral"
                                             />
@@ -622,7 +622,7 @@ export default function ForecastTableNice({
                                                     sign: "-",
                                                   },
                                                   {
-                                                    label: "Tilgung",
+                                                    label: "Amortisation",
                                                     val: Math.trunc(n(amortFrom?.liq)),
                                                     sign: "-",
                                                   },
@@ -630,7 +630,7 @@ export default function ForecastTableNice({
                                               {hasShortFlow &&
                                                 line("Kurzfristig", r._deltaBuckets.shortA, [
                                                   {
-                                                    label: "Cashflow Reinvest",
+                                                    label: "Ertrag Wiederanlage",
                                                     val: Math.trunc(n(breakdown?.shortA)),
                                                     sign: "+",
                                                   },
@@ -640,7 +640,7 @@ export default function ForecastTableNice({
                                                     sign: "-",
                                                   },
                                                   {
-                                                    label: "Tilgung",
+                                                    label: "Amortisation",
                                                     val: Math.trunc(n(amortFrom?.shortA)),
                                                     sign: "-",
                                                   },
@@ -653,7 +653,7 @@ export default function ForecastTableNice({
                                               {hasLongFlow &&
                                                 line("Langfristig", r._deltaBuckets.longA, [
                                                   {
-                                                    label: "Cashflow Reinvest",
+                                                    label: "Ertrag Wiederanlage",
                                                     val: Math.trunc(n(breakdown?.longA)),
                                                     sign: "+",
                                                   },
@@ -663,7 +663,7 @@ export default function ForecastTableNice({
                                                     sign: "-",
                                                   },
                                                   {
-                                                    label: "Tilgung",
+                                                    label: "Amortisation",
                                                     val: Math.trunc(n(amortFrom?.longA)),
                                                     sign: "-",
                                                   },
@@ -676,7 +676,7 @@ export default function ForecastTableNice({
                                               {hasRealFlow &&
                                                 line("Sachwerte", r._deltaBuckets.realA, [
                                                   {
-                                                    label: "Cashflow Reinvest",
+                                                    label: "Ertrag Wiederanlage",
                                                     val: Math.trunc(n(breakdown?.realA)),
                                                     sign: "+",
                                                   },
@@ -686,7 +686,7 @@ export default function ForecastTableNice({
                                                     sign: "-",
                                                   },
                                                   {
-                                                    label: "Tilgung",
+                                                    label: "Amortisation",
                                                     val: Math.trunc(n(amortFrom?.realA)),
                                                     sign: "-",
                                                   },
@@ -771,13 +771,13 @@ export default function ForecastTableNice({
 
                                       {n(r.assetCashflowToLiq) !== 0 && (
                                         <div className="flex items-center justify-between py-1">
-                                          <div className="text-slate-200">Cashflow → Liquidität</div>
+                                          <div className="text-slate-200">Ertrag → Liquidität</div>
                                           <div className="text-emerald-300 tabular-nums">+{formatCHF(n(r.assetCashflowToLiq))}</div>
                                         </div>
                                       )}
                                       {n(r.assetCashflowReinvest) !== 0 && (
                                         <div className="flex items-center justify-between py-1">
-                                          <div className="text-slate-200">Cashflow → ReInvest</div>
+                                          <div className="text-slate-200">Ertrag → Wiederanlage</div>
                                           <div className="text-emerald-300 tabular-nums">+{formatCHF(n(r.assetCashflowReinvest))}</div>
                                         </div>
                                       )}
@@ -803,7 +803,7 @@ export default function ForecastTableNice({
                                       {amort !== 0 && (
                                         <>
                                           <div className="flex items-center justify-between py-1">
-                                            <div className="text-slate-200">Tilgung (Transfer)</div>
+                                            <div className="text-slate-200">Amortisation (Transfer)</div>
                                             <div className="text-slate-200 tabular-nums">{formatCHF(amort)}</div>
                                           </div>
 
@@ -834,11 +834,11 @@ export default function ForecastTableNice({
                                         if (!hasAny) return null;
                                         const liqParts: string[] = [];
                                         if (n(intFrom?.liq)) liqParts.push(`−${formatCHF(n(intFrom.liq))} Zinsen`);
-                                        if (n(amortFrom?.liq)) liqParts.push(`−${formatCHF(n(amortFrom.liq))} Tilgung`);
+                                        if (n(amortFrom?.liq)) liqParts.push(`−${formatCHF(n(amortFrom.liq))} Amortisation`);
                                         const shortParts: string[] = [];
-                                        if (n(breakdown?.shortA)) shortParts.push(`+${formatCHF(n(breakdown.shortA))} Reinvest`);
+                                        if (n(breakdown?.shortA)) shortParts.push(`+${formatCHF(n(breakdown.shortA))} Wiederanlage`);
                                         if (n(intFrom?.shortA)) shortParts.push(`−${formatCHF(n(intFrom.shortA))} Zinsen`);
-                                        if (n(amortFrom?.shortA)) shortParts.push(`−${formatCHF(n(amortFrom.shortA))} Tilgung`);
+                                        if (n(amortFrom?.shortA)) shortParts.push(`−${formatCHF(n(amortFrom.shortA))} Amortisation`);
                                         if (n(coverFrom?.shortA)) shortParts.push(`−${formatCHF(n(coverFrom.shortA))} Defizitdeckung`);
                                         return (
                                           <div className="mt-3 rounded-lg border border-slate-800/80 bg-slate-900/30 p-2">
@@ -864,7 +864,7 @@ export default function ForecastTableNice({
                               </div>
 
                               <div className="mt-4 text-xs text-slate-500">
-                                Cashflow und Zinsen erklären die Eigenkapitalveränderung. Tilgung ist ein Transfer (Aktiven ↓, Schulden ↓); Quellen werden aus den angegebenen Gegenkonten ermittelt. Wenn Liquidität nicht reicht, steigt der Überzug.
+                                Ertrag und Zinsen erklären die Eigenkapitalveränderung. Amortisation ist ein Transfer (Aktiven ↓, Schulden ↓); Quellen werden aus den angegebenen Gegenkonten ermittelt. Wenn Liquidität nicht reicht, steigt der Überzug.
                               </div>
                             </>
                           );

@@ -6,7 +6,13 @@
 // - Profile GET/POST mapped to FormState (incl. step1.retireAtAge)
 
 import type { FormState } from "@/lib/types";
-import { API_WHOAMI, API_PROFILE, API_NONCE } from "./endpoints";
+import { API_WHOAMI, API_PROFILE, API_NONCE, API_AUTH_TOKEN } from "./endpoints";
+import {
+  getAuthToken,
+  setAuthToken,
+  clearAuthToken as clearAuthTokenStorage,
+  restoreTokenFromIndexedDB,
+} from "./authTokenStorage";
 
 /* =========================
    Types
@@ -46,6 +52,20 @@ function setNonce(nonce: string) {
 export function clearNonce() {
   if (!isBrowser()) return;
   sessionStorage.removeItem(NONCE_KEY);
+}
+
+export function clearAuthToken() {
+  clearAuthTokenStorage();
+}
+
+/** Headers für API-Calls: Nonce + Auth-Token (Fallback für PWA Cold Start). Export für positionsApi etc. */
+export function getApiHeaders(extra?: Record<string, string>): Record<string, string> {
+  const h: Record<string, string> = { ...extra };
+  const nonce = getNonce();
+  if (nonce) h["X-WP-Nonce"] = nonce;
+  const token = getAuthToken();
+  if (token) h["X-SL-Auth-Token"] = token;
+  return h;
 }
 
 /** Normalize retireAtAge to backend rules (50–75 else 65). */
@@ -91,12 +111,15 @@ export function normalizeForm(form: FormState): FormState {
 export async function ensureNonce(): Promise<string> {
   if (!isBrowser()) return "";
 
+  await restoreTokenFromIndexedDB();
   const existing = getNonce();
   if (existing) return existing;
 
+  const headers = getApiHeaders();
   const res = await fetch(API_NONCE, {
     credentials: "include",
     cache: "no-store",
+    headers: Object.keys(headers).length > 0 ? headers : undefined,
   });
 
   if (!res.ok) return "";
@@ -117,6 +140,8 @@ async function fetchWithNonce(input: RequestInfo, init: RequestInit = {}) {
 
   const doFetch = (n: string) => {
     const headers = new Headers(init.headers || {});
+    const apiHeaders = getApiHeaders();
+    Object.entries(apiHeaders).forEach(([k, v]) => headers.set(k, v));
     if (n) headers.set("X-WP-Nonce", n);
 
     return fetch(input, {
@@ -146,8 +171,8 @@ async function fetchWithNonce(input: RequestInfo, init: RequestInit = {}) {
     }
 
     if (res.status === 401 || res.status === 403) {
-      // logged out or blocked; nonce might be stale
       clearNonce();
+      clearAuthToken();
     }
   }
 
@@ -160,14 +185,20 @@ async function fetchWithNonce(input: RequestInfo, init: RequestInit = {}) {
 
 export async function whoAmI(): Promise<WhoAmI> {
   try {
+    await restoreTokenFromIndexedDB();
+    const headers = getApiHeaders();
     const res = await fetch(API_WHOAMI, {
       method: "GET",
       credentials: "include",
       cache: "no-store",
+      headers: Object.keys(headers).length > 0 ? headers : undefined,
     });
 
     if (!res.ok) {
-      if (res.status === 401 || res.status === 403) clearNonce();
+      if (res.status === 401 || res.status === 403) {
+        clearNonce();
+        clearAuthToken();
+      }
       return { logged_in: false, user_id: 0 };
     }
 
@@ -175,7 +206,12 @@ export async function whoAmI(): Promise<WhoAmI> {
 
     // Plugin-Format: { logged_in, user_id, name, email, roles }
     if (u && typeof u.logged_in === "boolean") {
-      if (u.logged_in === false) clearNonce();
+      if (u.logged_in === false) {
+        clearNonce();
+        clearAuthToken();
+      } else {
+        fetchAndStoreAuthToken();
+      }
 
       return {
         logged_in: !!u.logged_in,
@@ -187,11 +223,41 @@ export async function whoAmI(): Promise<WhoAmI> {
     }
 
     clearNonce();
+    clearAuthToken();
     return { logged_in: false, user_id: 0 };
   } catch {
-    // network error / CORS / offline / wrong host -> do not crash UI
     return { logged_in: false, user_id: 0, name: null, email: null, roles: [] };
   }
+}
+
+async function fetchAndStoreAuthToken() {
+  if (!isBrowser()) return;
+  const tryFetch = async (): Promise<boolean> => {
+    try {
+      const headers = getApiHeaders();
+      const res = await fetch(API_AUTH_TOKEN, {
+        credentials: "include",
+        cache: "no-store",
+        headers: Object.keys(headers).length > 0 ? headers : undefined,
+      });
+      if (!res.ok) return false;
+      const json = await res.json().catch(() => null);
+      const token = json?.token;
+      if (typeof token === "string" && token) {
+        setAuthToken(token);
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  };
+  if (await tryFetch()) return;
+  // Retry (Android PWA: Cookie kann verzögert ankommen)
+  await new Promise((r) => setTimeout(r, 600));
+  if (await tryFetch()) return;
+  await new Promise((r) => setTimeout(r, 800));
+  await tryFetch();
 }
 
 /* =========================

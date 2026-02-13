@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { whoAmI, ensureNonce, clearNonce } from "@/lib/profileApi";
+import { whoAmI, ensureNonce, clearNonce, clearAuthToken, getApiHeaders } from "@/lib/profileApi";
 import { BASE_PATH } from "@/lib/config";
 import { API_LOGOUT } from "@/lib/endpoints";
 
@@ -22,16 +22,18 @@ async function fetchWhoAmI() {
 
 async function doLogout() {
   const nonce = await ensureNonce();
+  const headers = getApiHeaders();
 
   try {
     await fetch(API_LOGOUT, {
       method: "POST",
       credentials: "include",
-      headers: nonce ? { "X-WP-Nonce": nonce } : undefined,
+      headers: Object.keys(headers).length > 0 ? headers : undefined,
       cache: "no-store",
     });
   } finally {
     clearNonce();
+    clearAuthToken();
     // WICHTIG: auf Seite OHNE silverline_bootstrap
     window.location.href = "https://mysilverline.it-pin.ch/login?logged_out=1";
   }

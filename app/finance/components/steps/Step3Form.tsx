@@ -53,7 +53,7 @@ const DEST_OPTIONS: Array<{ value: Destination; label: string }> = [
   { value: "liquidity", label: "Liquidität" },
   { value: "short", label: "Short" },
   { value: "long", label: "Long" },
-  { value: "debt", label: "Schulden (Tilgung)" },
+  { value: "debt", label: "Schulden (Amortisation)" },
 ];
 
 const SRC_OPTIONS: Array<{ value: FundingSource; label: string }> = [

@@ -8,12 +8,14 @@ export function FieldMoney({
   suffix,
   value,
   onChange,
+  onBlurValue,
   placeholder = "z.B. 850",
 }: {
   label: string;
   suffix?: string;
   value: string;                 // <-- kanonisch im Parent: "3500"
   onChange: (value: string) => void; // <-- bekommt kanonisch
+  onBlurValue?: (value: string) => void; // <-- optional, beim Verlassen mit kanonischem Wert
   placeholder?: string;
 }) {
   const [display, setDisplay] = useState<string>("");
@@ -42,6 +44,7 @@ export function FieldMoney({
             const canon = canonicalCHF(display);
             onChange(canon);
             setDisplay(canon ? formatCHFInput(canon) : "");
+            onBlurValue?.(canon);
           }}
           onMouseDown={(e) => {
             e.preventDefault();
@@ -67,10 +70,12 @@ export function FieldMoneyInt({
   label,
   valueChf,
   onChangeChf,
+  onBlurChf,
 }: {
   label: string;
   valueChf: number;
   onChangeChf: (n: number) => void;
+  onBlurChf?: (n: number) => void;
 }) {
   return (
     <FieldMoney
@@ -80,6 +85,7 @@ export function FieldMoneyInt({
         const canon = canonicalCHF(raw);
         onChangeChf(parseCHF(canon));
       }}
+      onBlurValue={onBlurChf ? (raw) => onBlurChf(parseCHF(raw)) : undefined}
     />
   );
 }

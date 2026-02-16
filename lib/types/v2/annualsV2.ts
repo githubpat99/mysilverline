@@ -28,6 +28,8 @@ export type AnnualIncomeV2 = {
 
   // Nur wenn amountCHF > 0 relevant/erforderlich (Schema enforced conditional)
   destination?: DestinationBucket;
+  /** Echtes Konto: asset:id | debt:id */
+  destinationAccountKey?: string;
   destinationSplit?: DestinationSplit[];
 };
 
@@ -37,6 +39,8 @@ export type FundingSource = {
   source: FundingBucket; // aus welchem Bucket wird bezahlt
   // Nur relevant bei fixedSplit; bei waterfall optional/ignoriert
   share?: number; // 0..1
+  /** Echtes Konto: asset:id | debt:id */
+  sourceAccountKey?: string;
 };
 
 // Expense: braucht Funding zwingend

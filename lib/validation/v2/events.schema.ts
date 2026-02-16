@@ -13,6 +13,10 @@ export const FundingBucketSchema = z.enum(["liquidity", "short", "long", "debt"]
 const FundingSourceItemSchema = z.object({
   source: FundingSourceSchema,
   share: z.number().finite().min(0).max(1).optional(),
+  sourceAccountKey: z
+    .string()
+    .nullish()
+    .transform((v) => (v === "" || v === null || v === undefined ? undefined : v)),
 });
 
 export const EventFundingSchema = z
@@ -65,6 +69,10 @@ export const EventLineSchema = z.object({
 
   destination: DestinationSchema.nullable().optional(),
   funding: EventFundingSchema.nullable().optional(),
+  destinationAccountKey: z
+    .string()
+    .nullish()
+    .transform((v) => (v === "" || v === null || v === undefined ? undefined : v)),
 }).superRefine((line, ctx) => {
   if (line.line_type === "income") {
     if (!line.destination) {

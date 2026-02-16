@@ -11,6 +11,8 @@ export type FundingStrategy = "waterfall" | "fixedSplit";
 export type FundingSourceItem = {
   source: FundingSource;
   share?: number; // required if fixedSplit
+  /** Echtes Konto: asset:id | debt:id – übersteuert source für Anzeige */
+  sourceAccountKey?: string;
 };
 
 export type EventFunding = {
@@ -29,8 +31,10 @@ export type EventLine = {
   meta_json: any | null;
 
   // NEW (fachlich zwingend)
-  destination?: Destination; // required for income
-  funding?: EventFunding;    // required for spending
+  destination?: Destination; // required for income (bucket für Engine)
+  funding?: EventFunding;   // required for spending
+  /** Echtes Konto: asset:id | debt:id – übersteuert destination für Anzeige */
+  destinationAccountKey?: string;
 };
 
 export type ProfileEvent = {

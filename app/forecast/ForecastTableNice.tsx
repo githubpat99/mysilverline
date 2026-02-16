@@ -30,6 +30,10 @@ export type YearRow = {
   netFlow?: number;
   assetCF?: number;
   events?: number;
+  eventsIncome?: number;
+  eventsExpense?: number;
+  annualsIncome?: number;
+  annualsExpense?: number;
 
   // optional movement/detail fields (if present, we show them)
   assetCashflowToLiq?: number;
@@ -236,6 +240,18 @@ export default function ForecastTableNice({
       { label: "Sachw.", amount: Math.trunc(n(src.realA)) },
     ].filter(x => x.amount !== 0);
     return parts.length ? parts.map(x => `${x.label} ${formatCHF(x.amount)}`).join(", ") : "";
+  }
+
+  /** Quelle ohne Betrag für ← Darstellung (analog Annuals) */
+  function sourceLabelShort(src?: { liq: number; shortA: number; longA: number; realA: number }) {
+    if (!src) return "Liquidität";
+    const parts = [
+      { label: "Liquidität", amount: Math.trunc(n(src.liq)) },
+      { label: "Kurzfristig", amount: Math.trunc(n(src.shortA)) },
+      { label: "Langfristig", amount: Math.trunc(n(src.longA)) },
+      { label: "Sachwerte", amount: Math.trunc(n(src.realA)) },
+    ].filter(x => x.amount !== 0);
+    return parts.length ? parts.map(x => x.label).join(", ") : "Liquidität";
   }
 
   return (
@@ -529,33 +545,39 @@ export default function ForecastTableNice({
                                           →  Eigenkapitalveränderung
                                         </div>
 
-                                        {/* Ertrag + Zinsen erklären Eigenkapitalveränderung */}
-                                        <MovementLine label="Ertrag → Liquidität" value={n(r.assetCashflowToLiq)} kind="pos" />
-                                        <MovementLine label="Ertrag → Wiederanlage" value={n(r.assetCashflowReinvest)} kind="pos" />
-                                        <MovementLine label="Zinsen" value={n(r.debtInterest)} kind="neg" />
-                                        {interestSrcLabel && (
-                                          <div className="mt-1 text-xs text-slate-400">
-                                            Quelle: {interestSrcLabel}
-                                          </div>
+                                        {/* Reihenfolge: 1. Annuals, 2. Ereignisse, 3. Erträge aus Kapital, 4. Zinsen, 5. Amortisation */}
+                                        {n(r.annualsIncome ?? 0) !== 0 && (
+                                          <MovementLine label="Annuals (Einnahmen) → Liquidität" value={n(r.annualsIncome)} kind="pos" />
+                                        )}
+                                        {n(r.annualsExpense ?? 0) !== 0 && (
+                                          <MovementLine label="Annuals (Ausgaben) ← Liquidität" value={n(r.annualsExpense)} kind="neg" />
+                                        )}
+                                        {n(r.eventsIncome ?? 0) !== 0 && (
+                                          <MovementLine label="Ereignisse (Einnahmen) → Liquidität" value={n(r.eventsIncome)} kind="pos" />
+                                        )}
+                                        {n(r.eventsExpense ?? 0) !== 0 && (
+                                          <MovementLine label="Ereignisse (Ausgaben) ← Liquidität" value={n(r.eventsExpense)} kind="neg" />
+                                        )}
+                                        {n(r.assetCashflowToLiq) !== 0 && (
+                                          <MovementLine label="Ertrag → Liquidität" value={n(r.assetCashflowToLiq)} kind="pos" />
+                                        )}
+                                        {n(r.assetCashflowReinvest) !== 0 && (
+                                          <MovementLine label="Ertrag → Wiederanlage" value={n(r.assetCashflowReinvest)} kind="pos" />
+                                        )}
+                                        {n(r.debtInterest) !== 0 && (
+                                          <MovementLine
+                                            label={`Zinsen ← ${sourceLabelShort(r.transferInterestFrom)}`}
+                                            value={n(r.debtInterest)}
+                                            kind="neg"
+                                          />
                                         )}
 
-                                        {/* dünne Linie vor Amortisation */}
-                                        {amort !== 0 && <div className="my-2 border-t border-slate-800/60" />}
-
-                                        {/* Amortisation als Transfer + Split */}
                                         {amort !== 0 && (
-                                          <>
-                                            <MovementLine
-                                              label="Amortisation (Transfer)"
-                                              value={amort}
-                                              kind="neutral"
-                                            />
-                                            {(splitLabel || splitLabelFromSrc(r.transferAmortFrom)) && (
-                                              <div className="mt-1 text-xs text-slate-400">
-                                                Quelle: {splitLabel || splitLabelFromSrc(r.transferAmortFrom)}
-                                              </div>
-                                            )}
-                                          </>
+                                          <MovementLine
+                                            label={`Amortisation ← ${sourceLabelShort(r.transferAmortFrom)}`}
+                                            value={amort}
+                                            kind="neutral"
+                                          />
                                         )}
                                         {overdraftAdded > 0 && (
                                           <div className="mt-1 text-xs text-amber-400/90">
@@ -569,7 +591,17 @@ export default function ForecastTableNice({
                                           const intFrom = r.transferInterestFrom;
                                           const amortFrom = r.transferAmortFrom;
                                           const coverFrom = r.coverDeficitFrom;
+                                          const annIncome = n(r.annualsIncome ?? 0);
+                                          const annExpense = n(r.annualsExpense ?? 0);
+                                          const evIncome = n(r.eventsIncome ?? 0);
+                                          const evExpense = n(r.eventsExpense ?? 0);
+                                          const ertragLiq = n(r.assetCashflowToLiq ?? 0);
                                           const hasLiqFlow =
+                                            annIncome !== 0 ||
+                                            annExpense !== 0 ||
+                                            evIncome !== 0 ||
+                                            evExpense !== 0 ||
+                                            ertragLiq !== 0 ||
                                             (intFrom && n(intFrom.liq) !== 0) ||
                                             (amortFrom && n(amortFrom.liq) !== 0);
                                           const hasShortFlow =
@@ -593,12 +625,14 @@ export default function ForecastTableNice({
                                           const line = (
                                             label: string,
                                             delta: number,
-                                            items: { label: string; val: number; sign: "+" | "-" }[],
+                                            items: { label: string; val: number; sign: "+" | "-" | "" }[],
                                           ) => {
                                             const nonZero = items.filter((x) => x.val !== 0);
                                             if (nonZero.length === 0) return null;
                                             const parts = nonZero
-                                              .map((x) => `${x.sign}${formatCHF(x.val)} ${x.label}`)
+                                              .map((x) =>
+                                                x.sign === "" ? `${formatCHF(x.val)} ${x.label}` : `${x.sign}${formatCHF(x.val)} ${x.label}`,
+                                              )
                                               .join(", ");
                                             return (
                                               <div
@@ -618,6 +652,31 @@ export default function ForecastTableNice({
                                               </div>
                                               {hasLiqFlow &&
                                                 line("Liquidität", r._deltaBuckets.liq, [
+                                                  {
+                                                    label: "Annuals (Einnahmen)",
+                                                    val: Math.trunc(annIncome),
+                                                    sign: "+",
+                                                  },
+                                                  {
+                                                    label: "Annuals (Ausgaben)",
+                                                    val: Math.trunc(annExpense),
+                                                    sign: "-",
+                                                  },
+                                                  {
+                                                    label: "Ereignisse (Einnahmen)",
+                                                    val: Math.trunc(evIncome),
+                                                    sign: "+",
+                                                  },
+                                                  {
+                                                    label: "Ereignisse (Ausgaben)",
+                                                    val: Math.trunc(evExpense),
+                                                    sign: "-",
+                                                  },
+                                                  {
+                                                    label: "Ertrag",
+                                                    val: Math.trunc(ertragLiq),
+                                                    sign: "+",
+                                                  },
                                                   {
                                                     label: "Zinsen",
                                                     val: Math.trunc(n(intFrom?.liq)),
@@ -771,6 +830,31 @@ export default function ForecastTableNice({
                                         →  Eigenkapitalveränderung
                                       </div>
 
+                                      {/* Reihenfolge: 1. Annuals, 2. Ereignisse, 3. Erträge, 4. Zinsen, 5. Amortisation */}
+                                      {n(r.annualsIncome ?? 0) !== 0 && (
+                                        <div className="flex items-center justify-between py-1">
+                                          <div className="text-slate-200">Annuals (Einnahmen) → Liquidität</div>
+                                          <div className="text-emerald-300 tabular-nums">+{formatCHF(n(r.annualsIncome))}</div>
+                                        </div>
+                                      )}
+                                      {n(r.annualsExpense ?? 0) !== 0 && (
+                                        <div className="flex items-center justify-between py-1">
+                                          <div className="text-slate-200">Annuals (Ausgaben) ← Liquidität</div>
+                                          <div className="text-rose-300 tabular-nums">-{formatCHF(n(r.annualsExpense))}</div>
+                                        </div>
+                                      )}
+                                      {n(r.eventsIncome ?? 0) !== 0 && (
+                                        <div className="flex items-center justify-between py-1">
+                                          <div className="text-slate-200">Ereignisse (Einnahmen) → Liquidität</div>
+                                          <div className="text-emerald-300 tabular-nums">+{formatCHF(n(r.eventsIncome))}</div>
+                                        </div>
+                                      )}
+                                      {n(r.eventsExpense ?? 0) !== 0 && (
+                                        <div className="flex items-center justify-between py-1">
+                                          <div className="text-slate-200">Ereignisse (Ausgaben) ← Liquidität</div>
+                                          <div className="text-rose-300 tabular-nums">-{formatCHF(n(r.eventsExpense))}</div>
+                                        </div>
+                                      )}
                                       {n(r.assetCashflowToLiq) !== 0 && (
                                         <div className="flex items-center justify-between py-1">
                                           <div className="text-slate-200">Ertrag → Liquidität</div>
@@ -784,37 +868,23 @@ export default function ForecastTableNice({
                                         </div>
                                       )}
                                       {n(r.debtInterest) !== 0 && (
-                                        <>
-                                          <div className="flex items-center justify-between py-1">
-                                            <div className="text-slate-200">Zinsen</div>
-                                            <div className="text-rose-300 tabular-nums">
-                                              -{formatCHF(Math.abs(n(r.debtInterest)))}
-                                            </div>
+                                        <div className="flex items-center justify-between py-1">
+                                          <div className="text-slate-200">
+                                            Zinsen ← {sourceLabelShort(r.transferInterestFrom)}
                                           </div>
-
-                                          {splitLabelFromSrc(r.transferInterestFrom) && (
-                                            <div className="pl-2 text-xs text-slate-400">
-                                              Quelle: {splitLabelFromSrc(r.transferInterestFrom)}
-                                            </div>
-                                          )}
-                                        </>
+                                          <div className="text-rose-300 tabular-nums">
+                                            -{formatCHF(Math.abs(n(r.debtInterest)))}
+                                          </div>
+                                        </div>
                                       )}
 
-                                      {amort !== 0 && <div className="my-2 border-t border-slate-800/60" />}
-
                                       {amort !== 0 && (
-                                        <>
-                                          <div className="flex items-center justify-between py-1">
-                                            <div className="text-slate-200">Amortisation (Transfer)</div>
-                                            <div className="text-slate-200 tabular-nums">{formatCHF(amort)}</div>
+                                        <div className="flex items-center justify-between py-1">
+                                          <div className="text-slate-200">
+                                            Amortisation ← {sourceLabelShort(r.transferAmortFrom)}
                                           </div>
-
-                                          {(splitLabel || splitLabelFromSrc(r.transferAmortFrom)) && (
-                                            <div className="mt-1 text-xs text-slate-400">
-                                              Quelle: {splitLabel || splitLabelFromSrc(r.transferAmortFrom)}
-                                            </div>
-                                          )}
-                                        </>
+                                          <div className="text-slate-200 tabular-nums">{formatCHF(amort)}</div>
+                                        </div>
                                       )}
                                       {overdraftAdded > 0 && (
                                         <div className="mt-2 text-xs text-amber-400/90">
@@ -828,13 +898,28 @@ export default function ForecastTableNice({
                                         const intFrom = r.transferInterestFrom;
                                         const amortFrom = r.transferAmortFrom;
                                         const coverFrom = r.coverDeficitFrom;
+                                        const annIncome = n(r.annualsIncome ?? 0);
+                                        const annExpense = n(r.annualsExpense ?? 0);
+                                        const evIncome = n(r.eventsIncome ?? 0);
+                                        const evExpense = n(r.eventsExpense ?? 0);
+                                        const ertragLiq = n(r.assetCashflowToLiq ?? 0);
                                         const hasAny =
+                                          annIncome !== 0 ||
+                                          annExpense !== 0 ||
+                                          evIncome !== 0 ||
+                                          evExpense !== 0 ||
+                                          ertragLiq !== 0 ||
                                           (intFrom && (n(intFrom.liq) !== 0 || n(intFrom.shortA) !== 0)) ||
                                           (amortFrom && (n(amortFrom.liq) !== 0 || n(amortFrom.shortA) !== 0)) ||
                                           (breakdown && n(breakdown.shortA) !== 0) ||
                                           (coverFrom && n(coverFrom.shortA) !== 0);
                                         if (!hasAny) return null;
                                         const liqParts: string[] = [];
+                                        if (annIncome) liqParts.push(`+${formatCHF(annIncome)} Annuals (Einnahmen)`);
+                                        if (annExpense) liqParts.push(`−${formatCHF(annExpense)} Annuals (Ausgaben)`);
+                                        if (evIncome) liqParts.push(`+${formatCHF(evIncome)} Ereignisse (Einnahmen)`);
+                                        if (evExpense) liqParts.push(`−${formatCHF(evExpense)} Ereignisse (Ausgaben)`);
+                                        if (ertragLiq) liqParts.push(`+${formatCHF(ertragLiq)} Ertrag`);
                                         if (n(intFrom?.liq)) liqParts.push(`−${formatCHF(n(intFrom.liq))} Zinsen`);
                                         if (n(amortFrom?.liq)) liqParts.push(`−${formatCHF(n(amortFrom.liq))} Amortisation`);
                                         const shortParts: string[] = [];

@@ -1470,6 +1470,11 @@ function sl_position_targets_set($uid, $fromInstrumentId, $targetIds) {
 // Relational: ProfileEvents (sl_profile_event + sl_profile_event_line)
 // ------------------------------
 
+/**
+ * Load events and return frontend ProfileEvent format for compatibility.
+ * PHP stores: event_id, label, start_year, end_year, recurrence, lines[]
+ * Frontend expects: client_id, title, start_date, end_date, recurrence, active, line: { amount_chf, line_type, ... }
+ */
 function sl_profile_events_load($uid) {
   global $wpdb;
 
@@ -1499,33 +1504,115 @@ function sl_profile_events_load($uid) {
   $byEvent = [];
   foreach ($events as $e) {
     $eid = (string)$e['event_id'];
+    $rec = (string)($e['recurrence'] ?? 'once');
+    if ($rec === 'once') $rec = 'none';
     $byEvent[$eid] = [
-      'id' => $eid,
-      'label' => (string)$e['label'],
-      'startYear' => (int)$e['start_year'],
-      'endYear' => ($e['end_year'] !== null ? (int)$e['end_year'] : null),
-      'recurrence' => (string)$e['recurrence'], // once|yearly|monthly (monthly later)
-      'eventType' => ($e['event_type'] !== null ? (string)$e['event_type'] : null),
-      'note' => ($e['note'] !== null ? (string)$e['note'] : null),
-      'lines' => [],
+      'client_id' => $eid,
+      'title' => (string)$e['label'],
+      'start_date' => sprintf('%04d-01-01', (int)$e['start_year']),
+      'end_date' => ($e['end_year'] !== null ? sprintf('%04d-12-31', (int)$e['end_year']) : null),
+      'recurrence' => $rec,
+      'active' => 1,
+      'meta_json' => null,
+      'line' => null,
     ];
   }
 
   foreach (($lines ?: []) as $l) {
     $eid = (string)$l['event_id'];
-    if (!isset($byEvent[$eid])) continue;
-
-    $byEvent[$eid]['lines'][] = [
-      'id' => (string)$l['line_id'],
-      'amountCHF' => (int)$l['amount_chf'],
-      'fromInstrumentId' => (!empty($l['from_instrument_id']) ? (string)$l['from_instrument_id'] : null),
-      'toInstrumentId' => (!empty($l['to_instrument_id']) ? (string)$l['to_instrument_id'] : null),
-      'year' => ($l['year'] !== null ? (int)$l['year'] : null),
-      'note' => ($l['note'] !== null ? (string)$l['note'] : null),
+    if (!isset($byEvent[$eid]) || $byEvent[$eid]['line'] !== null) continue;
+    $amount = (int)$l['amount_chf'];
+    $lineMeta = [];
+    if (!empty($l['note'])) {
+      $decoded = @json_decode($l['note'], true);
+      if (is_array($decoded)) $lineMeta = $decoded;
+    }
+    $lineType = $lineMeta['line_type'] ?? 'income';
+    $indexation = $lineMeta['indexation'] ?? null;
+    $destination = $lineMeta['destination'] ?? ($lineType === 'income' ? 'liquidity' : null);
+    $funding = $lineMeta['funding'] ?? ($lineType === 'spending' ? ['fundingStrategy' => 'waterfall', 'fundingSources' => [['source' => 'liquidity']]] : null);
+    $destAcc = $lineMeta['destinationAccountKey'] ?? null;
+    $byEvent[$eid]['line'] = [
+      'line_type' => $lineType,
+      'amount_chf' => $amount,
+      'indexation' => $indexation,
+      'category' => null,
+      'meta_json' => null,
+      'destination' => $destination,
+      'funding' => $funding,
+      'destinationAccountKey' => $destAcc,
     ];
   }
 
-  return array_values($byEvent);
+  $result = [];
+  foreach ($byEvent as $ev) {
+    if ($ev['line'] === null) continue;
+    $result[] = $ev;
+  }
+  return $result;
+}
+
+/**
+ * Normalize event from frontend ProfileEvent format to legacy PHP format.
+ * Frontend: client_id, title, start_date, end_date, line: { amount_chf, line_type, ... }
+ * PHP: id, label, startYear, endYear, lines: [{ id, amountCHF, note }]
+ */
+function sl_profile_event_normalize_for_save($ev) {
+  $event_id = isset($ev['client_id']) ? trim((string)$ev['client_id']) : (isset($ev['id']) ? trim((string)$ev['id']) : '');
+  $label = isset($ev['title']) ? trim((string)$ev['title']) : (isset($ev['label']) ? trim((string)$ev['label']) : '');
+  $startYear = 0;
+  if (!empty($ev['start_date']) && strlen($ev['start_date']) >= 4) {
+    $startYear = (int)substr($ev['start_date'], 0, 4);
+  } elseif (isset($ev['startYear'])) {
+    $startYear = (int)$ev['startYear'];
+  }
+  $endYear = null;
+  if (!empty($ev['end_date']) && strlen($ev['end_date']) >= 4) {
+    $endYear = (int)substr($ev['end_date'], 0, 4);
+  } elseif (array_key_exists('endYear', $ev) && $ev['endYear'] !== null && $ev['endYear'] !== '') {
+    $endYear = (int)$ev['endYear'];
+  }
+  $rec = isset($ev['recurrence']) ? strtolower(trim((string)$ev['recurrence'])) : 'once';
+  if ($rec === 'none') $rec = 'once';
+  if (!in_array($rec, ['once','yearly','monthly'], true)) $rec = 'once';
+  $lines = [];
+  if (isset($ev['line']) && is_array($ev['line'])) {
+    $ln = $ev['line'];
+    $line_id = $event_id . '_line';
+    $amount = isset($ln['amount_chf']) ? (int)$ln['amount_chf'] : (isset($ln['amountCHF']) ? (int)$ln['amountCHF'] : 0);
+    $lineMeta = ['line_type' => $ln['line_type'] ?? 'income', 'indexation' => $ln['indexation'] ?? null];
+    if (!empty($ln['destination'])) $lineMeta['destination'] = $ln['destination'];
+    if (!empty($ln['funding'])) $lineMeta['funding'] = $ln['funding'];
+    if (!empty($ln['destinationAccountKey'])) $lineMeta['destinationAccountKey'] = $ln['destinationAccountKey'];
+
+    $toId = null;
+    $fromId = null;
+    if (!empty($ln['destinationAccountKey'])) {
+      $k = trim((string)$ln['destinationAccountKey']);
+      if (preg_match('/^(asset|debt):(.+)$/', $k, $m)) $toId = $m[2];
+    }
+    if (!empty($ln['funding']['fundingSources'][0]['sourceAccountKey'])) {
+      $k = trim((string)$ln['funding']['fundingSources'][0]['sourceAccountKey']);
+      if (preg_match('/^(asset|debt):(.+)$/', $k, $m)) $fromId = $m[2];
+    }
+
+    $lineRow = ['id' => $line_id, 'amountCHF' => $amount, 'note' => json_encode($lineMeta)];
+    if ($toId !== null) $lineRow['toInstrumentId'] = $toId;
+    if ($fromId !== null) $lineRow['fromInstrumentId'] = $fromId;
+    $lines[] = $lineRow;
+  } elseif (isset($ev['lines']) && is_array($ev['lines'])) {
+    $lines = $ev['lines'];
+  }
+  return [
+    'id' => $event_id,
+    'label' => $label,
+    'startYear' => $startYear,
+    'endYear' => $endYear,
+    'recurrence' => $rec,
+    'eventType' => $ev['eventType'] ?? null,
+    'note' => $ev['note'] ?? null,
+    'lines' => $lines,
+  ];
 }
 
 function sl_profile_events_replace($uid, $events) {
@@ -1547,22 +1634,18 @@ function sl_profile_events_replace($uid, $events) {
 
   foreach ($events as $ev) {
     if (!is_array($ev)) continue;
+    $ev = sl_profile_event_normalize_for_save($ev);
 
-    $event_id = isset($ev['id']) ? trim((string)$ev['id']) : '';
-    $label = isset($ev['label']) ? trim((string)$ev['label']) : '';
-    $startYear = isset($ev['startYear']) ? (int)$ev['startYear'] : 0;
+    $event_id = trim((string)($ev['id'] ?? ''));
+    $label = trim((string)($ev['label'] ?? ''));
+    $startYear = (int)($ev['startYear'] ?? 0);
 
     if ($event_id === '' || $label === '' || $startYear <= 0) continue;
 
-    $endYear = (array_key_exists('endYear', $ev) && $ev['endYear'] !== null && $ev['endYear'] !== '') ? (int)$ev['endYear'] : null;
-    $rec = isset($ev['recurrence']) ? strtolower(trim((string)$ev['recurrence'])) : 'once';
-    if (!in_array($rec, ['once','yearly','monthly'], true)) $rec = 'once';
-
-    $eventType = (array_key_exists('eventType', $ev) && $ev['eventType'] !== null) ? trim((string)$ev['eventType']) : null;
-    if ($eventType === '') $eventType = null;
-
-    $note = (array_key_exists('note', $ev) && $ev['note'] !== null) ? trim((string)$ev['note']) : null;
-    if ($note === '') $note = null;
+    $endYear = ($ev['endYear'] !== null && $ev['endYear'] !== '') ? (int)$ev['endYear'] : null;
+    $rec = $ev['recurrence'] ?? 'once';
+    $eventType = !empty($ev['eventType']) ? trim((string)$ev['eventType']) : null;
+    $note = isset($ev['note']) && $ev['note'] !== null && $ev['note'] !== '' ? trim((string)$ev['note']) : null;
 
     $ins = $wpdb->insert(
       $t_e,
@@ -1585,7 +1668,7 @@ function sl_profile_events_replace($uid, $events) {
 
     foreach ($lines as $ln) {
       if (!is_array($ln)) continue;
-      $line_id = isset($ln['id']) ? trim((string)$ln['id']) : '';
+      $line_id = isset($ln['id']) ? trim((string)$ln['id']) : ($event_id . '_line');
       $amount = isset($ln['amountCHF']) ? (int)$ln['amountCHF'] : 0;
       if ($line_id === '' || $amount <= 0) continue;
 

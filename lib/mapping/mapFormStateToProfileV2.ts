@@ -141,7 +141,7 @@ export function mapFormStateToProfileV2(form: FormState, prev: ProfileV2): Profi
 
       const rawLine: any = e.line ?? {};
 
-      // IMPORTANT: explicitly keep destination/funding
+      // IMPORTANT: explicitly keep destination/funding + account keys
       const line: any = {
         ...rawLine,
         amount_chf: Math.trunc(rawLine.amount_chf ?? 0),
@@ -150,7 +150,17 @@ export function mapFormStateToProfileV2(form: FormState, prev: ProfileV2): Profi
         meta_json: rawLine.meta_json ?? null,
         destination: rawLine.destination ?? undefined,
         funding: rawLine.funding ?? undefined,
+        destinationAccountKey: rawLine.destinationAccountKey ?? undefined,
       };
+      if (line.funding?.fundingSources) {
+        line.funding = {
+          ...line.funding,
+          fundingSources: line.funding.fundingSources.map((s: any) => ({
+            ...s,
+            sourceAccountKey: s.sourceAccountKey ?? undefined,
+          })),
+        };
+      }
 
       // Clean: prevent mixed models
       if (line.line_type === "income") {

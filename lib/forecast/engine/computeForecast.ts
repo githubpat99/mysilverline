@@ -44,6 +44,10 @@ type ForecastRow = {
   netFlow: number;
   assetCF: number;
   events: number;
+  eventsIncome: number;
+  eventsExpense: number;
+  annualsIncome: number;
+  annualsExpense: number;
 
   // NEW: debt details
   debtInterest: number;
@@ -526,18 +530,38 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
 
     if (debtState.length > 0) recomputeDebtBucketsFromState();
 
-    // totals (ohne interest)
+    // totals (ohne interest) – für Reporting
     const expensesNoInterest = expensesTotal; // base+events (ohne interest)
     const incomeTotal = n(incomeBase + eventsIncome + assetCashflowToLiq);
 
-    // 1) Income/Expenses (ohne interest) -> LIQ
-    const netNoInterest = n(incomeTotal - expensesNoInterest);
-    assets.liq = n(assets.liq) + netNoInterest;
+    // === Reihenfolge: 1. Annuals, 2. Ereignisse, 3. Aktiven/Passiven (Zinsen, Amort) ===
 
-    // falls LIQ < 0: decken (Rebalancing)
-    const coverDraw = coverLiquidityDeficitTracked(assets);
+    let coverDraw = emptyDraw();
 
-    // 2) Zinsen zahlen – pro Schuld aus angegebener Quelle; Fehlbetrag → Überzug (Phase 4)
+    // 1) Annuals (Einnahmen/Ausgaben aus Jahresrechnung) -> LIQ
+    const netAnnuals = n(incomeBase - expensesBase);
+    assets.liq = n(assets.liq) + netAnnuals;
+    const d1 = coverLiquidityDeficitTracked(assets);
+    coverDraw.shortA += d1.shortA;
+    coverDraw.longA += d1.longA;
+    coverDraw.realA += d1.realA;
+
+    // 2) Ereignisse -> LIQ
+    const netEvents = n(eventsIncome - eventsExpense);
+    assets.liq = n(assets.liq) + netEvents;
+    const d2 = coverLiquidityDeficitTracked(assets);
+    coverDraw.shortA += d2.shortA;
+    coverDraw.longA += d2.longA;
+    coverDraw.realA += d2.realA;
+
+    // 3a) Asset-Cashflow zu Liquidität (aus Aktiven)
+    assets.liq = n(assets.liq) + assetCashflowToLiq;
+    const d3 = coverLiquidityDeficitTracked(assets);
+    coverDraw.shortA += d3.shortA;
+    coverDraw.longA += d3.longA;
+    coverDraw.realA += d3.realA;
+
+    // 3b) Zinsen zahlen – pro Schuld aus angegebener Quelle; Fehlbetrag → Überzug (Phase 4)
     // use interestPerDebt (principal at START of year), not mutated debtState
     let interestDraw = emptyDraw();
     let overdraftFromInterest = 0;
@@ -560,7 +584,7 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
       }
     }
 
-    // 3) Tilgung zahlen – pro Schuld aus angegebener Quelle; Fehlbetrag → Überzug (Phase 4)
+    // 3c) Amortisation zahlen – pro Schuld aus angegebener Quelle; Fehlbetrag → Überzug (Phase 4)
     let amortDraw = emptyDraw();
     let overdraftFromAmort = 0;
     const amortByInstrument: Record<string, number> = {};
@@ -717,6 +741,10 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
       netFlow: net,
       assetCF,
       events: eventsNet,
+      eventsIncome,
+      eventsExpense,
+      annualsIncome: incomeBase,
+      annualsExpense: expensesBase,
       transferInterestFrom: {
         liq: interestDraw.liq,
         shortA: interestDraw.shortA,

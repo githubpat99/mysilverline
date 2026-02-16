@@ -201,6 +201,8 @@ export default function FinanceClientPage() {
             onAnnualsOpenChange={setAnnualsOpen}
             eventOpenId={eventOpenId}
             onEventOpenIdChange={setEventOpenId}
+            assets={form.step1.positions ?? []}
+            debts={form.step2.positions ?? []}
             onCommit={handleAutosave}
           />
         );

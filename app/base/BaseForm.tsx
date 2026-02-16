@@ -48,15 +48,26 @@ export default function BaseForm() {
     const [saving, setSaving] = useState(false);
     const [err, setErr] = useState("");
 
+    const [loaded, setLoaded] = useState(false);
+
     useEffect(() => {
         (async () => {
             setErr("");
-            const r = await loadProfileV2();
-            if (!r.ok) {
+            try {
+                const r = await loadProfileV2();
+                if (!r.ok) {
+                    setErr("Konnte Profil nicht laden (API- oder Parse-Fehler).");
+                    setProfile(ensureSelf(makeEmptyProfileV2()));
+                } else {
+                    setProfile(ensureSelf(r.profile ?? makeEmptyProfileV2()));
+                }
+            } catch (e) {
+                console.error("[BaseForm] load failed", e);
                 setErr("Konnte Profil nicht laden.");
-                return;
+                setProfile(ensureSelf(makeEmptyProfileV2()));
+            } finally {
+                setLoaded(true);
             }
-            setProfile(ensureSelf(r.profile));
         })();
     }, []);
 
@@ -65,7 +76,7 @@ export default function BaseForm() {
         return persons.find((p) => p.role === ROLE_SELF || p.id === "self");
     }, [profile]);
 
-    if (!profile || !self) return <div style={{ padding: 16, color: "#94a3b8" }}>Lade…</div>;
+    if (!loaded || !profile || !self) return <div style={{ padding: 16, color: "#94a3b8" }}>Lade…</div>;
 
     const startYear = yyyy();
     const forecastHorizonYears = profile.meta?.forecastHorizonYears ?? 55;

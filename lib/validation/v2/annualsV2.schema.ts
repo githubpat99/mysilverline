@@ -21,6 +21,10 @@ export const FundingBucketSchema = z.enum(["liquidity", "short", "long", "debt"]
 export const AnnualFundingSourceItemSchema = z.object({
   source: FundingBucketSchema,
   share: z.number().finite().min(0).max(1).optional(),
+  sourceAccountKey: z
+    .string()
+    .nullish()
+    .transform((v) => (v === "" || v == null ? undefined : v)),
 });
 
 export const DestinationSplitSchema = z.object({
@@ -39,6 +43,10 @@ export const AnnualIncomeV2Schema = z
     endYear: YearSchema.optional(),
 
     destination: DestinationBucketSchema.optional(),
+    destinationAccountKey: z
+      .string()
+      .nullish()
+      .transform((v) => (v === "" || v == null ? undefined : v)),
     destinationSplit: z.array(DestinationSplitSchema).optional(),
   })
   .superRefine((v, ctx) => {
@@ -177,18 +185,22 @@ export const AnnualExpenseV2Schema = z
         return;
       }
 
-      // no duplicate sources
-      const seen = new Set<string>();
-      for (const s of sources) {
-        if (seen.has(s.source)) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ["fundingSources"],
-            message: "fundingSources must not contain duplicate sources",
-          });
-          break;
+      // Keine Duplikate bei unterschiedlichen Account-Keys; bei Fallback (nur Liquidität) Duplikate tolerieren
+      const withAccountKey = sources.filter((s) => (s as any).sourceAccountKey);
+      if (withAccountKey.length > 1) {
+        const seen = new Set<string>();
+        for (const s of withAccountKey) {
+          const k = (s as any).sourceAccountKey;
+          if (seen.has(k)) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              path: ["fundingSources"],
+              message: "fundingSources must not contain duplicate account keys",
+            });
+            break;
+          }
+          seen.add(k);
         }
-        seen.add(s.source);
       }
 
       if (v.fundingStrategy === "fixedSplit") {

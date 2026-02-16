@@ -30,7 +30,11 @@ export default function ForecastClientPage() {
                 setRows((out as any).rows ?? []);
                 setPositions(pos ?? []);
                 setRetirementYear((out as any).retirementYear);
-
+            } catch (e) {
+                console.error("[Forecast] compute failed", e);
+                setRows([]);
+                setPositions([]);
+                setRetirementYear(undefined);
             } finally {
                 setLoading(false);
             }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef } from "react";
-import type { Step3Data } from "@/lib/types";
+import type { Step3Data, AssetPosition, DebtPosition } from "@/lib/types";
 import MoneyInput from "@/app/lotto/components/MoneyInput";
 
 import type { AnnualsV2 } from "@/lib/types/v2/annualsV2";
@@ -17,6 +17,75 @@ import type {
   FundingStrategy,
 } from "@/lib/types/v2/events";
 
+type AccountOption = {
+  key: string; // "asset:id" | "debt:id" | "liquidity" (Fallback)
+  label: string;
+  bucket: Destination;
+};
+
+function makeKey(kind: "asset" | "debt", id: string) {
+  return `${kind}:${id}`;
+}
+
+function accountKeyToBucket(
+  key: string,
+  assets: AssetPosition[],
+  debts: DebtPosition[]
+): Destination {
+  if (key === "liquidity") return "liquidity";
+  if (key.startsWith("asset:")) {
+    const id = key.slice(6);
+    const p = assets.find((a) => a.id === id);
+    if (!p) return "liquidity";
+    const av = p.availability ?? "instant";
+    if (av === "instant") return "liquidity";
+    if (av === "3m_3y") return "short";
+    if (av === "gt_3y") return "long";
+    if (av === "locked") return "long";
+    return "liquidity";
+  }
+  if (key.startsWith("debt:")) return "debt";
+  return "liquidity";
+}
+
+function buildDestOptions(assets: AssetPosition[]): AccountOption[] {
+  const opts: AccountOption[] = assets.map((p) => {
+    const key = makeKey("asset", p.id);
+    const bucket = accountKeyToBucket(key, assets, []);
+    return {
+      key,
+      label: (p.label || "").trim() || `Aktiv (${p.id})`,
+      bucket,
+    };
+  });
+  if (opts.length === 0) {
+    opts.push({ key: "liquidity", label: "Liquidität", bucket: "liquidity" });
+  }
+  return opts;
+}
+
+function buildSrcOptions(assets: AssetPosition[], debts: DebtPosition[]): AccountOption[] {
+  const opts: AccountOption[] = [];
+  for (const p of assets) {
+    opts.push({
+      key: makeKey("asset", p.id),
+      label: (p.label || "").trim() || `Aktiv (${p.id})`,
+      bucket: accountKeyToBucket(makeKey("asset", p.id), assets, debts),
+    });
+  }
+  for (const p of debts) {
+    opts.push({
+      key: makeKey("debt", p.id),
+      label: (p.label || "").trim() || `Schuld (${p.id})`,
+      bucket: "debt",
+    });
+  }
+  if (opts.length === 0) {
+    opts.push({ key: "liquidity", label: "Liquidität", bucket: "liquidity" });
+  }
+  return opts;
+}
+
 type Props = {
   value: Step3Data;
   onChange: (next: Step3Data) => void;
@@ -26,6 +95,9 @@ type Props = {
 
   eventOpenId: string | null;
   onEventOpenIdChange: (id: string | null) => void;
+
+  assets?: AssetPosition[];
+  debts?: DebtPosition[];
 
   // autosave hook (wie Step1/2)
   onCommit?: () => void | Promise<void>;
@@ -47,20 +119,6 @@ const EVENT_INDEXATION_OPTIONS: Array<{ value: EventIndexation | "none"; label: 
   { value: "inflation", label: "mit Inflation" },
   { value: "fixed_real", label: "real konstant" },
   { value: "fixed_nominal", label: "nominal fix" },
-];
-
-const DEST_OPTIONS: Array<{ value: Destination; label: string }> = [
-  { value: "liquidity", label: "Liquidität" },
-  { value: "short", label: "Short" },
-  { value: "long", label: "Long" },
-  { value: "debt", label: "Schulden (Amortisation)" },
-];
-
-const SRC_OPTIONS: Array<{ value: FundingSource; label: string }> = [
-  { value: "liquidity", label: "Liquidität" },
-  { value: "short", label: "Short" },
-  { value: "long", label: "Long" },
-  { value: "debt", label: "Schulden (neuer Kredit)" },
 ];
 
 const STRATEGY_OPTIONS: Array<{ value: FundingStrategy; label: string }> = [
@@ -156,8 +214,29 @@ export default function Step3Form({
   onAnnualsOpenChange,
   eventOpenId,
   onEventOpenIdChange,
+  assets = [],
+  debts = [],
   onCommit,
 }: Props) {
+  const destOptions = useMemo(() => buildDestOptions(assets), [assets]);
+  const srcOptions = useMemo(() => buildSrcOptions(assets, debts), [assets, debts]);
+
+  function resolveDestLabel(keyOrBucket: string | undefined): string {
+    if (!keyOrBucket) return "Liquidität";
+    const opt = destOptions.find((o) => o.key === keyOrBucket);
+    if (opt) return opt.label;
+    const byBucket = destOptions.find((o) => o.bucket === keyOrBucket);
+    return byBucket?.label ?? "Liquidität";
+  }
+
+  function resolveSrcLabel(keyOrBucket: string | undefined): string {
+    if (!keyOrBucket) return "Liquidität";
+    const opt = srcOptions.find((o) => o.key === keyOrBucket);
+    if (opt) return opt.label;
+    const byBucket = srcOptions.find((o) => o.bucket === keyOrBucket);
+    return byBucket?.label ?? "Liquidität";
+  }
+
   // ---------------- autosave: dirty + lock ----------------
   const dirtyRef = useRef(false);
   const committingRef = useRef(false);
@@ -254,8 +333,11 @@ export default function Step3Form({
 
     const strategy: FundingStrategy = f.fundingStrategy ?? "waterfall";
 
-    const srcA: FundingSource = (f.fundingSources?.[0]?.source ?? "liquidity") as FundingSource;
-    const srcB: FundingSource = (f.fundingSources?.[1]?.source ?? "short") as FundingSource;
+    const keyA = f.fundingSources?.[0]?.sourceAccountKey ?? (f.fundingSources?.[0]?.source === "liquidity" ? "liquidity" : null) ?? "liquidity";
+    const keyB = f.fundingSources?.[1]?.sourceAccountKey ?? (f.fundingSources?.[1]?.source === "short" ? srcOptions.find((o) => o.bucket === "short")?.key : null) ?? srcOptions[1]?.key ?? "liquidity";
+
+    const selA = srcOptions.find((o) => o.key === keyA)?.key ?? srcOptions[0]?.key ?? "liquidity";
+    const selB = srcOptions.find((o) => o.key === keyB)?.key ?? srcOptions[1]?.key ?? srcOptions[0]?.key ?? "liquidity";
 
     const shareA = String(f.fundingSources?.[0]?.share ?? 0.7);
     const shareB = String(f.fundingSources?.[1]?.share ?? 0.3);
@@ -266,15 +348,20 @@ export default function Step3Form({
       const aShare = clamp01(parseNum(merged._shareA ?? shareA));
       const bShare = clamp01(parseNum(merged._shareB ?? shareB));
 
+      const key1 = merged._srcA ?? selA;
+      const key2 = merged._srcB ?? selB;
+      const opt1 = srcOptions.find((o) => o.key === key1) ?? srcOptions[0];
+      const opt2 = srcOptions.find((o) => o.key === key2) ?? srcOptions[1] ?? srcOptions[0];
+
       const sources =
         merged.fundingStrategy === "fixedSplit"
           ? [
-              { source: (merged._srcA ?? srcA) as FundingSource, share: aShare },
-              { source: (merged._srcB ?? srcB) as FundingSource, share: bShare },
+              { source: (opt1?.bucket ?? "liquidity") as FundingSource, share: aShare, sourceAccountKey: key1 === "liquidity" ? undefined : key1 },
+              { source: (opt2?.bucket ?? "short") as FundingSource, share: bShare, sourceAccountKey: key2 === "liquidity" ? undefined : key2 },
             ]
           : [
-              { source: (merged._srcA ?? srcA) as FundingSource },
-              { source: (merged._srcB ?? srcB) as FundingSource },
+              { source: (opt1?.bucket ?? "liquidity") as FundingSource, sourceAccountKey: key1 === "liquidity" ? undefined : key1 },
+              { source: (opt2?.bucket ?? "short") as FundingSource, sourceAccountKey: key2 === "liquidity" ? undefined : key2 },
             ];
 
       const nextFunding = {
@@ -292,11 +379,11 @@ export default function Step3Form({
 
     return (
       <div className="mt-3 rounded-xl border border-slate-800 bg-slate-950/30 p-3">
-        <div className="text-xs font-semibold text-slate-200">Funding (Ausgabe)</div>
+        <div className="text-xs font-semibold text-slate-200">Quellen (Ausgabe) – Konten aus Aktiven und Passiven</div>
 
         <div className="mt-3 grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="mb-1 block text-xs text-slate-400">Funding Strategy</label>
+            <label className="mb-1 block text-xs text-slate-400">Strategy</label>
             <select
               value={strategy}
               onChange={(ev) => commitFunding({ fundingStrategy: ev.target.value })}
@@ -314,12 +401,12 @@ export default function Step3Form({
             <div>
               <label className="mb-1 block text-xs text-slate-400">Quelle 1</label>
               <select
-                value={srcA}
+                value={selA}
                 onChange={(ev) => commitFunding({ _srcA: ev.target.value })}
                 className="w-full rounded-xl border border-slate-800 bg-slate-950/30 px-3 py-2 text-slate-100"
               >
-                {SRC_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
+                {srcOptions.map((o) => (
+                  <option key={o.key} value={o.key}>
                     {o.label}
                   </option>
                 ))}
@@ -340,12 +427,12 @@ export default function Step3Form({
             <div>
               <label className="mb-1 block text-xs text-slate-400">Quelle 2</label>
               <select
-                value={srcB}
+                value={selB}
                 onChange={(ev) => commitFunding({ _srcB: ev.target.value })}
                 className="w-full rounded-xl border border-slate-800 bg-slate-950/30 px-3 py-2 text-slate-100"
               >
-                {SRC_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
+                {srcOptions.map((o) => (
+                  <option key={o.key} value={o.key}>
                     {o.label}
                   </option>
                 ))}
@@ -388,25 +475,31 @@ export default function Step3Form({
   }
 
   function renderDestinationEditor(e: ProfileEvent) {
-    const dest = (e.line.destination ?? "liquidity") as Destination;
+    const destKey = e.line.destinationAccountKey ?? (e.line.destination === "liquidity" ? "liquidity" : null) ?? "liquidity";
+    const curOpt = destOptions.find((o) => o.key === destKey) ?? destOptions[0];
+    const selKey = curOpt?.key ?? destKey;
+
+    function onDestChange(key: string) {
+      const opt = destOptions.find((o) => o.key === key);
+      updateEventLine(e.client_id, {
+        destination: (opt?.bucket ?? "liquidity") as Destination,
+        destinationAccountKey: key === "liquidity" ? undefined : key,
+        funding: undefined,
+      });
+    }
 
     return (
       <div className="mt-3 rounded-xl border border-slate-800 bg-slate-950/30 p-3">
-        <div className="text-xs font-semibold text-slate-200">Destination (Einnahme)</div>
+        <div className="text-xs font-semibold text-slate-200">Ziel (Einnahme)</div>
         <div className="mt-3">
-          <label className="mb-1 block text-xs text-slate-400">Destination</label>
+          <label className="mb-1 block text-xs text-slate-400">Ziel (Konto aus Aktiven)</label>
           <select
-            value={dest}
-            onChange={(ev) =>
-              updateEventLine(e.client_id, {
-                destination: ev.target.value as Destination,
-                funding: undefined,
-              })
-            }
+            value={selKey}
+            onChange={(ev) => onDestChange(ev.target.value)}
             className="w-full rounded-xl border border-slate-800 bg-slate-950/30 px-3 py-2 text-slate-100"
           >
-            {DEST_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
+            {destOptions.map((o) => (
+              <option key={o.key} value={o.key}>
                 {o.label}
               </option>
             ))}
@@ -425,12 +518,19 @@ export default function Step3Form({
     return ((value.annualsV2?.income?.[0] as any)?.destination ?? "liquidity") as Destination;
   }
 
-  function setAnnualIncome(amountCHF: number, destination: Destination) {
+  function annualIncomeDestKey(): string {
+    const inc = value.annualsV2?.income?.[0] as any;
+    return inc?.destinationAccountKey ?? (inc?.destination === "liquidity" ? "liquidity" : destOptions.find((o) => o.bucket === (inc?.destination ?? "liquidity"))?.key ?? "liquidity");
+  }
+
+  function setAnnualIncome(amountCHF: number, destKey: string) {
+    const opt = destOptions.find((o) => o.key === destKey);
     const nextIncome: any = {
       id: "ai_total",
       label: "Annual Income Total",
       amountCHF: Math.trunc(amountCHF),
-      destination,
+      destination: (opt?.bucket ?? "liquidity") as Destination,
+      destinationAccountKey: destKey === "liquidity" ? undefined : destKey,
     };
     const next: AnnualsV2 = {
       income: [nextIncome],
@@ -524,7 +624,7 @@ export default function Step3Form({
             </div>
 
             <div className="mt-2 text-xs text-slate-400">
-              Destination: <span className="text-slate-200">{annualIncomeDest()}</span>
+              Ziel: <span className="text-slate-200">{resolveDestLabel(annualIncomeDestKey())}</span>
             </div>
           </button>
 
@@ -546,7 +646,12 @@ export default function Step3Form({
             </div>
 
             <div className="mt-2 text-xs text-slate-400">
-              Strategy: <span className="text-slate-200">{annualExpenseModel().fundingStrategy ?? "waterfall"}</span>
+              Quellen:{" "}
+              <span className="text-slate-200">
+                {(annualExpenseModel().fundingSources ?? [{ source: "liquidity" }])
+                  .map((s: any) => resolveSrcLabel(s.sourceAccountKey ?? s.source))
+                  .join(", ")}
+              </span>
             </div>
           </button>
         </div>
@@ -559,7 +664,7 @@ export default function Step3Form({
         <div className="flex items-center justify-between gap-3">
           <div>
             <div className="text-sm font-semibold text-slate-100">Ereignisse</div>
-            <div className="mt-1 text-xs text-slate-500">Einnahmen → Destination. Ausgaben → Funding.</div>
+            <div className="mt-1 text-xs text-slate-500">Einnahmen → Ziel. Ausgaben → Quellen.</div>
           </div>
 
           <button
@@ -580,19 +685,30 @@ export default function Step3Form({
             events.map((e) => {
               const isIncome = (e.line?.line_type ?? "income") === "income";
               const amount = Math.trunc(e.line?.amount_chf ?? 0);
-              const routing = isIncome
-                ? `→ ${((e.line?.destination ?? "liquidity") as any) as string}`
-                : `Funding: ${((e.line?.funding?.fundingStrategy ?? "waterfall") as any) as string}`;
+              const destKey = e.line?.destinationAccountKey ?? (e.line?.destination ?? "liquidity");
+              const destLabel = resolveDestLabel(destKey);
+              const srcs = e.line?.funding?.fundingSources ?? [{ source: "liquidity" as FundingSource }];
+              const quellenLabel = srcs
+                .map((s) => resolveSrcLabel(s.sourceAccountKey ?? s.source))
+                .join(", ");
+              const routing = isIncome ? `Ziel: ${destLabel}` : `Quellen: ${quellenLabel}`;
 
               return (
                 <div key={e.client_id} className="rounded-2xl border border-slate-800 bg-slate-900/40 p-3">
                   <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
+                    <button
+                      type="button"
+                      onClick={() => onEventOpenIdChange(e.client_id)}
+                      className="min-w-0 flex-1 text-left hover:opacity-90"
+                    >
                       <div className="flex items-center gap-2">
                         <span className="text-xs rounded-full border border-slate-700 px-2 py-0.5 text-slate-200">
                           {isIncome ? "Einnahme" : "Ausgabe"}
                         </span>
                         <div className="truncate text-sm font-medium text-slate-100">{e.title || "—"}</div>
+                        <span className="shrink-0 text-xs rounded-full border border-slate-700 px-2 py-1 text-slate-200">
+                          bearbeiten
+                        </span>
                       </div>
 
                       <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-400">
@@ -604,17 +720,9 @@ export default function Step3Form({
                         <span>·</span>
                         <span className="text-slate-300">{routing}</span>
                       </div>
-                    </div>
+                    </button>
 
-                    <div className="flex shrink-0 items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => onEventOpenIdChange(e.client_id)}
-                        className="rounded-full border border-slate-700 px-3 py-1.5 text-xs hover:border-slate-600"
-                      >
-                        Bearbeiten
-                      </button>
-
+                    <div className="flex shrink-0 items-center gap-3" onClick={(ev) => ev.stopPropagation()}>
                       <button
                         type="button"
                         className="text-xs text-slate-200 underline decoration-slate-600 underline-offset-4"
@@ -676,20 +784,20 @@ export default function Step3Form({
                       <MoneyInput
                         label="Betrag (CHF/Jahr)"
                         value={annualIncomeAmount()}
-                        onChange={(n: number) => setAnnualIncome(Math.trunc(n), annualIncomeDest())}
+                        onChange={(n: number) => setAnnualIncome(Math.trunc(n), annualIncomeDestKey())}
                         suffix="CHF"
                         size="short"
                       />
 
                       <div>
-                        <label className="mb-1 block text-xs text-slate-400">Destination</label>
+                        <label className="mb-1 block text-xs text-slate-400">Ziel (Konto aus Aktiven)</label>
                         <select
-                          value={annualIncomeDest()}
-                          onChange={(ev) => setAnnualIncome(annualIncomeAmount(), ev.target.value as Destination)}
+                          value={annualIncomeDestKey()}
+                          onChange={(ev) => setAnnualIncome(annualIncomeAmount(), ev.target.value)}
                           className="w-full rounded-xl border border-slate-800 bg-slate-950/30 px-3 py-2 text-slate-100"
                         >
-                          {DEST_OPTIONS.map((o) => (
-                            <option key={o.value} value={o.value}>
+                          {destOptions.map((o) => (
+                            <option key={o.key} value={o.key}>
                               {o.label}
                             </option>
                           ))}
@@ -702,8 +810,11 @@ export default function Step3Form({
                     const ex0: any = annualExpenseModel();
 
                     const strategy: FundingStrategy = ex0.fundingStrategy ?? "waterfall";
-                    const srcA: FundingSource = ex0.fundingSources?.[0]?.source ?? "liquidity";
-                    const srcB: FundingSource = ex0.fundingSources?.[1]?.source ?? "short";
+                    const keyA = ex0.fundingSources?.[0]?.sourceAccountKey ?? (ex0.fundingSources?.[0]?.source === "liquidity" ? "liquidity" : null) ?? "liquidity";
+                    const keyB = ex0.fundingSources?.[1]?.sourceAccountKey ?? srcOptions.find((o) => o.bucket === (ex0.fundingSources?.[1]?.source ?? "short"))?.key ?? srcOptions[1]?.key ?? "liquidity";
+
+                    const selA = srcOptions.find((o) => o.key === keyA)?.key ?? srcOptions[0]?.key ?? "liquidity";
+                    const selB = srcOptions.find((o) => o.key === keyB)?.key ?? srcOptions[1]?.key ?? srcOptions[0]?.key ?? "liquidity";
 
                     const shareA = String(ex0.fundingSources?.[0]?.share ?? 0.7);
                     const shareB = String(ex0.fundingSources?.[1]?.share ?? 0.3);
@@ -714,13 +825,21 @@ export default function Step3Form({
                       const aShare = clamp01(parseNum(merged._shareA ?? shareA));
                       const bShare = clamp01(parseNum(merged._shareB ?? shareB));
 
+                      const key1 = merged._srcA ?? selA;
+                      const key2 = merged._srcB ?? selB;
+                      const opt1 = srcOptions.find((o) => o.key === key1) ?? srcOptions[0];
+                      const opt2 = srcOptions.find((o) => o.key === key2) ?? srcOptions[1] ?? srcOptions[0];
+
                       const fundingSources =
                         merged.fundingStrategy === "fixedSplit"
                           ? [
-                              { source: merged._srcA ?? srcA, share: aShare },
-                              { source: merged._srcB ?? srcB, share: bShare },
+                              { source: (opt1?.bucket ?? "liquidity") as FundingSource, share: aShare, sourceAccountKey: key1 === "liquidity" ? undefined : key1 },
+                              { source: (opt2?.bucket ?? "short") as FundingSource, share: bShare, sourceAccountKey: key2 === "liquidity" ? undefined : key2 },
                             ]
-                          : [{ source: merged._srcA ?? srcA }, { source: merged._srcB ?? srcB }];
+                          : [
+                              { source: (opt1?.bucket ?? "liquidity") as FundingSource, sourceAccountKey: key1 === "liquidity" ? undefined : key1 },
+                              { source: (opt2?.bucket ?? "short") as FundingSource, sourceAccountKey: key2 === "liquidity" ? undefined : key2 },
+                            ];
 
                       const nextExpense = {
                         id: "ae_total",
@@ -766,14 +885,14 @@ export default function Step3Form({
                           </div>
 
                           <div>
-                            <label className="mb-1 block text-xs text-slate-400">Quelle 1</label>
+                            <label className="mb-1 block text-xs text-slate-400">Quelle 1 (Konto)</label>
                             <select
-                              value={srcA}
+                              value={selA}
                               onChange={(ev) => commitExpense({ _srcA: ev.target.value })}
                               className="w-full rounded-xl border border-slate-800 bg-slate-950/30 px-3 py-2 text-slate-100"
                             >
-                              {SRC_OPTIONS.map((o) => (
-                                <option key={o.value} value={o.value}>
+                              {srcOptions.map((o) => (
+                                <option key={o.key} value={o.key}>
                                   {o.label}
                                 </option>
                               ))}
@@ -792,14 +911,14 @@ export default function Step3Form({
                           </div>
 
                           <div>
-                            <label className="mb-1 block text-xs text-slate-400">Quelle 2</label>
+                            <label className="mb-1 block text-xs text-slate-400">Quelle 2 (Konto)</label>
                             <select
-                              value={srcB}
+                              value={selB}
                               onChange={(ev) => commitExpense({ _srcB: ev.target.value })}
                               className="w-full rounded-xl border border-slate-800 bg-slate-950/30 px-3 py-2 text-slate-100"
                             >
-                              {SRC_OPTIONS.map((o) => (
-                                <option key={o.value} value={o.value}>
+                              {srcOptions.map((o) => (
+                                <option key={o.key} value={o.key}>
                                   {o.label}
                                 </option>
                               ))}
@@ -852,7 +971,7 @@ export default function Step3Form({
                 <div className="min-w-0">
                   <div className="font-semibold text-slate-100">Ereignis bearbeiten</div>
                   <div className="text-sm text-slate-400">
-                    {openEvent.line?.line_type === "income" ? "Einnahme → Destination" : "Ausgabe → Funding"}
+                    {openEvent.line?.line_type === "income" ? "Einnahme → Ziel" : "Ausgabe → Quellen"}
                   </div>
                 </div>
 
@@ -991,8 +1110,8 @@ export default function Step3Form({
                     />
                   </div>
 
-                  <div className="sm:col-span-2 flex items-center justify-between gap-3 pt-2">
-                    <div className="text-xs text-slate-500">Pflichtfelder: Einnahme → Destination. Ausgabe → Funding.</div>
+                    <div className="sm:col-span-2 flex items-center justify-between gap-3 pt-2">
+                    <div className="text-xs text-slate-500">Pflichtfelder: Einnahme → Ziel. Ausgabe → Quellen. Standard: Liquidität.</div>
 
                     <button
                       type="button"

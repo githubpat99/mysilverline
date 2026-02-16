@@ -1,6 +1,9 @@
 "use client";
 
 import { useMemo, useRef } from "react";
+import { ArrowDownCircle, ArrowUpCircle, Copy, Plus, Trash2, X } from "lucide-react";
+import CustomSelect from "../CustomSelect";
+import CustomDateInput from "../CustomDateInput";
 import type { Step3Data, AssetPosition, DebtPosition } from "@/lib/types";
 import MoneyInput from "@/app/lotto/components/MoneyInput";
 
@@ -203,8 +206,17 @@ function ensureIncomeDestination(e: ProfileEvent): ProfileEvent {
 
 function formatYearRange(e: ProfileEvent) {
   const s = e.start_date?.slice(0, 4) ?? "—";
+  const isEinmalig = !e.recurrence || e.recurrence === "none";
+  if (isEinmalig) return s;
   const t = e.end_date ? e.end_date.slice(0, 4) : "offen";
   return `${s}–${t}`;
+}
+
+function recurrenceDisplayLabel(r: EventRecurrence | null | undefined): string {
+  if (!r || r === "none") return "einmalig";
+  if (r === "yearly") return "jährlich";
+  if (r === "monthly") return "monatlich";
+  return r;
 }
 
 export default function Step3Form({
@@ -383,34 +395,35 @@ export default function Step3Form({
 
         <div className="mt-3 grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="mb-1 block text-xs text-slate-400">Finanzierungsstrategie</label>
-            <select
-              value={strategy}
-              onChange={(ev) => commitFunding({ fundingStrategy: ev.target.value })}
-              className="w-full rounded-xl border border-slate-800 bg-slate-950/30 px-3 py-2 text-slate-100"
-            >
+            <label className="mb-1.5 block text-xs text-slate-400">Finanzierungsstrategie</label>
+            <div className="flex gap-1.5" role="radiogroup" aria-label="Finanzierungsstrategie">
               {STRATEGY_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
+                <button
+                  key={o.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={strategy === o.value}
+                  onClick={() => commitFunding({ fundingStrategy: o.value })}
+                  className={[
+                    "rounded-lg border px-2.5 py-1.5 text-xs transition",
+                    strategy === o.value ? "border-sky-500/60 bg-slate-800 text-sky-200" : "border-slate-700 bg-slate-950/50 text-slate-400 hover:border-slate-600 hover:text-slate-200",
+                  ].join(" ")}
+                >
                   {o.label}
-                </option>
+                </button>
               ))}
-            </select>
+            </div>
           </div>
 
           <div className="sm:col-span-2 grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block text-xs text-slate-400">Quelle 1</label>
-              <select
+              <CustomSelect
+                label="Quelle 1"
+                options={srcOptions.map((o) => ({ value: o.key, label: o.label }))}
                 value={selA}
-                onChange={(ev) => commitFunding({ _srcA: ev.target.value })}
-                className="w-full rounded-xl border border-slate-800 bg-slate-950/30 px-3 py-2 text-slate-100"
-              >
-                {srcOptions.map((o) => (
-                  <option key={o.key} value={o.key}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
+                onChange={(v) => commitFunding({ _srcA: v })}
+                placeholder="Quelle wählen…"
+              />
 
               {strategy === "fixedSplit" && (
                 <div className="mt-2">
@@ -425,18 +438,13 @@ export default function Step3Form({
             </div>
 
             <div>
-              <label className="mb-1 block text-xs text-slate-400">Quelle 2</label>
-              <select
+              <CustomSelect
+                label="Quelle 2"
+                options={srcOptions.map((o) => ({ value: o.key, label: o.label }))}
                 value={selB}
-                onChange={(ev) => commitFunding({ _srcB: ev.target.value })}
-                className="w-full rounded-xl border border-slate-800 bg-slate-950/30 px-3 py-2 text-slate-100"
-              >
-                {srcOptions.map((o) => (
-                  <option key={o.key} value={o.key}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
+                onChange={(v) => commitFunding({ _srcB: v })}
+                placeholder="Quelle wählen…"
+              />
 
               {strategy === "fixedSplit" && (
                 <div className="mt-2">
@@ -482,18 +490,13 @@ export default function Step3Form({
       <div className="mt-3 rounded-xl border border-slate-800 bg-slate-950/30 p-3">
         <div className="text-xs font-semibold text-slate-200">Ziel (Einnahme)</div>
         <div className="mt-3">
-          <label className="mb-1 block text-xs text-slate-400">Ziel (Konto aus Aktiven)</label>
-          <select
+          <CustomSelect
+            label="Ziel (Konto aus Aktiven)"
+            options={destOptions.map((o) => ({ value: o.key, label: o.label }))}
             value={selKey}
-            onChange={(ev) => onDestChange(ev.target.value)}
-            className="w-full rounded-xl border border-slate-800 bg-slate-950/30 px-3 py-2 text-slate-100"
-          >
-            {destOptions.map((o) => (
-              <option key={o.key} value={o.key}>
-                {o.label}
-              </option>
-            ))}
-          </select>
+            onChange={onDestChange}
+            placeholder="Ziel wählen…"
+          />
         </div>
       </div>
     );
@@ -578,7 +581,6 @@ export default function Step3Form({
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="text-sm font-semibold text-slate-100">Regelmässig</div>
-            <div className="mt-1 text-xs text-slate-500">Einkommen → Destination. Ausgaben → Funding.</div>
           </div>
 
           {(() => {
@@ -588,7 +590,7 @@ export default function Step3Form({
             const cls = diff > 0 ? "text-emerald-400" : diff < 0 ? "text-rose-400" : "text-slate-400";
             const sign = diff > 0 ? "+" : "";
             return (
-              <div className={`text-sm font-medium tabular-nums ${cls}`}>
+              <div className={`text-sm font-medium tabular-nums whitespace-nowrap ${cls}`}>
                 {sign}{diff.toLocaleString("de-CH")} CHF
               </div>
             );
@@ -608,7 +610,7 @@ export default function Step3Form({
               </div>
             </div>
 
-            <div className="mt-3 text-2xl font-bold text-slate-100">
+            <div className="mt-3 text-2xl font-bold text-slate-100 whitespace-nowrap">
               {annualIncomeAmount().toLocaleString("de-CH")} CHF
             </div>
 
@@ -629,7 +631,7 @@ export default function Step3Form({
               </div>
             </div>
 
-            <div className="mt-3 text-2xl font-bold text-slate-100">
+            <div className="mt-3 text-2xl font-bold text-slate-100 whitespace-nowrap">
               {Math.trunc(annualExpenseModel().amountCHF ?? 0).toLocaleString("de-CH")} CHF
             </div>
 
@@ -652,15 +654,15 @@ export default function Step3Form({
         <div className="flex items-center justify-between gap-3">
           <div>
             <div className="text-sm font-semibold text-slate-100">Ereignisse</div>
-            <div className="mt-1 text-xs text-slate-500">Einnahmen → Ziel. Ausgaben → Quellen.</div>
           </div>
 
           <button
             type="button"
             onClick={addEvent}
-            className="rounded-xl border border-slate-700 bg-slate-900/60 px-3 py-2 text-xs text-slate-100 hover:bg-slate-900"
+            className="flex items-center justify-center rounded-xl border border-slate-700 bg-slate-900/60 p-2 text-slate-100 hover:bg-slate-900"
+            title="Ereignis hinzufügen"
           >
-            + Ereignis
+            <Plus size={18} className="text-sky-400" />
           </button>
         </div>
 
@@ -697,31 +699,32 @@ export default function Step3Form({
                       </div>
 
                       <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-400">
-                        <span>{amount.toLocaleString("de-CH")} CHF</span>
+                        <span className="whitespace-nowrap">{amount.toLocaleString("de-CH")} CHF</span>
                         <span>·</span>
                         <span>{formatYearRange(e)}</span>
                         <span>·</span>
-                        <span>{e.recurrence ?? "none"}</span>
+                        <span>{recurrenceDisplayLabel(e.recurrence)}</span>
                         <span>·</span>
                         <span className="text-slate-300">{routing}</span>
                       </div>
                     </button>
 
-                    <div className="flex shrink-0 items-center gap-3" onClick={(ev) => ev.stopPropagation()}>
+                    <div className="flex shrink-0 items-center gap-2" onClick={(ev) => ev.stopPropagation()}>
                       <button
                         type="button"
-                        className="text-xs text-slate-200 underline decoration-slate-600 underline-offset-4"
+                        className="flex items-center justify-center rounded-lg border border-slate-700 p-2 text-slate-200 hover:border-slate-600 transition"
                         onClick={() => cloneEvent(e.client_id)}
+                        title="Duplizieren"
                       >
-                        Dupl.
+                        <Copy size={16} />
                       </button>
-
                       <button
                         type="button"
-                        className="text-xs text-slate-300 underline decoration-slate-600 underline-offset-4"
+                        className="flex items-center justify-center rounded-lg border border-slate-700 p-2 text-slate-300 hover:border-slate-600 transition"
                         onClick={() => deleteEvent(e.client_id)}
+                        title="Entfernen"
                       >
-                        Entfernen
+                        <Trash2 size={16} />
                       </button>
                     </div>
                   </div>
@@ -737,9 +740,9 @@ export default function Step3Form({
         <div className="fixed inset-0 z-50">
           <button type="button" className="absolute inset-0 bg-black/60" onClick={closeAnnualsModal} aria-label="Close" />
 
-          <div className="absolute inset-x-0 top-6 mx-auto w-[calc(100%-2rem)] max-w-4xl">
-            <div className="rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl">
-              <div className="flex items-start justify-between gap-4 border-b border-slate-800 p-5">
+          <div className="absolute inset-x-0 top-0 left-0 right-0 w-full max-h-[100vh] flex flex-col overflow-hidden">
+            <div className="rounded-b-2xl border-x border-b border-slate-800 bg-slate-950 shadow-2xl flex-1 min-h-0 flex flex-col overflow-hidden">
+              <div className="flex shrink-0 items-start justify-between gap-4 border-b border-slate-800 p-5">
                 <div>
                   <div className="font-semibold text-slate-100">
                     Regelmässig: {annualsOpen === "income" ? "Jahreseinkommen" : "Jahresausgaben"}
@@ -754,13 +757,14 @@ export default function Step3Form({
                 <button
                   type="button"
                   onClick={closeAnnualsModal}
-                  className="rounded-full border border-slate-700 px-4 py-2 text-sm hover:border-slate-600"
+                  className="flex items-center justify-center rounded-full border border-slate-700 p-2.5 text-sm hover:border-slate-600"
+                  title="Schliessen"
                 >
-                  Schliessen
+                  <X size={18} className="text-slate-400" />
                 </button>
               </div>
 
-              <div className="p-5">
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-5">
                 {annualsOpen === "income" ? (
                   <div className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
                     <div className="text-sm font-semibold text-slate-100">Jahreseinkommen (Total)</div>
@@ -774,20 +778,13 @@ export default function Step3Form({
                         size="short"
                       />
 
-                      <div>
-                        <label className="mb-1 block text-xs text-slate-400">Ziel (Konto aus Aktiven)</label>
-                        <select
-                          value={annualIncomeDestKey()}
-                          onChange={(ev) => setAnnualIncome(annualIncomeAmount(), ev.target.value)}
-                          className="w-full rounded-xl border border-slate-800 bg-slate-950/30 px-3 py-2 text-slate-100"
-                        >
-                          {destOptions.map((o) => (
-                            <option key={o.key} value={o.key}>
-                              {o.label}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+                      <CustomSelect
+                        label="Ziel (Konto aus Aktiven)"
+                        options={destOptions.map((o) => ({ value: o.key, label: o.label }))}
+                        value={annualIncomeDestKey()}
+                        onChange={(key) => setAnnualIncome(annualIncomeAmount(), key)}
+                        placeholder="Ziel wählen…"
+                      />
                     </div>
                   </div>
                 ) : (
@@ -855,33 +852,34 @@ export default function Step3Form({
                           />
 
                           <div>
-                            <label className="mb-1 block text-xs text-slate-400">Finanzierungsstrategie</label>
-                            <select
-                              value={strategy}
-                              onChange={(ev) => commitExpense({ fundingStrategy: ev.target.value })}
-                              className="w-full rounded-xl border border-slate-800 bg-slate-950/30 px-3 py-2 text-slate-100"
-                            >
+                            <label className="mb-1.5 block text-xs text-slate-400">Finanzierungsstrategie</label>
+                            <div className="flex gap-1.5" role="radiogroup" aria-label="Finanzierungsstrategie">
                               {STRATEGY_OPTIONS.map((o) => (
-                                <option key={o.value} value={o.value}>
+                                <button
+                                  key={o.value}
+                                  type="button"
+                                  role="radio"
+                                  aria-checked={strategy === o.value}
+                                  onClick={() => commitExpense({ fundingStrategy: o.value })}
+                                  className={[
+                                    "rounded-lg border px-2.5 py-1.5 text-xs transition",
+                                    strategy === o.value ? "border-sky-500/60 bg-slate-800 text-sky-200" : "border-slate-700 bg-slate-950/50 text-slate-400 hover:border-slate-600 hover:text-slate-200",
+                                  ].join(" ")}
+                                >
                                   {o.label}
-                                </option>
+                                </button>
                               ))}
-                            </select>
+                            </div>
                           </div>
 
                           <div>
-                            <label className="mb-1 block text-xs text-slate-400">Quelle 1 (Konto)</label>
-                            <select
+                            <CustomSelect
+                              label="Quelle 1 (Konto)"
+                              options={srcOptions.map((o) => ({ value: o.key, label: o.label }))}
                               value={selA}
-                              onChange={(ev) => commitExpense({ _srcA: ev.target.value })}
-                              className="w-full rounded-xl border border-slate-800 bg-slate-950/30 px-3 py-2 text-slate-100"
-                            >
-                              {srcOptions.map((o) => (
-                                <option key={o.key} value={o.key}>
-                                  {o.label}
-                                </option>
-                              ))}
-                            </select>
+                              onChange={(v) => commitExpense({ _srcA: v })}
+                              placeholder="Quelle wählen…"
+                            />
 
                             {strategy === "fixedSplit" && (
                               <div className="mt-2">
@@ -896,18 +894,13 @@ export default function Step3Form({
                           </div>
 
                           <div>
-                            <label className="mb-1 block text-xs text-slate-400">Quelle 2 (Konto)</label>
-                            <select
+                            <CustomSelect
+                              label="Quelle 2 (Konto)"
+                              options={srcOptions.map((o) => ({ value: o.key, label: o.label }))}
                               value={selB}
-                              onChange={(ev) => commitExpense({ _srcB: ev.target.value })}
-                              className="w-full rounded-xl border border-slate-800 bg-slate-950/30 px-3 py-2 text-slate-100"
-                            >
-                              {srcOptions.map((o) => (
-                                <option key={o.key} value={o.key}>
-                                  {o.label}
-                                </option>
-                              ))}
-                            </select>
+                              onChange={(v) => commitExpense({ _srcB: v })}
+                              placeholder="Quelle wählen…"
+                            />
 
                             {strategy === "fixedSplit" && (
                               <div className="mt-2">
@@ -941,35 +934,46 @@ export default function Step3Form({
         <div className="fixed inset-0 z-50">
           <button type="button" className="absolute inset-0 bg-black/60" onClick={closeEventModal} aria-label="Close" />
 
-          <div className="absolute inset-x-0 top-6 mx-auto w-[calc(100%-2rem)] max-w-5xl">
-            <div className="rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl">
-              <div className="flex items-start justify-between gap-4 border-b border-slate-800 p-5">
-                <div className="min-w-0">
-                  <div className="font-semibold text-slate-100">Ereignis bearbeiten</div>
-                  <div className="text-sm text-slate-400">
-                    {openEvent.line?.line_type === "income" ? "Einnahme → Ziel" : "Ausgabe → Quellen"}
-                  </div>
+          <div className="absolute inset-x-0 top-0 left-0 right-0 w-full max-h-[100vh] flex flex-col overflow-hidden">
+            <div className="flex flex-1 min-h-0 flex-col overflow-hidden rounded-b-2xl border-x border-b border-slate-800 bg-slate-950 shadow-2xl">
+              <div className="flex shrink-0 items-start justify-between gap-4 border-b border-slate-800 p-5">
+                <div className="min-w-0 flex items-center gap-2">
+                  {openEvent.line?.line_type === "income" ? (
+                    <ArrowDownCircle size={24} className="shrink-0 text-emerald-400" />
+                  ) : (
+                    <ArrowUpCircle size={24} className="shrink-0 text-rose-400" />
+                  )}
                 </div>
 
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={() => cloneEvent(openEvent.client_id)}
-                    className="rounded-full border border-slate-700 px-4 py-2 text-sm hover:border-slate-600"
+                    className="flex items-center justify-center rounded-full border border-slate-700 p-2.5 text-sm hover:border-slate-600"
+                    title="Duplizieren"
                   >
-                    Duplizieren
+                    <Copy size={18} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => deleteEvent(openEvent.client_id)}
+                    className="flex items-center justify-center rounded-full border border-slate-700 p-2.5 text-sm hover:border-slate-600 text-slate-300 hover:text-slate-100"
+                    title="Entfernen"
+                  >
+                    <Trash2 size={18} />
                   </button>
                   <button
                     type="button"
                     onClick={closeEventModal}
-                    className="rounded-full border border-slate-700 px-4 py-2 text-sm hover:border-slate-600"
+                    className="flex items-center justify-center rounded-full border border-slate-700 p-2.5 text-sm hover:border-slate-600"
+                    title="Schliessen"
                   >
-                    Schliessen
+                    <X size={18} className="text-slate-400" />
                   </button>
                 </div>
               </div>
 
-              <div className="p-5">
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-5">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="sm:col-span-2">
                     <label className="mb-1 block text-xs text-slate-400">Titel</label>
@@ -982,18 +986,24 @@ export default function Step3Form({
                   </div>
 
                   <div>
-                    <label className="mb-1 block text-xs text-slate-400">Typ</label>
-                    <select
-                      value={openEvent.line?.line_type ?? "income"}
-                      onChange={(ev) => onChangeEventType(openEvent.client_id, ev.target.value as EventLineType)}
-                      className="w-full rounded-xl border border-slate-800 bg-slate-950/30 px-3 py-2 text-slate-100"
-                    >
+                    <label className="mb-1.5 block text-xs text-slate-400">Typ</label>
+                    <div className="flex gap-1.5" role="radiogroup" aria-label="Typ">
                       {EVENT_TYPE_OPTIONS.map((o) => (
-                        <option key={o.value} value={o.value}>
+                        <button
+                          key={o.value}
+                          type="button"
+                          role="radio"
+                          aria-checked={(openEvent.line?.line_type ?? "income") === o.value}
+                          onClick={() => onChangeEventType(openEvent.client_id, o.value)}
+                          className={[
+                            "rounded-lg border px-3 py-1.5 text-xs transition",
+                            (openEvent.line?.line_type ?? "income") === o.value ? "border-sky-500/60 bg-slate-800 text-sky-200" : "border-slate-700 bg-slate-950/50 text-slate-400 hover:border-slate-600 hover:text-slate-200",
+                          ].join(" ")}
+                        >
                           {o.label}
-                        </option>
+                        </button>
                       ))}
-                    </select>
+                    </div>
                   </div>
 
                   <MoneyInput
@@ -1004,67 +1014,69 @@ export default function Step3Form({
                     size="short"
                   />
 
-                  <div>
-                    <label className="mb-1 block text-xs text-slate-400">Startdatum</label>
-                    <input
-                      type="date"
-                      value={openEvent.start_date ?? ""}
-                      onChange={(ev) => updateEvent(openEvent.client_id, { start_date: ev.target.value })}
-                      className="w-full rounded-xl border border-slate-800 bg-slate-950/30 px-3 py-2 text-slate-100"
-                    />
-                  </div>
+                  <CustomDateInput
+                    label="Startdatum"
+                    value={openEvent.start_date ?? ""}
+                    onChange={(v) => updateEvent(openEvent.client_id, { start_date: v ?? "" })}
+                    placeholder="Startdatum wählen…"
+                  />
+
+                  <CustomDateInput
+                    label="Enddatum (optional)"
+                    value={openEvent.end_date ?? null}
+                    onChange={(v) => updateEvent(openEvent.client_id, { end_date: v })}
+                    placeholder="Enddatum wählen… (oder offen)"
+                    allowEmpty
+                  />
 
                   <div>
-                    <label className="mb-1 block text-xs text-slate-400">Enddatum (optional)</label>
-                    <input
-                      type="date"
-                      value={openEvent.end_date ?? ""}
-                      onChange={(ev) => updateEvent(openEvent.client_id, { end_date: ev.target.value || null })}
-                      className="w-full rounded-xl border border-slate-800 bg-slate-950/30 px-3 py-2 text-slate-100"
-                    />
-                    <div className="mt-2">
-                      <button
-                        type="button"
-                        onClick={() => updateEvent(openEvent.client_id, { end_date: null })}
-                        className="text-xs text-slate-300 underline decoration-slate-600 underline-offset-4"
-                      >
-                        Enddatum leeren (offen)
-                      </button>
+                    <label className="mb-1.5 block text-xs text-slate-400">Wiederholung</label>
+                    <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Wiederholung">
+                      {EVENT_RECURRENCE_OPTIONS.map((o) => (
+                        <button
+                          key={o.value}
+                          type="button"
+                          role="radio"
+                          aria-checked={(openEvent.recurrence ?? "none") === o.value}
+                          onClick={() => updateEvent(openEvent.client_id, { recurrence: o.value })}
+                          className={[
+                            "rounded-lg border px-2.5 py-1.5 text-xs transition",
+                            (openEvent.recurrence ?? "none") === o.value ? "border-sky-500/60 bg-slate-800 text-sky-200" : "border-slate-700 bg-slate-950/50 text-slate-400 hover:border-slate-600 hover:text-slate-200",
+                          ].join(" ")}
+                        >
+                          {o.label}
+                        </button>
+                      ))}
                     </div>
                   </div>
 
                   <div>
-                    <label className="mb-1 block text-xs text-slate-400">Wiederholung</label>
-                    <select
-                      value={openEvent.recurrence ?? "none"}
-                      onChange={(ev) => updateEvent(openEvent.client_id, { recurrence: ev.target.value as EventRecurrence })}
-                      className="w-full rounded-xl border border-slate-800 bg-slate-950/30 px-3 py-2 text-slate-100"
-                    >
-                      {EVENT_RECURRENCE_OPTIONS.map((o) => (
-                        <option key={o.value} value={o.value}>
-                          {o.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="mb-1 block text-xs text-slate-400">Indexierung (Event)</label>
-                    <select
-                      value={((openEvent.line?.indexation ?? "none") as any)}
-                      onChange={(ev) =>
-                        updateEventLine(openEvent.client_id, {
-                          indexation: ev.target.value === "none" ? null : (ev.target.value as EventIndexation),
-                        })
-                      }
-                      className="w-full rounded-xl border border-slate-800 bg-slate-950/30 px-3 py-2 text-slate-100"
-                    >
-                      {EVENT_INDEXATION_OPTIONS.map((o) => (
-                        <option key={o.value} value={o.value}>
-                          {o.label}
-                        </option>
-                      ))}
-                    </select>
+                    <label className="mb-1.5 block text-xs text-slate-400">Indexierung (Event)</label>
+                    <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Indexierung">
+                      {EVENT_INDEXATION_OPTIONS.map((o) => {
+                        const val = (openEvent.line?.indexation ?? "none") as string;
+                        const isVal = val === o.value;
+                        return (
+                          <button
+                            key={o.value}
+                            type="button"
+                            role="radio"
+                            aria-checked={isVal}
+                            onClick={() =>
+                              updateEventLine(openEvent.client_id, {
+                                indexation: o.value === "none" ? null : (o.value as EventIndexation),
+                              })
+                            }
+                            className={[
+                              "rounded-lg border px-2.5 py-1.5 text-xs transition",
+                              isVal ? "border-sky-500/60 bg-slate-800 text-sky-200" : "border-slate-700 bg-slate-950/50 text-slate-400 hover:border-slate-600 hover:text-slate-200",
+                            ].join(" ")}
+                          >
+                            {o.label}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
 
                   <div className="sm:col-span-2">
@@ -1086,16 +1098,8 @@ export default function Step3Form({
                     />
                   </div>
 
-                    <div className="sm:col-span-2 flex items-center justify-between gap-3 pt-2">
+                    <div className="sm:col-span-2 pt-2">
                     <div className="text-xs text-slate-500">Pflichtfelder: Einnahme → Ziel. Ausgabe → Quellen. Standard: Liquidität.</div>
-
-                    <button
-                      type="button"
-                      onClick={() => deleteEvent(openEvent.client_id)}
-                      className="rounded-xl border border-slate-700 bg-slate-900/50 px-3 py-2 text-xs text-slate-200 hover:border-slate-600"
-                    >
-                      Entfernen
-                    </button>
                   </div>
                 </div>
               </div>

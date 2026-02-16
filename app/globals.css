@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+html {
+  color-scheme: dark; /* Native Formulare (select, option, input) im Dark-Mode */
+}
+
 body {
   margin: 0;
 }
@@ -29,6 +33,16 @@ body.musterfall-scrollbar-hidden {
 html.musterfall-scrollbar-hidden::-webkit-scrollbar,
 body.musterfall-scrollbar-hidden::-webkit-scrollbar {
   display: none;
+}
+
+/* Native select dropdown: Dark Mode Optionen */
+select option {
+  background-color: #0f172a; /* slate-900 */
+  color: #f1f5f9; /* slate-100 */
+}
+select option:checked,
+select option:hover {
+  background-color: #1e293b; /* slate-800 */
 }
 
 /* PWA vs Browser: sofort korrekt ohne JavaScript/Refresh */

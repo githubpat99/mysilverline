@@ -13,6 +13,7 @@ import { mapFormStateToProfileV2 } from "@/lib/mapping";
 
 import type { ProfileV2 } from "@/lib/types/v2";
 
+import { CreditCard, Receipt, Wallet } from "lucide-react";
 import Step1Form from "@/app/finance/components/steps/Step1Form";
 import Step2Form from "@/app/finance/components/steps/Step2Form";
 import Step3Form from "@/app/finance/components/steps/Step3Form";
@@ -53,10 +54,10 @@ function TopStepNav({
   completion: CompletionState;
   onStepClick: (s: StepId) => void;
 }) {
-  const items: Array<{ step: StepId; label: string }> = [
-    { step: 1 as StepId, label: "Aktiven" },
-    { step: 2 as StepId, label: "Passiven" },
-    { step: 3 as StepId, label: "Einnahmen/Ausgaben" },
+  const items: Array<{ step: StepId; label: string; icon: React.ReactNode }> = [
+    { step: 1 as StepId, label: "Aktiven", icon: <Wallet size={18} /> },
+    { step: 2 as StepId, label: "Passiven", icon: <CreditCard size={18} /> },
+    { step: 3 as StepId, label: "Einnahmen/Ausgaben", icon: <Receipt size={18} /> },
   ];
 
   return (
@@ -70,21 +71,22 @@ function TopStepNav({
             key={String(it.step)}
             type="button"
             onClick={() => onStepClick(it.step)}
+            title={it.label}
             className={[
-              "rounded-full border px-2.5 py-0.5 sm:px-3 sm:py-1 text-sm transition",
+              "rounded-full border p-2 sm:px-3 sm:py-1 sm:p-0 text-sm transition flex items-center justify-center gap-1.5",
               active
                 ? "border-sky-500/60 bg-slate-950/40 text-sky-200"
                 : "border-slate-700 bg-slate-950/20 text-slate-300 hover:border-slate-600 hover:text-slate-100",
             ].join(" ")}
             aria-current={active ? "step" : undefined}
           >
-            {it.label}
-            {done ? <span className="ml-2 text-xs text-slate-400">✓</span> : null}
+            <span className="sm:hidden">{it.icon}</span>
+            <span className="hidden sm:inline">{it.label}</span>
+            {done ? <span className="hidden sm:inline ml-1 text-xs text-slate-400">✓</span> : null}
           </button>
         );
       })}
     </div>
-
   );
 }
 
@@ -226,7 +228,7 @@ export default function FinanceClientPage() {
 
   return (
     <main className=" bg-slate-950 text-slate-50">
-      <div className="mx-auto max-w-6xl px-0 sm:px-4 py-3 sm:py-8">
+      <div className="mx-auto max-w-6xl px-0 sm:px-4 pt-1 pb-3 sm:pt-2 sm:pb-8">
 
         <div className="space-y-3 sm:space-y-6">
           <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-4">

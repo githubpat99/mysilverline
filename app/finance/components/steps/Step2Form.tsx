@@ -7,7 +7,8 @@ import { FieldMoneyInt } from "../fields/FieldMoney";
 import { Amount, InlineAmount } from "../Amount";
 import { bucketFromAvailability, availabilityFromBucket } from "@/lib/forecast/buckets";
 import type { Availability, Bucket } from "@/lib/forecast/buckets";
-import { Plus, X } from "lucide-react";
+import { Plus, Trash2, X } from "lucide-react";
+import CustomSelect from "../CustomSelect";
 
 /**
  * TYPE-ÄNDERUNGEN (in "@/lib/types")
@@ -306,10 +307,10 @@ export default function Step2Form({
   return (
     <div>
       {/* Header */}
-      <div className="px-5 pt-4 pb-3">
+      <div className="px-5 pt-0 pb-3">
 
         {/* KPI row */}
-        <div className="mt-4">
+        <div className="mt-0">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             <div className="min-w-0">
               <div className="text-[11px] uppercase tracking-wide text-slate-400">
@@ -341,7 +342,7 @@ export default function Step2Form({
       </div>
 
       {/* Tiles */}
-      <div className="mt-5 grid gap-4 md:grid-cols-2">
+      <div className="mt-0 grid gap-4 md:grid-cols-2">
         {buckets.map((b) => {
           const total = totals.byBucket[b];
           const count = totals.counts[b];
@@ -409,17 +410,19 @@ export default function Step2Form({
                   {/* Desktop */}
                   <button
                     onClick={() => addPosition(activeBucket)}
-                    className="hidden sm:inline-flex rounded-full border border-slate-700 px-4 py-2 text-sm hover:border-slate-600 whitespace-nowrap"
+                    className="hidden sm:inline-flex items-center justify-center rounded-full border border-slate-700 p-2.5 text-sm hover:border-slate-600"
                     type="button"
+                    title="Position hinzufügen"
                   >
-                    + Position
+                    <Plus size={18} className="text-sky-400" />
                   </button>
                   <button
                     onClick={closeModal}
-                    className="hidden sm:inline-flex rounded-full border border-slate-700 px-4 py-2 text-sm hover:border-slate-600"
+                    className="hidden sm:inline-flex items-center justify-center rounded-full border border-slate-700 p-2.5 text-sm hover:border-slate-600"
                     type="button"
+                    title="Schliessen"
                   >
-                    Schliessen
+                    <X size={18} className="text-slate-400" />
                   </button>
 
                   {/* Mobile icons (min 44px Touch-Target) */}
@@ -462,31 +465,48 @@ export default function Step2Form({
                         }}
                       >
                         <div className="grid gap-3">
-                          <div>
-                            <label className="block text-xs text-slate-400 mb-1">Bezeichnung</label>
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0 flex-1">
+                              <label className="block text-xs text-slate-400 mb-1">Bezeichnung</label>
                             <input
                               value={it.label}
                               onChange={(e) => updatePosition(it.id, { label: e.target.value })}
                               placeholder="z.B. Raiffeisen Hypothek, Visa, Autokredit…"
                               className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-600"
                             />
+                            </div>
+                            {!it.isSystem && (
+                              <button
+                                type="button"
+                                onClick={() => removePosition(it.id)}
+                                className="flex shrink-0 items-center justify-center rounded-xl border border-slate-800 bg-slate-950 p-2 text-slate-300 hover:border-slate-700 hover:text-slate-100 transition"
+                                title="Entfernen"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            )}
                           </div>
 
                           <div>
-                            <label className="block text-xs text-slate-400 mb-1">Typ</label>
-                            <select
-                              value={it.debtType}
-                              onChange={(e) => updatePosition(it.id, { debtType: e.target.value as DebtType })}
-                              className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100"
-                            >
-                              <option value="mortgage">{typeLabel("mortgage")}</option>
-                              <option value="loan">{typeLabel("loan")}</option>
-                              <option value="consumer">{typeLabel("consumer")}</option>
-                              <option value="creditcard">{typeLabel("creditcard")}</option>
-                              <option value="other">{typeLabel("other")}</option>
-                            </select>
+                            <label className="block text-xs text-slate-400 mb-1.5">Typ</label>
+                            <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Typ">
+                              {(["mortgage", "loan", "consumer", "creditcard", "other"] as DebtType[]).map((dv) => (
+                                <button
+                                  key={dv}
+                                  type="button"
+                                  role="radio"
+                                  aria-checked={it.debtType === dv}
+                                  onClick={() => updatePosition(it.id, { debtType: dv })}
+                                  className={[
+                                    "rounded-lg border px-2.5 py-1.5 text-xs transition",
+                                    it.debtType === dv ? "border-sky-500/60 bg-slate-800 text-sky-200" : "border-slate-700 bg-slate-950/50 text-slate-400 hover:border-slate-600 hover:text-slate-200",
+                                  ].join(" ")}
+                                >
+                                  {typeLabel(dv)}
+                                </button>
+                              ))}
+                            </div>
                           </div>
-
 
                           <FieldMoneyInt
                             label="Wert"
@@ -500,21 +520,33 @@ export default function Step2Form({
                           />
 
                           <div>
-                            <label className="block text-xs text-slate-400 mb-1">Verfügbarkeit</label>
-                            <select
-                              value={it.availability}
-                              onChange={(e) => updatePosition(it.id, { availability: e.target.value as Availability })}
-                              className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100"
-                            >
-                              <option value="instant">sofort</option>
-                              <option value="3m_3y">3M–3J</option>
-                              <option value="gt_3y">&gt; 3J</option>
-                              <option value="locked">gebunden</option>
-                            </select>
+                            <label className="block text-xs text-slate-400 mb-1.5">Verfügbarkeit</label>
+                            <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Verfügbarkeit">
+                              {[
+                                { v: "instant" as Availability, l: "sofort" },
+                                { v: "3m_3y" as Availability, l: "3M–3J" },
+                                { v: "gt_3y" as Availability, l: ">3J" },
+                                { v: "locked" as Availability, l: "gebunden" },
+                              ].map((o) => (
+                                <button
+                                  key={o.v}
+                                  type="button"
+                                  role="radio"
+                                  aria-checked={it.availability === o.v}
+                                  onClick={() => updatePosition(it.id, { availability: o.v })}
+                                  className={[
+                                    "rounded-lg border px-2.5 py-1.5 text-xs transition",
+                                    it.availability === o.v ? "border-sky-500/60 bg-slate-800 text-sky-200" : "border-slate-700 bg-slate-950/50 text-slate-400 hover:border-slate-600 hover:text-slate-200",
+                                  ].join(" ")}
+                                >
+                                  {o.l}
+                                </button>
+                              ))}
+                            </div>
                           </div>
 
                           <div>
-                            <label className="block text-xs text-slate-400 mb-1">%</label>
+                            <label className="block text-xs text-slate-400 mb-1">Zins (%)</label>
                             <input
                               type="number"
                               step="0.01"
@@ -539,23 +571,17 @@ export default function Step2Form({
                           </div>
 
                           <div>
-                            <label className="block text-xs text-slate-400 mb-1">Quelle (Gegenkonto)</label>
-                            <select
+                            <CustomSelect
+                              label="Quelle (Gegenkonto)"
+                              options={[
+                                { value: "", label: sourceLocked ? "Liquidität (Default)" : "Quelle wählen…" },
+                                ...sourceAccountOptions.map((o) => ({ value: o.key, label: o.label })),
+                              ]}
                               value={it.sourceAccountKey ?? ""}
+                              onChange={(v) => updatePosition(it.id, { sourceAccountKey: v || undefined })}
+                              placeholder={sourceLocked ? "Liquidität (Default)" : "Quelle wählen…"}
                               disabled={sourceAccountOptions.length <= 1}
-                              onChange={(e) => updatePosition(it.id, { sourceAccountKey: e.target.value || undefined })}
-                              className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100"
-                            >
-                              <option value="">
-                                {sourceLocked ? "Liquidität (Default)" : "Quelle wählen…"}
-                              </option>
-                              {sourceAccountOptions.map((o) => (
-                                <option key={o.key} value={o.key}>
-                                  {o.label}
-                                </option>
-                              ))}
-                            </select>
-
+                            />
                             {needsSource && (
                               <div className="mt-1 text-xs text-amber-400/90">Quelle fehlt – muss ein bestehendes Konto sein.</div>
                             )}
@@ -567,20 +593,8 @@ export default function Step2Form({
                             onChangeChf={(n) => updatePosition(it.id, { amortizationPaChf: n })}
                           />
 
-                          <div className="mt-1 flex items-center justify-between gap-3">
-                            <div className="text-xs text-slate-500">
-                              Laufzeit: <span className="text-slate-300">{BUCKET_META[activeBucket].title}</span>
-                            </div>
-
-                            {!it.isSystem && (
-                              <button
-                                type="button"
-                                onClick={() => removePosition(it.id)}
-                                className="rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-slate-300 hover:border-slate-700 hover:text-slate-100 transition"
-                              >
-                                Entfernen
-                              </button>
-                            )}
+                          <div className="mt-1 text-xs text-slate-500">
+                            Laufzeit: <span className="text-slate-300">{BUCKET_META[activeBucket].title}</span>
                           </div>
                         </div>
                       </div>
@@ -593,15 +607,15 @@ export default function Step2Form({
                   <table className="w-full text-sm table-fixed">
                     <thead className="text-slate-400">
                       <tr className="border-b border-slate-800">
+                        <th className="py-2 w-[7%]"> </th>
                         <th className="text-left py-2 px-3 w-[15%]">Bezeichnung</th>
                         <th className="text-left py-2 px-3 w-[11%]">Typ</th>
                         <th className="text-left py-2 px-3 w-[12%]">Wert</th>
                         <th className="text-left py-2 px-3 w-[12%]">Verf.</th>
                         <th className="text-left py-2 px-3 w-[12%]">Amort.</th>
-                        <th className="text-left py-2 px-3 w-[10%]">%</th>
+                        <th className="text-left py-2 px-3 w-[10%]">Zins (%)</th>
                         <th className="text-left py-2 px-3 w-[15%]">Quelle</th>
                         <th className="text-left py-2 px-3 w-[13%]">Notiz</th>
-                        <th className="text-right py-2 w-[10%]"> </th>
                       </tr>
                     </thead>
 
@@ -621,6 +635,19 @@ export default function Step2Form({
                               void commitIfDirty(it.id);
                             }}
                           >
+                            <td className="py-2 pr-1">
+                              {!it.isSystem ? (
+                                <button
+                                  type="button"
+                                  onClick={() => removePosition(it.id)}
+                                  className="flex items-center justify-center rounded-lg border border-slate-800 bg-slate-950 p-2 text-slate-300 hover:border-slate-700 hover:text-slate-100 transition"
+                                  title="Entfernen"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              ) : null}
+                            </td>
+
                             {/* Bezeichnung */}
                             <td className="py-2 pr-3">
                               <input
@@ -633,17 +660,23 @@ export default function Step2Form({
 
                             {/* Typ */}
                             <td className="py-2 pr-3">
-                              <select
-                                value={it.debtType}
-                                onChange={(e) => updatePosition(it.id, { debtType: e.target.value as DebtType })}
-                                className="w-full rounded-lg border border-slate-800 bg-slate-950 px-1.5 py-2"
-                              >
-                                <option value="mortgage">{typeLabel("mortgage")}</option>
-                                <option value="loan">{typeLabel("loan")}</option>
-                                <option value="consumer">{typeLabel("consumer")}</option>
-                                <option value="creditcard">{typeLabel("creditcard")}</option>
-                                <option value="other">{typeLabel("other")}</option>
-                              </select>
+                              <div className="flex flex-wrap gap-1" role="radiogroup" aria-label="Typ">
+                                {(["mortgage", "loan", "consumer", "creditcard", "other"] as DebtType[]).map((dv) => (
+                                  <button
+                                    key={dv}
+                                    type="button"
+                                    role="radio"
+                                    aria-checked={it.debtType === dv}
+                                    onClick={() => updatePosition(it.id, { debtType: dv })}
+                                    className={[
+                                      "rounded border px-1.5 py-0.5 text-[11px] transition",
+                                      it.debtType === dv ? "border-sky-500/60 bg-slate-800 text-sky-200" : "border-slate-700 bg-slate-950/50 text-slate-400 hover:border-slate-600",
+                                    ].join(" ")}
+                                  >
+                                    {typeLabel(dv)}
+                                  </button>
+                                ))}
+                              </div>
                             </td>
 
                             {/* Wert */}
@@ -660,18 +693,30 @@ export default function Step2Form({
                               />
                             </td>
 
-                            {/* Bucket (read-only, aus availability) */}
-                            <td className="py-2 pr-3 text-slate-300">
-                              <select
-                                value={it.availability}
-                                onChange={(e) => updatePosition(it.id, { availability: e.target.value as Availability })}
-                                className="w-full rounded-xl border border-slate-800 bg-slate-950 px-1.5 py-2 text-sm text-slate-100"
-                              >
-                                <option value="instant">sofort</option>
-                                <option value="3m_3y">3M–3J</option>
-                                <option value="gt_3y">&gt; 3J</option>
-                                <option value="locked">gebunden</option>
-                              </select>
+                            {/* Verfügbarkeit */}
+                            <td className="py-2 pr-3">
+                              <div className="flex flex-wrap gap-1" role="radiogroup" aria-label="Verfügbarkeit">
+                                {[
+                                  { v: "instant" as Availability, l: "sofort" },
+                                  { v: "3m_3y" as Availability, l: "3M–3J" },
+                                  { v: "gt_3y" as Availability, l: ">3J" },
+                                  { v: "locked" as Availability, l: "gebunden" },
+                                ].map((o) => (
+                                  <button
+                                    key={o.v}
+                                    type="button"
+                                    role="radio"
+                                    aria-checked={it.availability === o.v}
+                                    onClick={() => updatePosition(it.id, { availability: o.v })}
+                                    className={[
+                                      "rounded border px-1.5 py-0.5 text-[11px] transition",
+                                      it.availability === o.v ? "border-sky-500/60 bg-slate-800 text-sky-200" : "border-slate-700 bg-slate-950/50 text-slate-400 hover:border-slate-600",
+                                    ].join(" ")}
+                                  >
+                                    {o.l}
+                                  </button>
+                                ))}
+                              </div>
                             </td>
 
                             {/* Amortisation p.a. */}
@@ -710,22 +755,16 @@ export default function Step2Form({
 
                             {/* Quelle (Gegenkonto) */}
                             <td className="py-2 pr-3 align-top">
-                              <select
+                              <CustomSelect
+                                options={[
+                                  { value: "", label: sourceLocked ? "Liquidität (Default)" : "Quelle wählen…" },
+                                  ...sourceAccountOptions.map((o) => ({ value: o.key, label: o.label })),
+                                ]}
                                 value={it.sourceAccountKey ?? ""}
+                                onChange={(v) => updatePosition(it.id, { sourceAccountKey: v || undefined })}
+                                placeholder={sourceLocked ? "Liquidität (Default)" : "Quelle wählen…"}
                                 disabled={sourceAccountOptions.length <= 1}
-                                onChange={(e) => updatePosition(it.id, { sourceAccountKey: e.target.value || undefined })}
-                                className="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2"
-                              >
-                                <option value="">
-                                  {sourceLocked ? "Liquidität (Default)" : "Quelle wählen…"}
-                                </option>
-                                {sourceAccountOptions.map((o) => (
-                                  <option key={o.key} value={o.key}>
-                                    {o.label}
-                                  </option>
-                                ))}
-                              </select>
-
+                              />
                               {needsSource && (
                                 <div className="mt-1 text-xs text-amber-400/90">
                                   Quelle fehlt – muss ein bestehendes Konto sein.
@@ -742,26 +781,13 @@ export default function Step2Form({
                                 placeholder="optional"
                               />
                             </td>
-
-                            {/* Aktion */}
-                            <td className="py-2 text-right">
-                              {!it.isSystem && (
-                                <button
-                                  type="button"
-                                  onClick={() => removePosition(it.id)}
-                                  className="rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-slate-300 hover:border-slate-700 hover:text-slate-100 transition"
-                                >
-                                  Entfernen
-                                </button>
-                              )}
-                            </td>
                           </tr>
                         );
                       })}
 
                       {activeItems.length === 0 && (
                         <tr>
-                          <td colSpan={7} className="py-6 text-center text-slate-500">
+                          <td colSpan={9} className="py-6 text-center text-slate-500">
                             Keine Positionen in {BUCKET_META[activeBucket].title}.
                           </td>
                         </tr>

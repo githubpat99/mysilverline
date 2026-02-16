@@ -13,7 +13,8 @@ import type {
 import { Amount, InlineAmount } from "../Amount";
 import { FieldMoneyInt } from "../fields/FieldMoney";
 import { bucketFromAvailability, bucketLabel, type Bucket } from "@/lib/forecast/buckets";
-import { Plus, X } from "lucide-react";
+import { Plus, Trash2, X } from "lucide-react";
+import CustomSelect from "../CustomSelect";
 
 type Step1Data = FormState["step1"];
 
@@ -365,13 +366,13 @@ export default function Step1Form({
     if (!hasCf) return "";
 
     const opts = counterOptionsFor(p);
-    if (p.goal === "liq" && opts.length === 0) return "Für Ziel=liq brauchst du mindestens ein LIQ-Konto bei Aktiven.";
+    if (p.goal === "liq" && opts.length === 0) return "Für Ziel=Liquidität brauchst du mindestens ein LIQ-Konto bei Aktiven.";
 
     const selfKey = makeKey("asset", p.id);
     if (!p.targetAccountKey) return "Gegenkonto fehlt.";
 
     if (p.goal === "liq" && p.targetAccountKey === selfKey) {
-      return "Gegenkonto darf bei Ziel=liq nicht die gleiche Position sein.";
+      return "Gegenkonto darf bei Ziel=Liquidität nicht die gleiche Position sein.";
     }
 
     if (!opts.some((o) => o.key === p.targetAccountKey)) return "Gegenkonto ist ungültig (falscher Bucket/Ziel).";
@@ -386,8 +387,8 @@ export default function Step1Form({
   return (
     <div>
       {/* Header (ohne Kachel) */}
-      <div className="px-5 pt-4 pb-3">
-        <div className="mt-4">
+      <div className="px-5 pt-0 pb-3">
+        <div className="mt-0">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             <div className="min-w-0">
               <div className="text-[11px] uppercase tracking-wide text-slate-400">Gesamtvermögen</div>
@@ -428,7 +429,7 @@ export default function Step1Form({
       </div>
 
       {/* Tiles */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-0">
         {(Object.keys(BUCKET_META) as Bucket[]).map((b) => {
           const meta = BUCKET_META[b];
           const t = totals[b];
@@ -537,17 +538,19 @@ export default function Step1Form({
                   {/* Desktop */}
                   <button
                     onClick={() => addPosition(activeBucket)}
-                    className="hidden sm:inline-flex rounded-full border border-slate-700 px-4 py-2 text-sm hover:border-slate-600 whitespace-nowrap"
+                    className="hidden sm:inline-flex items-center justify-center rounded-full border border-slate-700 p-2.5 text-sm hover:border-slate-600"
                     type="button"
+                    title="Position hinzufügen"
                   >
-                    + Position
+                    <Plus size={18} className="text-sky-400" />
                   </button>
                   <button
                     onClick={closeModal}
-                    className="hidden sm:inline-flex rounded-full border border-slate-700 px-4 py-2 text-sm hover:border-slate-600"
+                    className="hidden sm:inline-flex items-center justify-center rounded-full border border-slate-700 p-2.5 text-sm hover:border-slate-600"
                     type="button"
+                    title="Schliessen"
                   >
-                    Schliessen
+                    <X size={18} className="text-slate-400" />
                   </button>
 
                   {/* Mobile icons (min 44px Touch-Target) */}
@@ -589,32 +592,56 @@ export default function Step1Form({
                         }}
                       >
                         <div className="grid gap-3">
-                          <div>
-                            <label className="block text-xs text-slate-400 mb-1">Bezeichnung</label>
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0 flex-1">
+                              <label className="block text-xs text-slate-400 mb-1">Bezeichnung</label>
                             <input
                               value={p.label}
                               onChange={(e) => upsert(p.id, { label: e.target.value })}
                               placeholder="z.B. Sparkonto, ETF, Bargeld…"
                               className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-600"
                             />
+                            </div>
+                            {!p.isSystem && (
+                              <button
+                                type="button"
+                                onClick={() => removePosition(p.id)}
+                                className="flex shrink-0 items-center justify-center rounded-xl border border-slate-800 bg-slate-950 p-2 text-slate-300 hover:border-slate-700 hover:text-slate-100 transition"
+                                title="Entfernen"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            )}
                           </div>
 
                           <div>
-                            <label className="block text-xs text-slate-400 mb-1">Typ</label>
-                            <select
-                              value={p.assetClass}
-                              onChange={(e) => upsert(p.id, { assetClass: e.target.value as AssetClass })}
-                              className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100"
-                            >
-                              <option value="cash">Cash</option>
-                              <option value="bank">Bank</option>
-                              <option value="securities">Wertschriften</option>
-                              <option value="pension">Vorsorge</option>
-                              <option value="real_estate">Immobilien</option>
-                              <option value="gold">Gold</option>
-                              <option value="crypto">Kryptowährungen</option>
-                              <option value="other">Sonstiges</option>
-                            </select>
+                            <label className="block text-xs text-slate-400 mb-1.5">Typ</label>
+                            <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Typ">
+                              {([
+                                { v: "cash" as AssetClass, l: "Cash" },
+                                { v: "bank" as AssetClass, l: "Bank" },
+                                { v: "securities" as AssetClass, l: "Wertschr." },
+                                { v: "pension" as AssetClass, l: "Vorsorge" },
+                                { v: "real_estate" as AssetClass, l: "Immo" },
+                                { v: "gold" as AssetClass, l: "Gold" },
+                                { v: "crypto" as AssetClass, l: "Krypto" },
+                                { v: "other" as AssetClass, l: "Sonstiges" },
+                              ]).map((o) => (
+                                <button
+                                  key={o.v}
+                                  type="button"
+                                  role="radio"
+                                  aria-checked={p.assetClass === o.v}
+                                  onClick={() => upsert(p.id, { assetClass: o.v })}
+                                  className={[
+                                    "rounded-lg border px-2.5 py-1.5 text-xs transition",
+                                    p.assetClass === o.v ? "border-sky-500/60 bg-slate-800 text-sky-200" : "border-slate-700 bg-slate-950/50 text-slate-400 hover:border-slate-600 hover:text-slate-200",
+                                  ].join(" ")}
+                                >
+                                  {o.l}
+                                </button>
+                              ))}
+                            </div>
                           </div>
 
                           <FieldMoneyInt
@@ -624,17 +651,29 @@ export default function Step1Form({
                           />
 
                           <div>
-                            <label className="block text-xs text-slate-400 mb-1">Verfügbarkeit</label>
-                            <select
-                              value={p.availability}
-                              onChange={(e) => upsert(p.id, { availability: e.target.value as Availability })}
-                              className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100"
-                            >
-                              <option value="instant">sofort</option>
-                              <option value="3m_3y">3M–3J</option>
-                              <option value="gt_3y">&gt; 3J</option>
-                              <option value="locked">gebunden</option>
-                            </select>
+                            <label className="block text-xs text-slate-400 mb-1.5">Verfügbarkeit</label>
+                            <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Verfügbarkeit">
+                              {([
+                                { v: "instant" as Availability, l: "sofort" },
+                                { v: "3m_3y" as Availability, l: "3M–3J" },
+                                { v: "gt_3y" as Availability, l: ">3J" },
+                                { v: "locked" as Availability, l: "gebunden" },
+                              ]).map((o) => (
+                                <button
+                                  key={o.v}
+                                  type="button"
+                                  role="radio"
+                                  aria-checked={p.availability === o.v}
+                                  onClick={() => upsert(p.id, { availability: o.v })}
+                                  className={[
+                                    "rounded-lg border px-2.5 py-1.5 text-xs transition",
+                                    p.availability === o.v ? "border-sky-500/60 bg-slate-800 text-sky-200" : "border-slate-700 bg-slate-950/50 text-slate-400 hover:border-slate-600 hover:text-slate-200",
+                                  ].join(" ")}
+                                >
+                                  {o.l}
+                                </button>
+                              ))}
+                            </div>
                           </div>
 
                           <FieldMoneyInt
@@ -644,34 +683,44 @@ export default function Step1Form({
                           />
 
                           <div>
-                            <label className="block text-xs text-slate-400 mb-1">Ziel</label>
-                            <select
-                              value={p.goal}
-                              onChange={(e) => upsert(p.id, { goal: e.target.value as Goal })}
-                              className="w-full rounded-xl border border-slate-800 bg-slate-950 px-1 py-2 text-sm text-slate-100"
-                            >
-                              <option value="liq">liq</option>
-                              <option value="reinvest">Wiederanlage</option>
-                            </select>
+                            <label className="block text-xs text-slate-400 mb-1.5">Ziel</label>
+                            <div className="flex gap-1.5" role="radiogroup" aria-label="Ziel">
+                              {[
+                                { v: "liq" as Goal, l: "Liquidität" },
+                                { v: "reinvest" as Goal, l: "Wiederanlage" },
+                              ].map((o) => (
+                                <button
+                                  key={o.v}
+                                  type="button"
+                                  role="radio"
+                                  aria-checked={p.goal === o.v}
+                                  onClick={() => upsert(p.id, { goal: o.v })}
+                                  className={[
+                                    "rounded-lg border px-3 py-1.5 text-xs transition",
+                                    p.goal === o.v ? "border-sky-500/60 bg-slate-800 text-sky-200" : "border-slate-700 bg-slate-950/50 text-slate-400 hover:border-slate-600 hover:text-slate-200",
+                                  ].join(" ")}
+                                >
+                                  {o.l}
+                                </button>
+                              ))}
+                            </div>
                           </div>
 
                           {hasCashflow(p) && (
                             <div>
-                              <label className="block text-xs text-slate-400 mb-1">Gegenkonto</label>
-                              <select
+                              <CustomSelect
+                                label="Gegenkonto"
+                                options={[
+                                  { value: "", label: "Gegenkonto wählen…" },
+                                  ...counterOptionsFor(p).map((o) => ({
+                                    value: o.key,
+                                    label: o.label + (o.key === makeKey("asset", p.id) ? " (intern)" : ""),
+                                  })),
+                                ]}
                                 value={p.targetAccountKey ?? ""}
-                                onChange={(e) => upsert(p.id, { targetAccountKey: e.target.value || undefined })}
-                                className="w-full rounded-xl border border-slate-800 bg-slate-950 px-2 py-2 text-sm text-slate-100"
-                              >
-                                <option value="">Gegenkonto wählen…</option>
-                                {counterOptionsFor(p).map((o) => (
-                                  <option key={o.key} value={o.key}>
-                                    {o.label}
-                                    {o.key === makeKey("asset", p.id) ? " (intern)" : ""}
-                                  </option>
-                                ))}
-                              </select>
-
+                                onChange={(v) => upsert(p.id, { targetAccountKey: v || undefined })}
+                                placeholder="Gegenkonto wählen…"
+                              />
                               {err && <div className="mt-1 text-xs text-amber-400/90">{err}</div>}
                             </div>
                           )}
@@ -684,18 +733,6 @@ export default function Step1Form({
                               className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-600"
                               placeholder="optional"
                             />
-                          </div>
-
-                          <div className="mt-1 flex items-center justify-end gap-3">
-                            {!p.isSystem && (
-                              <button
-                                type="button"
-                                onClick={() => removePosition(p.id)}
-                                className="rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-slate-300 hover:border-slate-700 hover:text-slate-100 transition"
-                              >
-                                Entfernen
-                              </button>
-                            )}
                           </div>
                         </div>
                       </div>
@@ -714,6 +751,7 @@ export default function Step1Form({
                   <table className="w-full text-sm table-fixed">
                     <thead className="text-slate-400">
                       <tr className="border-b border-slate-800">
+                        <th className="py-2 w-[7%]"> </th>
                         <th className="text-left py-2 px-3 w-[14%]">Bezeichnung</th>
                         <th className="text-left py-2 px-3 w-[10%]">Typ</th>
                         <th className="text-left py-2 px-3 w-[10%]">Wert</th>
@@ -722,7 +760,6 @@ export default function Step1Form({
                         <th className="text-left py-2 px-3 min-w-[7.5rem] w-[14%]">Ziel</th>
                         <th className="text-left py-2 px-3 w-[16%]">Gegenkonto</th>
                         <th className="text-left py-2 px-3 w-[10%]">Notiz</th>
-                        <th className="text-right py-2 w-[7%]"> </th>
                       </tr>
                     </thead>
 
@@ -740,6 +777,19 @@ export default function Step1Form({
                               void commitIfDirty(p.id);
                             }}
                           >
+                            <td className="py-2 pr-1">
+                              {!p.isSystem ? (
+                                <button
+                                  type="button"
+                                  onClick={() => removePosition(p.id)}
+                                  className="flex items-center justify-center rounded-lg border border-slate-800 bg-slate-950 p-2 text-slate-300 hover:border-slate-700 hover:text-slate-100 transition"
+                                  title="Entfernen"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              ) : null}
+                            </td>
+
                             <td className="py-2 pr-3">
                               <input
                                 value={p.label}
@@ -749,20 +799,32 @@ export default function Step1Form({
                             </td>
 
                             <td className="py-2 pr-3">
-                              <select
-                                value={p.assetClass}
-                                onChange={(e) => upsert(p.id, { assetClass: e.target.value as AssetClass })}
-                                className="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2"
-                              >
-                                <option value="cash">Cash</option>
-                                <option value="bank">Bank</option>
-                                <option value="securities">Wertschriften</option>
-                                <option value="pension">Vorsorge</option>
-                                <option value="real_estate">Immobilien</option>
-                                <option value="gold">Gold</option>
-                                <option value="crypto">Kryptowährungen</option>
-                                <option value="other">Sonstiges</option>
-                              </select>
+                              <div className="flex flex-wrap gap-1" role="radiogroup" aria-label="Typ">
+                                {([
+                                  { v: "cash" as AssetClass, l: "Cash" },
+                                  { v: "bank" as AssetClass, l: "Bank" },
+                                  { v: "securities" as AssetClass, l: "Wertschr." },
+                                  { v: "pension" as AssetClass, l: "Vorsorge" },
+                                  { v: "real_estate" as AssetClass, l: "Immo" },
+                                  { v: "gold" as AssetClass, l: "Gold" },
+                                  { v: "crypto" as AssetClass, l: "Krypto" },
+                                  { v: "other" as AssetClass, l: "Sonstiges" },
+                                ]).map((o) => (
+                                  <button
+                                    key={o.v}
+                                    type="button"
+                                    role="radio"
+                                    aria-checked={p.assetClass === o.v}
+                                    onClick={() => upsert(p.id, { assetClass: o.v })}
+                                    className={[
+                                      "rounded border px-1.5 py-0.5 text-[11px] transition",
+                                      p.assetClass === o.v ? "border-sky-500/60 bg-slate-800 text-sky-200" : "border-slate-700 bg-slate-950/50 text-slate-400 hover:border-slate-600",
+                                    ].join(" ")}
+                                  >
+                                    {o.l}
+                                  </button>
+                                ))}
+                              </div>
                             </td>
 
                             <td className="py-2 pr-3">
@@ -773,17 +835,29 @@ export default function Step1Form({
                               />
                             </td>
 
-                            <td className="py-2 pr-3" >
-                              <select
-                                value={p.availability}
-                                onChange={(e) => upsert(p.id, { availability: e.target.value as Availability })}
-                                className="w-full rounded-xl border border-slate-800 bg-slate-950 px-1.5 py-2 text-sm text-slate-100"
-                              >
-                                <option value="instant">sofort</option>
-                                <option value="3m_3y">3M–3J</option>
-                                <option value="gt_3y">&gt; 3J</option>
-                                <option value="locked">gebunden</option>
-                              </select>
+                            <td className="py-2 pr-3">
+                              <div className="flex flex-wrap gap-1" role="radiogroup" aria-label="Verfügbarkeit">
+                                {[
+                                  { v: "instant" as Availability, l: "sofort" },
+                                  { v: "3m_3y" as Availability, l: "3M–3J" },
+                                  { v: "gt_3y" as Availability, l: ">3J" },
+                                  { v: "locked" as Availability, l: "gebunden" },
+                                ].map((o) => (
+                                  <button
+                                    key={o.v}
+                                    type="button"
+                                    role="radio"
+                                    aria-checked={p.availability === o.v}
+                                    onClick={() => upsert(p.id, { availability: o.v })}
+                                    className={[
+                                      "rounded border px-1.5 py-0.5 text-[11px] transition",
+                                      p.availability === o.v ? "border-sky-500/60 bg-slate-800 text-sky-200" : "border-slate-700 bg-slate-950/50 text-slate-400 hover:border-slate-600",
+                                    ].join(" ")}
+                                  >
+                                    {o.l}
+                                  </button>
+                                ))}
+                              </div>
                             </td>
 
                             <td className="py-2 pr-3">
@@ -795,33 +869,43 @@ export default function Step1Form({
                             </td>
 
                             <td className="py-2 pr-3 min-w-[7.5rem]">
-                              <select
-                                value={p.goal}
-                                onChange={(e) => upsert(p.id, { goal: e.target.value as Goal })}
-                                className="w-full rounded-lg border border-slate-800 bg-slate-950 px-2 py-2"
-                              >
-                                <option value="liq">Liquidität</option>
-                                <option value="reinvest">Wiederanlage</option>
-                              </select>
+                              <div className="flex gap-1" role="radiogroup" aria-label="Ziel">
+                                {[
+                                  { v: "liq" as Goal, l: "Liquidität" },
+                                  { v: "reinvest" as Goal, l: "Wiederanlage" },
+                                ].map((o) => (
+                                  <button
+                                    key={o.v}
+                                    type="button"
+                                    role="radio"
+                                    aria-checked={p.goal === o.v}
+                                    onClick={() => upsert(p.id, { goal: o.v })}
+                                    className={[
+                                      "rounded border px-2 py-0.5 text-xs transition",
+                                      p.goal === o.v ? "border-sky-500/60 bg-slate-800 text-sky-200" : "border-slate-700 bg-slate-950/50 text-slate-400 hover:border-slate-600",
+                                    ].join(" ")}
+                                  >
+                                    {o.l}
+                                  </button>
+                                ))}
+                              </div>
                             </td>
 
                             <td className="py-2 pr-3 align-top">
                               {hasCashflow(p) ? (
                                 <>
-                                  <select
+                                  <CustomSelect
+                                    options={[
+                                      { value: "", label: "Gegenkonto wählen…" },
+                                      ...counterOptionsFor(p).map((o) => ({
+                                        value: o.key,
+                                        label: o.label + (o.key === makeKey("asset", p.id) ? " (intern)" : ""),
+                                      })),
+                                    ]}
                                     value={p.targetAccountKey ?? ""}
-                                    onChange={(e) => upsert(p.id, { targetAccountKey: e.target.value || undefined })}
-                                    className="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2"
-                                  >
-                                    <option value="">Gegenkonto wählen…</option>
-                                    {counterOptionsFor(p).map((o) => (
-                                      <option key={o.key} value={o.key}>
-                                        {o.label}
-                                        {o.key === makeKey("asset", p.id) ? " (intern)" : ""}
-                                      </option>
-                                    ))}
-                                  </select>
-
+                                    onChange={(v) => upsert(p.id, { targetAccountKey: v || undefined })}
+                                    placeholder="Gegenkonto wählen…"
+                                  />
                                   {err && <div className="mt-1 text-xs text-amber-400/90">{err}</div>}
                                 </>
                               ) : (
@@ -836,18 +920,6 @@ export default function Step1Form({
                                 className="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2"
                                 placeholder="optional"
                               />
-                            </td>
-
-                            <td className="py-2 text-right">
-                              {!p.isSystem && (
-                                <button
-                                  type="button"
-                                  onClick={() => removePosition(p.id)}
-                                  className="rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-slate-300 hover:border-slate-700 hover:text-slate-100 transition"
-                                >
-                                  Entfernen
-                                </button>
-                              )}
                             </td>
                           </tr>
                         );
@@ -865,7 +937,7 @@ export default function Step1Form({
                 </div>
 
                 <div className="mt-3 text-xs text-slate-500">
-                  Regeln: Ziel=liq → LIQ-Konto (nicht identisch). Ziel=Wiederanlage → intern (identisch) oder Nicht-LIQ-Konto.
+                  Regeln: Ziel=Liquidität → LIQ-Konto (nicht identisch). Ziel=Wiederanlage → intern (identisch) oder Nicht-LIQ-Konto.
                 </div>
               </div>
             </div>

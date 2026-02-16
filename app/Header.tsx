@@ -185,11 +185,27 @@ export default function Header() {
       </div>
 
       {!isMinimal && menuOpen && (
-        <div className="md:hidden border-t border-slate-800 bg-slate-900 px-3 py-3">
-          <div className="rounded-lg border border-slate-800 bg-slate-950/30 px-3 py-2 text-sm text-slate-200 mb-4">
-            {userLabel}
-          </div>
-
+        <div className="fixed inset-0 z-[100] md:hidden flex flex-col">
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setMenuOpen(false)}
+            aria-hidden="true"
+          />
+          <div className="relative z-10 border-b border-slate-800 bg-slate-900 px-3 py-3">
+            <div className="flex items-center justify-between mb-4">
+              <div className="rounded-lg border border-slate-800 bg-slate-950/30 px-3 py-2 text-sm text-slate-200">
+                {userLabel}
+              </div>
+              <button
+                onClick={() => setMenuOpen(false)}
+                className="p-2 -m-2 text-slate-400 hover:text-sky-400 transition"
+                aria-label="Menü schliessen"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
           <nav className="flex flex-col gap-3 text-sm">
             <Link
               href="/base"
@@ -246,6 +262,7 @@ export default function Header() {
 
             <LogoutBtn className="block w-full text-left" />
           </nav>
+          </div>
         </div>
       )}
     </header>

@@ -10,6 +10,7 @@ import { mapFormStateToProfileV2 } from "@/lib/mapping/mapFormStateToProfileV2";
 import { mapFormStateToPositions } from "@/lib/mapping/mapFormStateToPositions";
 import { mapV2ToFormState } from "@/lib/mapping/mapV2ToFormState";
 import { makeEmptyProfileV2 } from "@/lib/profile/makeEmptyProfileV2";
+import BalanceSummaryChart from "@/app/components/DonutChart";
 import type { FormState } from "@/lib/types";
 import type { ProfileV2 } from "@/lib/types/v2";
 import type { PositionDTO } from "@/lib/types/v2/positions.dto";
@@ -46,6 +47,7 @@ export default function MusterfallPage() {
 
   async function adoptAsMyProfile() {
     if (!form) return;
+    if (!window.confirm("Achtung: Bestehende Daten werden überschrieben!")) return;
     setAdopting(true);
     setError(null);
     try {
@@ -123,7 +125,15 @@ export default function MusterfallPage() {
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-xl font-semibold text-slate-100">Musterfall</h1>
-            <p className="text-sm text-slate-400">Beispiel-Szenario. Sie können es als Vorlage übernehmen.</p>
+            <div className="text-sm text-slate-400">
+              {form.base?.description?.trim() ? (
+                <>
+                  <span className="whitespace-pre-line">{form.base.description.trim()}</span>
+                </>
+              ) : (
+                <span>Beispiel-Szenario. Sie können es als Vorlage übernehmen.</span>
+              )}
+            </div>
           </div>
           <div className="flex gap-3">
             <Link
@@ -153,11 +163,11 @@ export default function MusterfallPage() {
             <div className="mt-4 grid gap-4 sm:grid-cols-2 md:grid-cols-4">
               <div className="rounded-xl border border-slate-800 p-4">
                 <div className="text-xs text-slate-500">Aktiven</div>
-                <div className="text-lg font-semibold text-slate-100">{assetsTotal.toLocaleString("de-CH")} CHF</div>
+                <div className="text-lg font-semibold text-emerald-400">{assetsTotal.toLocaleString("de-CH")} CHF</div>
               </div>
               <div className="rounded-xl border border-slate-800 p-4">
                 <div className="text-xs text-slate-500">Passiven</div>
-                <div className="text-lg font-semibold text-slate-100">{debtsTotal.toLocaleString("de-CH")} CHF</div>
+                <div className="text-lg font-semibold text-rose-400">{debtsTotal.toLocaleString("de-CH")} CHF</div>
               </div>
               <div className="rounded-xl border border-slate-800 p-4">
                 <div className="text-xs text-slate-500">Jahreseinnahmen</div>
@@ -171,12 +181,19 @@ export default function MusterfallPage() {
           </section>
 
           <section className="rounded-2xl border border-slate-800 bg-slate-900/40 p-6">
+            <h2 className="text-sm font-semibold text-slate-200">Bilanz</h2>
+            <div className="mt-4">
+              <BalanceSummaryChart totalAssets={assetsTotal} totalLiabilities={debtsTotal} />
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-slate-800 bg-slate-900/40 p-6">
             <h2 className="text-sm font-semibold text-slate-200">Aktiven ({assets.length})</h2>
             <ul className="mt-3 space-y-2">
               {assets.map((p) => (
                 <li key={p.id} className="flex justify-between text-sm">
                   <span className="text-slate-300">{p.label}{p.isSystem ? " (System)" : ""}</span>
-                  <span className="text-slate-100">{(p.amountChf ?? 0).toLocaleString("de-CH")} CHF</span>
+                  <span className="text-emerald-400">{(p.amountChf ?? 0).toLocaleString("de-CH")} CHF</span>
                 </li>
               ))}
             </ul>
@@ -188,7 +205,7 @@ export default function MusterfallPage() {
               {debts.map((p) => (
                 <li key={p.id} className="flex justify-between text-sm">
                   <span className="text-slate-300">{p.label}{p.isSystem ? " (System)" : ""}</span>
-                  <span className="text-slate-100">{(p.balanceChf ?? 0).toLocaleString("de-CH")} CHF</span>
+                  <span className="text-rose-400">{(p.balanceChf ?? 0).toLocaleString("de-CH")} CHF</span>
                 </li>
               ))}
             </ul>
@@ -196,13 +213,31 @@ export default function MusterfallPage() {
 
           <section className="rounded-2xl border border-slate-800 bg-slate-900/40 p-6">
             <h2 className="text-sm font-semibold text-slate-200">Ereignisse ({events.length})</h2>
-            <ul className="mt-3 space-y-2">
-              {events.slice(0, 10).map((e) => (
-                <li key={e.client_id} className="flex justify-between text-sm">
-                  <span className="text-slate-300">{e.title}</span>
-                  <span className="text-slate-100">{(e.line?.amount_chf ?? 0).toLocaleString("de-CH")} CHF</span>
-                </li>
-              ))}
+            <ul className="mt-3 space-y-3">
+              {events.slice(0, 10).map((e) => {
+                const year = e.start_date?.slice(0, 4) || "—";
+                const recurrenceLabel =
+                  e.recurrence === "yearly"
+                    ? "jährlich"
+                    : e.recurrence === "monthly"
+                      ? "monatlich"
+                      : "einmalig";
+                const isIncome = e.line?.line_type === "income";
+                const amountCls = isIncome ? "text-emerald-400" : "text-rose-400";
+                return (
+                  <li key={e.client_id} className="flex justify-between gap-4 text-sm">
+                    <div className="min-w-0">
+                      <span className="text-slate-300">{e.title}</span>
+                      <p className="mt-0.5 text-xs text-slate-500">
+                        Eintritt: {year} · {recurrenceLabel}
+                      </p>
+                    </div>
+                    <span className={`shrink-0 font-medium ${amountCls}`}>
+                      {(e.line?.amount_chf ?? 0).toLocaleString("de-CH")} CHF
+                    </span>
+                  </li>
+                );
+              })}
               {events.length > 10 && (
                 <li className="text-slate-500">… und {events.length - 10} weitere</li>
               )}

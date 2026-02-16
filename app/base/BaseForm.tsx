@@ -149,7 +149,15 @@ export default function BaseForm() {
 
             const toSave: ProfileV2 = {
                 ...p,
-                meta: { ...p.meta, startYear, forecastHorizonYears: hy },
+                meta: {
+                    ...p.meta,
+                    startYear,
+                    forecastHorizonYears: hy,
+                    description:
+                        typeof p.meta?.description === "string" && p.meta.description.trim()
+                            ? p.meta.description.replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim()
+                            : undefined,
+                },
                 household: {
                     ...p.household,
                     persons: p.household.persons.map((person) =>
@@ -230,6 +238,17 @@ export default function BaseForm() {
                         onChange={(e) => patchMeta({ forecastHorizonYears: Number(e.target.value || 0) })}
                         style={{ width: "100%", padding: 10, borderRadius: 10 }}
                         inputMode="numeric"
+                    />
+                </label>
+
+                <label>
+                    <div style={{ fontSize: 12, color: "#94a3b8", marginBottom: 6 }}>Fallbeschreibung (optional)</div>
+                    <textarea
+                        value={profile.meta?.description ?? ""}
+                        onChange={(e) => patchMeta({ description: e.target.value || undefined })}
+                        rows={8}
+                        style={{ width: "100%", padding: 10, borderRadius: 10, resize: "vertical", fontFamily: "inherit" }}
+                        placeholder="z.B. Familie mit Eigenheim und Hypothek"
                     />
                 </label>
 

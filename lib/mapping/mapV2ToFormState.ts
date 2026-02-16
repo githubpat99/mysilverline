@@ -100,6 +100,7 @@ export function mapProfileV2ToFormStateBase(profile: ProfileV2): Pick<FormState,
       birthDate: self?.birthDate ?? "",
       retireAtAge: self?.retireAtAge ?? 65,
       forecastHorizonYears: profile.meta?.forecastHorizonYears ?? 55,
+      description: profile.meta?.description ?? undefined,
     },
     step3: {
       annualsV2: {

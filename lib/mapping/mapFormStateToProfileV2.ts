@@ -102,6 +102,10 @@ export function mapFormStateToProfileV2(form: FormState, prev: ProfileV2): Profi
     ...(next.meta ?? {}),
     startYear: baseYear,
     forecastHorizonYears,
+    description:
+      typeof form.base?.description === "string" && form.base.description.trim()
+        ? form.base.description.replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim()
+        : undefined,
   };
 
   // ---- ANNUALS V2 (Step3 -> 1:1) ----

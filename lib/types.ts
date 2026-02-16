@@ -87,6 +87,8 @@ export type BaseData = {
   birthDate: string; // ISO "YYYY-MM-DD"
   forecastHorizonYears: number; // default 55
   retireAtAge?: number; // z.B. 65
+  /** Fallbeschreibung (z.B. für Musterfall) */
+  description?: string;
 };
 
 export type Step1Data = {

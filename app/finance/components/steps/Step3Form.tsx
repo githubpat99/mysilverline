@@ -451,16 +451,6 @@ export default function Step3Form({
             </div>
           </div>
 
-          <div className="sm:col-span-2">
-            <label className="mb-1 block text-xs text-slate-400">minLiquidityCHF (optional)</label>
-            <input
-              value={String(f.minLiquidityCHF ?? "")}
-              onChange={(ev) => commitFunding({ minLiquidityCHF: ev.target.value })}
-              className="w-full rounded-xl border border-slate-800 bg-slate-950/30 px-3 py-2 text-slate-100"
-              placeholder="z.B. 10000"
-            />
-          </div>
-
           <label className="sm:col-span-2 flex items-center gap-2 text-xs text-slate-300">
             <input
               type="checkbox"
@@ -931,15 +921,6 @@ export default function Step3Form({
                             )}
                           </div>
 
-                          <div className="sm:col-span-2">
-                            <label className="mb-1 block text-xs text-slate-400">minLiquidityCHF (optional)</label>
-                            <input
-                              value={String(ex0.minLiquidityCHF ?? "")}
-                              onChange={(ev) => commitExpense({ minLiquidityCHF: ev.target.value })}
-                              className="w-full rounded-xl border border-slate-800 bg-slate-950/30 px-3 py-2 text-slate-100"
-                              placeholder="z.B. 10000"
-                            />
-                          </div>
                         </div>
                       </div>
                     );

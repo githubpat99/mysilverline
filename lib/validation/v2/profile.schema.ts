@@ -8,6 +8,7 @@ import { AnnualsV2Schema } from "./annualsV2.schema";
 export const ProfileMetaSchema = z.object({
   startYear: YearSchema,
   forecastHorizonYears: z.number().int().optional(),
+  description: z.string().optional(),
 });
 
 // import { AnnualsSchema } from "./annuals.schema"; // REMOVE

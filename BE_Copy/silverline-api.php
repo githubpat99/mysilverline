@@ -333,6 +333,13 @@ function sl_load_profile_for_uid($uid) {
         if ($h !== null) $profile['meta']['forecastHorizonYears'] = $h;
       }
     }
+    $has_desc_col = is_array($cols) && in_array('description', $cols, true);
+    if ($has_desc_col) {
+      $row = $wpdb->get_row($wpdb->prepare("SELECT description FROM {$t_basic} WHERE user_id=%d LIMIT 1", $uid), ARRAY_A);
+      if ($row && isset($row['description']) && is_string($row['description']) && trim($row['description']) !== '') {
+        $profile['meta']['description'] = trim($row['description']);
+      }
+    }
     $profile['household'] = sl_basic_load_household($uid, $t_basic);
     $profile['annualsV2'] = sl_annuals_v2_load($uid, $t_basic, (int)$profile['meta']['startYear']);
   }
@@ -413,6 +420,18 @@ function sl_profile_v2_post(WP_REST_Request $req) {
           ['%d']
         );
         if ($ok === false) throw new Exception('horizon_update_failed');
+      }
+      $has_desc_col = is_array($cols) && in_array('description', $cols, true);
+      if ($has_desc_col) {
+        $desc = isset($meta['description']) && is_string($meta['description']) ? trim($meta['description']) : '';
+        $ok = $wpdb->update(
+          $t_basic,
+          ['description' => $desc, 'updated_at' => $now],
+          ['user_id' => $uid],
+          ['%s','%s'],
+          ['%d']
+        );
+        if ($ok === false) throw new Exception('description_update_failed');
       }
     }
 

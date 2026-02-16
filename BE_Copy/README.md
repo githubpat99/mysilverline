@@ -6,6 +6,12 @@ Dieser Ordner enthält die Silverline API mit **Token-Auth für PWA** integriert
 
 Der Musterfall ist ein Beispiel-Szenario, das allen Nutzern angezeigt wird. Nur der konfigurierte Inhaber kann es ändern.
 
+**Fallbeschreibung:** In der Basis kann eine optionale Fallbeschreibung hinterlegt werden. Beim Musterfall wird sie anstelle von „Beispiel-Szenario“ angezeigt. Dafür die Spalte `description` (VARCHAR/TEXT) in `wp_sl_finance_basic` anlegen:
+
+```sql
+ALTER TABLE wp_sl_finance_basic ADD COLUMN description TEXT NULL;
+```
+
 **Konfiguration:** In `wp-config.php` (vor dem Laden des Plugins):
 
 ```php

@@ -171,7 +171,7 @@ export default function ForecastChartSummary({
         </div>
       </div>
 
-      <div className="h-56 w-full rounded-xl bg-slate-950/25 ring-1 ring-white/5">
+      <div className="h-56 min-h-[180px] w-full rounded-xl bg-slate-950/25 ring-1 ring-white/5">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={visibleLineData} margin={{ top: 28, right: 12, bottom: 4, left: 4 }}>
             <defs>

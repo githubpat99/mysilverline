@@ -592,14 +592,14 @@ export default function Step3Form({
           </div>
 
           {(() => {
-            const r = AnnualsV2Schema.safeParse(value.annualsV2);
+            const income = annualIncomeAmount();
+            const expense = Math.trunc(annualExpenseModel().amountCHF ?? 0);
+            const diff = income - expense;
+            const cls = diff > 0 ? "text-emerald-400" : diff < 0 ? "text-rose-400" : "text-slate-400";
+            const sign = diff > 0 ? "+" : "";
             return (
-              <div className="text-xs">
-                {r.success ? (
-                  <span className="text-emerald-300">valid</span>
-                ) : (
-                  <span className="text-rose-300">invalid</span>
-                )}
+              <div className={`text-sm font-medium tabular-nums ${cls}`}>
+                {sign}{diff.toLocaleString("de-CH")} CHF
               </div>
             );
           })()}
@@ -616,7 +616,6 @@ export default function Step3Form({
                 <div className="text-sm font-semibold text-slate-100">Jahreseinkommen</div>
                 <div className="text-xs text-slate-400">Total (CHF/Jahr)</div>
               </div>
-              <span className="text-xs rounded-full border border-slate-700 px-2 py-1 text-slate-200">bearbeiten</span>
             </div>
 
             <div className="mt-3 text-2xl font-bold text-slate-100">
@@ -638,7 +637,6 @@ export default function Step3Form({
                 <div className="text-sm font-semibold text-slate-100">Jahresausgaben</div>
                 <div className="text-xs text-slate-400">Total (CHF/Jahr)</div>
               </div>
-              <span className="text-xs rounded-full border border-slate-700 px-2 py-1 text-slate-200">bearbeiten</span>
             </div>
 
             <div className="mt-3 text-2xl font-bold text-slate-100">
@@ -706,9 +704,6 @@ export default function Step3Form({
                           {isIncome ? "Einnahme" : "Ausgabe"}
                         </span>
                         <div className="truncate text-sm font-medium text-slate-100">{e.title || "—"}</div>
-                        <span className="shrink-0 text-xs rounded-full border border-slate-700 px-2 py-1 text-slate-200">
-                          bearbeiten
-                        </span>
                       </div>
 
                       <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-400">

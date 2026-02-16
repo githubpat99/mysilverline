@@ -20,6 +20,17 @@ svg * {
   outline: none !important;
 }
 
+/* Musterfall: Scrollbalken ausblenden */
+html.musterfall-scrollbar-hidden,
+body.musterfall-scrollbar-hidden {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+html.musterfall-scrollbar-hidden::-webkit-scrollbar,
+body.musterfall-scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
+
 /* PWA vs Browser: sofort korrekt ohne JavaScript/Refresh */
 .landing-pwa {
   display: none;

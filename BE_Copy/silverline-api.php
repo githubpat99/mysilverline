@@ -100,6 +100,12 @@ add_action('rest_api_init', function () {
     'callback' => 'sl_profile_events_replace_post',
     'permission_callback' => 'sl_perm_logged_in_and_nonce',
   ]);
+
+  register_rest_route('silverline/v1', '/musterfall', [
+    'methods'  => 'GET',
+    'callback' => 'sl_musterfall_get',
+    'permission_callback' => 'sl_perm_logged_in_cookie_only',
+  ]);
 });
 
 // CORS: X-SL-Auth-Token für PWA (insbesondere Android) erlauben
@@ -124,6 +130,9 @@ define('SL_AUTH_TOKEN_META_KEY', 'sl_auth_token');
 define('SL_AUTH_TOKEN_EXPIRY_META_KEY', 'sl_auth_token_expiry');
 define('SL_AUTH_TOKEN_TTL_DAYS', 7);
 define('SL_AUTH_TOKEN_HEADER', 'x-sl-auth-token');
+
+/** Musterfall: User-ID, dessen Daten als Beispiel dienen. Nur dieser User kann sie ändern. In wp-config.php überschreiben: define('SL_MUSTERFALL_UID', 123); */
+if (!defined('SL_MUSTERFALL_UID')) define('SL_MUSTERFALL_UID', 1);
 
 function sl_get_token_from_request(WP_REST_Request $req) {
   $h = $req->get_header(SL_AUTH_TOKEN_HEADER);
@@ -269,6 +278,7 @@ function sl_whoami(WP_REST_Request $req) {
     'name'      => $u->display_name ?: $u->user_login,
     'email'     => $u->user_email,
     'roles'     => array_values((array)$u->roles),
+    'can_edit_musterfall' => ((int)$u->ID === SL_MUSTERFALL_UID),
   ], 200);
 }
 
@@ -298,63 +308,68 @@ function sl_logout(WP_REST_Request $req) {
 // ProfileV2 transport (GET/POST)
 // ------------------------------
 
-function sl_profile_v2_get(WP_REST_Request $req) {
+function sl_load_profile_for_uid($uid) {
   global $wpdb;
-
-  $uid  = (int)get_current_user_id();
+  $uid  = (int)$uid;
   $year = (int)gmdate('Y');
-
   $t_basic = $wpdb->prefix . 'sl_finance_basic';
-  $t_pos   = $wpdb->prefix . 'sl_position';
-
   $has_basic = sl_table_exists($t_basic);
-  $has_pos   = sl_table_exists($t_pos);
 
   $profile = [
     'household'    => ['persons' => []],
     'instruments'  => [],
     'annualsV2'    => ['income' => [], 'expense' => [], 'indexation' => 'inflation'],
-    'events'       => [], // now ProfileEvents shape
-    'meta'         => [
-      'startYear' => $year,
-      'forecastHorizonYears' => 55,
-    ],
+    'events'       => [],
+    'meta'         => ['startYear' => $year, 'forecastHorizonYears' => 55],
   ];
 
   if ($has_basic) {
     $cols = $wpdb->get_col("SHOW COLUMNS FROM {$t_basic}", 0);
     $has_horizon_col = is_array($cols) && in_array('forecast_horizon_years', $cols, true);
-
     if ($has_horizon_col) {
-      $row = $wpdb->get_row(
-        $wpdb->prepare("SELECT forecast_horizon_years FROM {$t_basic} WHERE user_id=%d LIMIT 1", $uid),
-        ARRAY_A
-      );
+      $row = $wpdb->get_row($wpdb->prepare("SELECT forecast_horizon_years FROM {$t_basic} WHERE user_id=%d LIMIT 1", $uid), ARRAY_A);
       if ($row && array_key_exists('forecast_horizon_years', $row) && $row['forecast_horizon_years'] !== null) {
         $h = sl_sanitize_horizon_years($row['forecast_horizon_years']);
         if ($h !== null) $profile['meta']['forecastHorizonYears'] = $h;
       }
     }
-
     $profile['household'] = sl_basic_load_household($uid, $t_basic);
     $profile['annualsV2'] = sl_annuals_v2_load($uid, $t_basic, (int)$profile['meta']['startYear']);
   }
-
-  /*
-  if ($has_pos) {
-    $profile['instruments'] = sl_positions_load_as_instruments_v3($uid, $t_pos);
-    // attach targetIds (IDs-only, relational)
-    sl_positions_attach_targets($uid, $profile['instruments']);
-  }
-*/
-
-  // ProfileEvents (new tables)
   $profile['events'] = sl_profile_events_load($uid);
+  return $profile;
+}
 
+function sl_profile_v2_get(WP_REST_Request $req) {
+  $uid = (int)get_current_user_id();
+  $profile = sl_load_profile_for_uid($uid);
+  return new WP_REST_Response(['ok' => true, 'profile' => $profile, 'updated_at' => current_time('mysql', 1)], 200);
+}
+
+function sl_musterfall_get(WP_REST_Request $req) {
+  if (get_current_user_id() === 0) sl_ensure_current_user_from_cookie_or_token($req);
+  if (get_current_user_id() <= 0) {
+    return new WP_REST_Response(['ok' => false, 'error' => 'not_logged_in'], 401);
+  }
+  $musterfall_uid = (int)SL_MUSTERFALL_UID;
+  if ($musterfall_uid <= 0) {
+    return new WP_REST_Response(['ok' => false, 'error' => 'musterfall_not_configured'], 500);
+  }
+  global $wpdb;
+  $t_pos = $wpdb->prefix . 'sl_position';
+  $positions = [];
+  if (sl_table_exists($t_pos)) {
+    sl_ensure_system_positions($musterfall_uid, $t_pos);
+    $positions = sl_positions_load_as_instruments_v3($musterfall_uid, $t_pos);
+    if (!empty($positions)) sl_positions_attach_targets($musterfall_uid, $positions);
+  }
+  if (empty($positions)) $positions = sl_get_default_system_positions();
+  $profile = sl_load_profile_for_uid($musterfall_uid);
   return new WP_REST_Response([
-    'ok'         => true,
-    'profile'    => $profile,
-    'updated_at' => current_time('mysql', 1),
+    'ok' => true,
+    'profile' => $profile,
+    'positions' => $positions,
+    'can_edit' => (get_current_user_id() === $musterfall_uid),
   ], 200);
 }
 

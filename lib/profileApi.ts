@@ -24,6 +24,7 @@ export type WhoAmI = {
   name?: string | null;
   email?: string | null;
   roles?: string[];
+  can_edit_musterfall?: boolean;
 };
 
 type ProfileGetResponse = { ok: true; form: FormState } | { ok: false; error?: string };
@@ -219,6 +220,7 @@ export async function whoAmI(): Promise<WhoAmI> {
         name: u.name ?? null,
         email: u.email ?? null,
         roles: Array.isArray(u.roles) ? u.roles : [],
+        can_edit_musterfall: !!(u.can_edit_musterfall ?? false),
       };
     }
 
@@ -226,7 +228,7 @@ export async function whoAmI(): Promise<WhoAmI> {
     clearAuthToken();
     return { logged_in: false, user_id: 0 };
   } catch {
-    return { logged_in: false, user_id: 0, name: null, email: null, roles: [] };
+    return { logged_in: false, user_id: 0, name: null, email: null, roles: [], can_edit_musterfall: false };
   }
 }
 

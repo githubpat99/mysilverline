@@ -14,6 +14,7 @@ type WhoAmI = {
   name?: string | null;
   email?: string | null;
   roles?: string[];
+  can_edit_musterfall?: boolean;
 };
 
 async function fetchWhoAmI() {
@@ -49,6 +50,7 @@ export default function Header() {
   const isFinance = pathname?.startsWith("/finance");
   const isSummary = pathname?.startsWith("/summary");
   const isForecast = pathname?.startsWith("/forecast");
+  const isMusterfall = pathname?.startsWith("/musterfall");
 
   useEffect(() => {
     let alive = true;
@@ -136,6 +138,14 @@ export default function Header() {
               Forecast
             </Link>
 
+            <Link
+              href="/musterfall"
+              prefetch={false}
+              className={linkClass(!!isMusterfall)}
+            >
+              Musterfall
+            </Link>
+
             <a
               href="https://mysilverline.it-pin.ch"
               className="text-slate-300 hover:text-sky-400 transition"
@@ -215,6 +225,15 @@ export default function Header() {
               onClick={() => setMenuOpen(false)}
             >
               Forecast
+            </Link>
+
+            <Link
+              href="/musterfall"
+              prefetch={false}
+              className={[linkClass(!!isMusterfall), "block w-full"].join(" ")}
+              onClick={() => setMenuOpen(false)}
+            >
+              Musterfall
             </Link>
 
             <a

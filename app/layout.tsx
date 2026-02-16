@@ -17,7 +17,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="de">
       <body className="bg-slate-950 text-slate-50 antialiased">
         <Header />
-        <main className="px-4 sm:px-6">{children}</main>
+        <main className="px-3 sm:px-6">{children}</main>
       </body>
     </html>
   );

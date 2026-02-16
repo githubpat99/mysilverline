@@ -56,11 +56,11 @@ function TopStepNav({
   const items: Array<{ step: StepId; label: string }> = [
     { step: 1 as StepId, label: "Aktiven" },
     { step: 2 as StepId, label: "Passiven" },
-    { step: 3 as StepId, label: "Bewegungen" },
+    { step: 3 as StepId, label: "Einnahmen/Ausgaben" },
   ];
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+    <div className="flex flex-wrap items-center gap-1 sm:gap-2">
       {items.map((it) => {
         const active = currentStep === it.step;
         const done = !!completion[it.step];
@@ -71,7 +71,7 @@ function TopStepNav({
             type="button"
             onClick={() => onStepClick(it.step)}
             className={[
-              "rounded-full border px-3 py-1 text-sm transition",
+              "rounded-full border px-2.5 py-0.5 sm:px-3 sm:py-1 text-sm transition",
               active
                 ? "border-sky-500/60 bg-slate-950/40 text-sky-200"
                 : "border-slate-700 bg-slate-950/20 text-slate-300 hover:border-slate-600 hover:text-slate-100",
@@ -226,10 +226,10 @@ export default function FinanceClientPage() {
 
   return (
     <main className=" bg-slate-950 text-slate-50">
-      <div className="mx-auto max-w-6xl px-4 py-8">
+      <div className="mx-auto max-w-6xl px-0 sm:px-4 py-3 sm:py-8">
 
-        <div className="space-y-6">
-          <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="space-y-3 sm:space-y-6">
+          <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-4">
             <TopStepNav
               currentStep={currentStep}
               completion={completed}
@@ -247,7 +247,7 @@ export default function FinanceClientPage() {
             />
           </div>
 
-          <section className="min-w-0 rounded-2xl border border-slate-800 bg-slate-900/40 p-6 shadow-lg">
+          <section className="min-w-0 rounded-2xl border border-slate-800 bg-slate-900/40 p-4 sm:p-6 shadow-lg">
             {stepForm}
 
             {saveError && (

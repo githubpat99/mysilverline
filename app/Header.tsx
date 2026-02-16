@@ -97,7 +97,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-800 bg-slate-900/80 backdrop-blur">
-      <div className="mx-auto max-w-6xl px-4 py-4 flex items-center justify-between gap-4">
+      <div className="mx-auto max-w-6xl px-3 py-2 sm:px-4 sm:py-4 flex items-center justify-between gap-2 sm:gap-4">
         <Link
           href={me?.logged_in ? "/finance" : "/"}
           prefetch={false}
@@ -106,7 +106,7 @@ export default function Header() {
           <img
             src={`${BASE_PATH}/SL-logo.png`}
             alt=""
-            className="h-7 w-7 object-contain"
+            className="h-6 w-6 sm:h-7 sm:w-7 object-contain"
           />
           <span className="text-sky-400">Silverline</span>
         </Link>
@@ -168,7 +168,7 @@ export default function Header() {
             aria-label="Menü öffnen"
           >
             <svg
-              className="w-7 h-7"
+              className="w-6 h-6 sm:w-7 sm:h-7"
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
@@ -185,7 +185,7 @@ export default function Header() {
       </div>
 
       {!isMinimal && menuOpen && (
-        <div className="md:hidden border-t border-slate-800 bg-slate-900 px-4 py-4">
+        <div className="md:hidden border-t border-slate-800 bg-slate-900 px-3 py-3">
           <div className="rounded-lg border border-slate-800 bg-slate-950/30 px-3 py-2 text-sm text-slate-200 mb-4">
             {userLabel}
           </div>

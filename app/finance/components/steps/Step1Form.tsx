@@ -686,11 +686,7 @@ export default function Step1Form({
                             />
                           </div>
 
-                          <div className="mt-1 flex items-center justify-between gap-3">
-                            <div className="text-xs text-slate-500">
-                              Bucket: <span className="text-slate-300">{bucketFromAvailability(p.availability)}</span>
-                            </div>
-
+                          <div className="mt-1 flex items-center justify-end gap-3">
                             {!p.isSystem && (
                               <button
                                 type="button"

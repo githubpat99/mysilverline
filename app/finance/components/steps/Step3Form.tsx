@@ -383,7 +383,7 @@ export default function Step3Form({
 
         <div className="mt-3 grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="mb-1 block text-xs text-slate-400">Strategy</label>
+            <label className="mb-1 block text-xs text-slate-400">Finanzierungsstrategie</label>
             <select
               value={strategy}
               onChange={(ev) => commitFunding({ fundingStrategy: ev.target.value })}
@@ -577,7 +577,7 @@ export default function Step3Form({
       <div className="rounded-2xl border border-slate-800 bg-slate-950/30 p-4">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <div className="text-sm font-semibold text-slate-100">Annuals</div>
+            <div className="text-sm font-semibold text-slate-100">Regelmässig</div>
             <div className="mt-1 text-xs text-slate-500">Einkommen → Destination. Ausgaben → Funding.</div>
           </div>
 
@@ -718,10 +718,10 @@ export default function Step3Form({
 
                       <button
                         type="button"
-                        className="text-xs text-red-300 underline decoration-red-700/60 underline-offset-4"
+                        className="text-xs text-slate-300 underline decoration-slate-600 underline-offset-4"
                         onClick={() => deleteEvent(e.client_id)}
                       >
-                        Löschen
+                        Entfernen
                       </button>
                     </div>
                   </div>
@@ -742,7 +742,7 @@ export default function Step3Form({
               <div className="flex items-start justify-between gap-4 border-b border-slate-800 p-5">
                 <div>
                   <div className="font-semibold text-slate-100">
-                    Annuals: {annualsOpen === "income" ? "Jahreseinkommen" : "Jahresausgaben"}
+                    Regelmässig: {annualsOpen === "income" ? "Jahreseinkommen" : "Jahresausgaben"}
                   </div>
                   <div className="text-sm text-slate-400">
                     {annualsOpen === "income"
@@ -855,7 +855,7 @@ export default function Step3Form({
                           />
 
                           <div>
-                            <label className="mb-1 block text-xs text-slate-400">Funding Strategy</label>
+                            <label className="mb-1 block text-xs text-slate-400">Finanzierungsstrategie</label>
                             <select
                               value={strategy}
                               onChange={(ev) => commitExpense({ fundingStrategy: ev.target.value })}
@@ -928,7 +928,7 @@ export default function Step3Form({
                 )}
 
                 <div className="mt-3 text-xs text-slate-500">
-                  Hinweis: Annuals sind “Total”-Werte. Detaillierung (optional) kommt später.
+                  Hinweis: Regelmässige Beträge sind “Total”-Werte. Detaillierung (optional) kommt später.
                 </div>
               </div>
             </div>
@@ -1092,9 +1092,9 @@ export default function Step3Form({
                     <button
                       type="button"
                       onClick={() => deleteEvent(openEvent.client_id)}
-                      className="rounded-xl border border-red-900/60 bg-red-950/30 px-3 py-2 text-xs text-red-200 hover:border-red-800"
+                      className="rounded-xl border border-slate-700 bg-slate-900/50 px-3 py-2 text-xs text-slate-200 hover:border-slate-600"
                     >
-                      Löschen
+                      Entfernen
                     </button>
                   </div>
                 </div>

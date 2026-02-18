@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { whoAmI, ensureNonce, clearNonce, clearAuthToken, getApiHeaders } from "@/lib/profileApi";
 import { BASE_PATH } from "@/lib/config";
 import { API_LOGOUT } from "@/lib/endpoints";
+import SyncButton from "./components/SyncButton";
 
 type WhoAmI = {
   logged_in: boolean;
@@ -155,9 +156,12 @@ export default function Header() {
 
             <LogoutBtn />
           </nav>
-          <span className="rounded-full border border-slate-700 bg-slate-950/30 px-3 py-1 text-xs text-slate-300">
-            {userLabel}
-          </span>
+          <div className="flex items-center gap-3">
+            <SyncButton />
+            <span className="rounded-full border border-slate-700 bg-slate-950/30 px-3 py-1 text-xs text-slate-300">
+              {userLabel}
+            </span>
+          </div>
         </div>
         )}
 

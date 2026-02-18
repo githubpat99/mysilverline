@@ -64,14 +64,14 @@ NEXT_PUBLIC_OFFLINE_MODE=true
 - Erzwingt ausschliesslich IndexedDB.
 - Für lokales Testing ohne Backend-Verbindung.
 
-## Implementierungsstand (WIP)
+## Implementierungsstand
 
 - [x] Dexie-Schema (profile, positions, events)
 - [x] Local Guest User (local_user_id in localStorage)
 - [x] AuthService (getLocalUserId, getAuthState, fetchFreshNonce, isOfflineMode)
 - [x] DataService (loadProfile, saveProfile, loadPositions, savePositions)
 - [x] Integration in BaseForm, FinanceClientPage, ForecastClientPage, SummaryClientPage, bootstrapProfileV2
-- [ ] SyncService (link-user, push, pull)
-- [ ] SyncStatusBadge, SyncButton, ConflictQueue, GuestBanner
-- [ ] WordPress Backend: Sync-Endpoints
-- [ ] Dev-Overlay „OFFLINE MODE“
+- [x] SyncService (link-user, push, pull)
+- [x] SyncStatusBadge, SyncButton, ConflictQueue, GuestBanner
+- [x] WordPress Backend: Sync-Endpoints (silverline-api.php)
+- [x] Dev-Overlay OFFLINE MODE

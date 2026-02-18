@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { loadProfileV2, saveProfileV2Safe } from "@/lib/profileApiV2";
+import { loadProfile, saveProfile } from "@/lib/services/dataService";
 import { makeEmptyProfileV2 } from "@/lib/profile/makeEmptyProfileV2";
 import type { ProfileV2 } from "@/lib/types/v2";
 import type { Person, PersonRole } from "@/lib/types/v2/household";
@@ -54,7 +54,7 @@ export default function BaseForm() {
         (async () => {
             setErr("");
             try {
-                const r = await loadProfileV2();
+                const r = await loadProfile();
                 if (!r.ok) {
                     setErr("Konnte Profil nicht laden (API- oder Parse-Fehler).");
                     setProfile(ensureSelf(makeEmptyProfileV2()));
@@ -168,7 +168,7 @@ export default function BaseForm() {
                 },
             };
 
-            const r = await saveProfileV2Safe(toSave);
+            const r = await saveProfile(toSave);
 
             if (!r.ok) {
                 setErr(r.status === 401 || r.status === 403 ? "Nicht eingeloggt / Nonce." : "Speichern fehlgeschlagen.");
@@ -177,7 +177,7 @@ export default function BaseForm() {
 
             if (r.profile) setProfile(ensureSelf(r.profile));
             else {
-                const rr = await loadProfileV2();
+                const rr = await loadProfile();
                 if (rr.ok) setProfile(ensureSelf(rr.profile));
             }
         } finally {

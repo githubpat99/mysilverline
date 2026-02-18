@@ -1,10 +1,9 @@
-import { loadProfileV2 } from "@/lib/profileApiV2";
-import { loadPositions } from "@/lib/load/types";
+import { loadProfile, loadPositions } from "@/lib/services/dataService";
 import type { LoadedDto } from "@/lib/load/types";
 
 export async function loadAllDto(): Promise<LoadedDto> {
   const [profileRes, positions] = await Promise.all([
-    loadProfileV2(),
+    loadProfile(),
     loadPositions(),
   ]);
 

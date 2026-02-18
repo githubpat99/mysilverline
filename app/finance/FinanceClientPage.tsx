@@ -5,8 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { bootstrapProfileV2 } from "@/lib/bootstrapProfileV2";
 
-import { saveProfileV2Safe } from "@/lib/profileApiV2";
-import { savePositionsSafe } from "@/lib/positionsApi";
+import { saveProfile, savePositions } from "@/lib/services/dataService";
 import type { CompletionState, FormState, StepId } from "@/lib/types";
 import { validateStep } from "@/lib/validate";
 import { mapFormStateToProfileV2 } from "@/lib/mapping";
@@ -126,7 +125,7 @@ export default function FinanceClientPage() {
     const nextProfile = mapFormStateToProfileV2(form, profileV2);
     const nextPositions = mapFormStateToPositions(form);
 
-    const r = await saveProfileV2Safe(nextProfile);
+    const r = await saveProfile(nextProfile);
     if (!r.ok) {
       if (r.status === 401 || r.status === 403) {
         setSaveError("Nicht eingeloggt oder Nonce ungültig. Bitte neu anmelden.");
@@ -141,7 +140,7 @@ export default function FinanceClientPage() {
     setSaveError("");
     setProfileV2(r.profile ?? nextProfile);
 
-    const pos = await savePositionsSafe(nextPositions);
+    const pos = await savePositions(nextPositions);
     if (!pos.ok) {
       if (pos.status === 401 || pos.status === 403) {
         setSaveError("Nicht eingeloggt oder Nonce ungültig. Bitte neu anmelden.");

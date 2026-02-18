@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 import BalanceSummaryChart from "@/app/components/DonutChart";
-import { loadProfileV2 } from "@/lib/profileApiV2";
+import { loadProfile, loadPositions } from "@/lib/services/dataService";
 import { formatCHF } from "@/lib/format";
 
 type Term = "short" | "long";
@@ -115,61 +115,6 @@ function debtTerm(debtType: unknown, bucket: unknown): Term {
   return "short";
 }
 
-function getNonce(): string | null {
-  // je nachdem wie du es speicherst – wir versuchen mehrere Keys
-  const keys = ["sl_nonce", "silverline_nonce", "nonce"];
-  for (const k of keys) {
-    const v = typeof window !== "undefined" ? window.sessionStorage.getItem(k) : null;
-    if (v && v.length > 10) return v;
-  }
-  return null;
-}
-
-async function loadPositionsV2(): Promise<PositionDTO[]> {
-  const nonce = getNonce();
-
-  // probiere beide URL-Varianten (je nach Deployment / Rewrites)
-  const urls = ["/api/silverline/v1/positions", "/wp-json/silverline/v1/positions"];
-
-  let lastErr: unknown = null;
-
-  for (const url of urls) {
-    try {
-      const res = await fetch(url, {
-        method: "GET",
-        credentials: "include",
-        headers: {
-          ...(nonce ? { "X-SL-Nonce": nonce } : {}),
-          Accept: "application/json",
-        },
-      });
-
-      if (!res.ok) throw new Error(`GET ${url} -> ${res.status}`);
-
-      const data = await res.json();
-
-      // unwrap: { positions: [...] } oder { data: { positions: [...] } } oder direkt [...]
-      const positions =
-        (data && (data.positions as any)) ??
-        (data && (data.data?.positions as any)) ??
-        (data && (data.profile?.positions as any)) ??
-        data;
-
-      if (Array.isArray(positions)) return positions as PositionDTO[];
-
-      // manchmal: { ok: true, positions: [...] }
-      if (positions && Array.isArray((positions as any).positions)) return (positions as any).positions;
-
-      return [];
-    } catch (e) {
-      lastErr = e;
-    }
-  }
-
-  // wenn gar nichts ging: Fehler weiterwerfen, damit UI "nicht eingeloggt / keine Daten" zeigt
-  throw lastErr ?? new Error("positions load failed");
-}
-
 export default function SummaryPage() {
   const [items, setItems] = useState<Item[] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -180,12 +125,12 @@ export default function SummaryPage() {
         // wichtig: triggert bei dir i.d.R. Nonce/Session-Setup (und Login-Check)
         // wir brauchen das Ergebnis hier nicht zwingend, aber es stabilisiert Auth.
         try {
-          await loadProfileV2();
+          await loadProfile();
         } catch {
           // egal – positions kann trotzdem gehen (Cookie-Fallback)
         }
 
-        const positions = await loadPositionsV2();
+        const positions = await loadPositions();
 
         if (!positions) {
           setItems(null);
@@ -204,9 +149,9 @@ export default function SummaryPage() {
             };
           }
 
-          // debt: je nach API-Version valueCHF oder balanceCHF/balance
+          // debt: valueCHF (PositionDTO) oder legacy balanceCHF/balance
           const debtValue =
-            p.balanceCHF ?? p.balance ?? (p as any).valueCHF ?? (p as any).principalCHF ?? (p as any).principal;
+            (p as any).valueCHF ?? (p as any).balanceCHF ?? (p as any).balance ?? (p as any).principalCHF ?? (p as any).principal;
 
           return {
             kind: "debt",

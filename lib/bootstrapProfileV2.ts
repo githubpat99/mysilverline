@@ -1,6 +1,5 @@
-import { loadProfileV2 } from "@/lib/profileApiV2";
+import { loadProfile, loadPositions } from "@/lib/services/dataService";
 import { mapV2ToFormState } from "@/lib/mapping/mapV2ToFormState";
-import { getPositions } from "@/lib/api/positionsApi";
 import { makeEmptyProfileV2 } from "@/lib/profile/makeEmptyProfileV2";
 import type { ProfileV2 } from "@/lib/types/v2";
 
@@ -14,10 +13,9 @@ export async function bootstrapProfileV2(opts: {
   const { setProfileV2, setForm, setLoading } = opts;
 
   try {
-
-    const r = await loadProfileV2();
+    const r = await loadProfile();
     const p = r.ok ? (r.profile ?? makeEmptyProfileV2()) : makeEmptyProfileV2();
-    const positionDtos = await getPositions(); // PositionDTO[]
+    const positionDtos = await loadPositions();
     const mapped = mapV2ToFormState(p, positionDtos);
 
     setForm(mapped);

@@ -3,9 +3,8 @@
 import { useEffect, useState } from "react";
 import ForecastTableNice, { type YearRow } from "./ForecastTableNice";
 import { computeForecastFromProfileV2 } from "@/lib/forecast/computeForecastFromProfileV2";
-import { loadProfileV2 } from "@/lib/profileApiV2";
+import { loadProfile, loadPositions } from "@/lib/services/dataService";
 import type { ProfileV2 } from "@/lib/types/v2";
-import { loadPositions } from "@/lib/load/types";
 
 export default function ForecastClientPage() {
     const [rows, setRows] = useState<YearRow[]>([]);
@@ -16,7 +15,7 @@ export default function ForecastClientPage() {
     useEffect(() => {
         async function run() {
             try {
-                const resp = await loadProfileV2();
+                const resp = await loadProfile();
                 const profile = resp.profile;
                 const pos = await loadPositions();
 

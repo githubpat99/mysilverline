@@ -39,7 +39,6 @@ function getDefaultPositions(): PositionDTO[] {
       bucket: "3m_3y",
       debtType: "other",
       valueCHF: 0,
-      annualFlowCHF: null,
       note: null,
       source_account_key: null,
       target_account_key: null,

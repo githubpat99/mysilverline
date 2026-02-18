@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Modernes S-Icon">
+  <defs>
+    <linearGradient id="g" x1="96" y1="96" x2="416" y2="416" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#00D2FF"/>
+      <stop offset="0.55" stop-color="#2B6CFF"/>
+      <stop offset="1" stop-color="#6B2BFF"/>
+    </linearGradient>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#000" flood-opacity="0.28"/>
+    </filter>
+  </defs>
+
+  <!-- transparent background; add a rounded square if you want: -->
+  <!-- <rect x="36" y="36" width="440" height="440" rx="96" fill="#0B1220"/> -->
+
+  <g filter="url(#soft)">
+    <!-- Single-path "S" with rounded, modern feel -->
+    <path
+      fill="none"
+      stroke="url(#g)"
+      stroke-width="44"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      d="
+        M 368 170
+        C 200 150 250 100 190 120
+        C 170 112 144 148 144 196
+        C 144 250 210 262 266 274
+        C 326 287 368 302 368 352
+        C 368 406 314 432 256 432
+        C 203 432 162 410 140 372
+      "
+    />
+  </g>
+</svg>

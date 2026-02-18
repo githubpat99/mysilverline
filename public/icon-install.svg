@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <!-- Rounded square outer -->
+  <rect x="2" y="2" width="44" height="44" rx="10" stroke="currentColor" stroke-width="2" fill="none"/>
+  <!-- Circle -->
+  <circle cx="24" cy="24" r="14" stroke="currentColor" stroke-width="2" fill="none"/>
+  <!-- Arrow shaft -->
+  <path d="M24 11v14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Arrow head (filled triangle) -->
+  <path d="M18 23L24 31L30 23Z" fill="currentColor"/>
+</svg>

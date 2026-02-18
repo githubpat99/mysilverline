@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+html {
+  color-scheme: dark; /* Native Formulare (select, option, input) im Dark-Mode */
+}
+
+body {
+  margin: 0;
+}
+/* Tap-Highlight auf Mobile komplett entfernen */
+html,
+body {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Kein Outline / Focus-Rand, auch nicht auf SVG/Chart */
+*:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+svg,
+svg * {
+  outline: none !important;
+}
+
+/* Musterfall: Scrollbalken ausblenden */
+html.musterfall-scrollbar-hidden,
+body.musterfall-scrollbar-hidden {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+html.musterfall-scrollbar-hidden::-webkit-scrollbar,
+body.musterfall-scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
+
+/* Native select dropdown: Dark Mode Optionen */
+select option {
+  background-color: #0f172a; /* slate-900 */
+  color: #f1f5f9; /* slate-100 */
+}
+select option:checked,
+select option:hover {
+  background-color: #1e293b; /* slate-800 */
+}
+
+/* PWA vs Browser: sofort korrekt ohne JavaScript/Refresh */
+.landing-pwa {
+  display: none;
+}
+.landing-browser {
+  display: block;
+}
+@media (display-mode: standalone), (display-mode: fullscreen), (display-mode: minimal-ui) {
+  .landing-pwa {
+    display: flex;
+  }
+  .landing-browser {
+    display: none;
+  }
+}

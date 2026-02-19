@@ -1,0 +1,24 @@
+{
+  "name": "Silverline",
+  "short_name": "Silverline",
+  "description": "Finanz-Planung und Forecast",
+  "start_url": "/app-static/finance",
+  "scope": "/app-static/",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "/app-static/SL-logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/app-static/SL-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

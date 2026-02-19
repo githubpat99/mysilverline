@@ -75,7 +75,8 @@ if (-not (Test-Path -LiteralPath $project)) { throw "Project folder fehlt: $proj
 
 $git = Try-GetGitInfo -repoPath $project
 if ($git.Commit) {
-  Write-Host ("Git: {0} ({1}) Dirty={2}" -f $git.Commit, ($git.Branch ?? "?"), $git.Dirty)
+  $branchVal = if ($git.Branch) { $git.Branch } else { "?" }
+  Write-Host ("Git: {0} ({1}) Dirty={2}" -f $git.Commit, $branchVal, $git.Dirty)
   if ($git.Dirty) { Write-Warning "Working tree is DIRTY (uncommitted changes). Deploy will continue." }
 } else {
   Write-Warning "Git info not available (git missing or not a repo)."
@@ -136,7 +137,7 @@ exit
 "@ | Set-Content -LiteralPath $scriptFile -Encoding ASCII
 
 & $winscp "/log=$logFile" "/script=$scriptFile"
-if ($LASTEXITCODE -ne 0) { throw "Deploy failed – siehe Log: $logFile" }
+if ($LASTEXITCODE -ne 0) { throw "Deploy failed - siehe Log: $logFile" }
 
-Write-Host "Build+Deploy OK – $deployTsLocal"
+Write-Host "Build+Deploy OK - $deployTsLocal"
 Write-Host "Check: https://mysilverline.it-pin.ch/app-static/__deploy.txt"

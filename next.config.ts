@@ -1,18 +1,18 @@
 /** @type {import('next').NextConfig} */
+
+const basePath = process.env.NODE_ENV === "production"
+  ? "/app-static"
+  : (process.env.NEXT_PUBLIC_BASE_PATH || "");
+
 const nextConfig = {
   output: "export",
   trailingSlash: true,
 
-  // wichtig bei Subpath
-  basePath: "/app-static",
-  assetPrefix: "/app-static",
+  ...(basePath ? { basePath, assetPrefix: basePath } : {}),
 
   images: { unoptimized: true },
 
-  // RSC / App Router fetches vermeiden
   experimental: {
-    // verhindert solche __PAGE__.txt RSC fetches in manchen Setups
-    // (falls Next Version das unterstützt)
     ppr: false,
   },
 };

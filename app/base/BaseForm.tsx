@@ -76,7 +76,7 @@ export default function BaseForm() {
         return persons.find((p) => p.role === ROLE_SELF || p.id === "self");
     }, [profile]);
 
-    if (!loaded || !profile || !self) return <div style={{ padding: 16, color: "#94a3b8" }}>Lade…</div>;
+    if (!loaded || !profile || !self) return <div className="p-4 text-slate-400">Lade…</div>;
 
     const startYear = yyyy();
     const forecastHorizonYears = profile.meta?.forecastHorizonYears ?? 55;
@@ -186,85 +186,126 @@ export default function BaseForm() {
     }
 
     return (
-        <div style={{ maxWidth: 820, margin: "0 auto", padding: 16 }}>
-            <h1 style={{ fontSize: 20, fontWeight: 800 }}>Basis</h1>
-            <p style={{ color: "#64748b", marginTop: 6 }}>
-                Startjahr ist fix (aktuelles Jahr). Hier definierst du nur Person und Forecast-Horizont.
-            </p>
+        <div className="mx-auto max-w-3xl px-4 py-6">
+            {/* Header row: title + save button */}
+            <div className="flex items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-xl font-extrabold">Basis</h1>
+                    <p className="mt-1 text-sm text-slate-500">
+                        Person und Forecast-Horizont definieren.
+                    </p>
+                </div>
+                <button
+                    onClick={onSave}
+                    disabled={saving}
+                    className="shrink-0 rounded-lg border border-sky-500/60 bg-sky-500/10 px-4 py-1.5 text-sm font-medium text-sky-300 transition hover:bg-sky-500/20 disabled:opacity-50"
+                >
+                    {saving ? "Speichern…" : "Speichern"}
+                </button>
+            </div>
 
-            {err ? (
-                <div style={{ marginTop: 12, padding: 10, border: "1px solid #7f1d1d", borderRadius: 10, color: "#fecaca" }}>
+            {err && (
+                <div className="mt-3 rounded-lg border border-red-900 bg-red-950/40 px-3 py-2 text-sm text-red-200">
                     {err}
                 </div>
-            ) : null}
+            )}
 
-            <div style={{ marginTop: 16, display: "grid", gap: 12 }}>
+            {/* Form grid */}
+            <div className="mt-5 grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
                 <label>
-                    <div style={{ fontSize: 12, color: "#94a3b8", marginBottom: 6 }}>Startjahr (fix)</div>
-                    <input value={String(startYear)} disabled style={{ width: "100%", padding: 10, borderRadius: 10, opacity: 0.7 }} />
-                </label>
-
-                <label>
-                    <div style={{ fontSize: 12, color: "#94a3b8", marginBottom: 6 }}>
-                        Geburtsdatum *
-                    </div>
+                    <div className="mb-1 text-xs text-slate-400">Geburtsdatum *</div>
                     <input
                         type="date"
                         value={toDateInputValue(self.birthDate)}
                         onChange={(e) => patchSelf({ birthDate: fromDateInputValue(e.target.value) })}
-                        style={{ width: "100%", padding: 10, borderRadius: 10 }}
+                        className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-sky-500 focus:outline-none"
                     />
                 </label>
 
-
                 <label>
-                    <div style={{ fontSize: 12, color: "#94a3b8", marginBottom: 6 }}>Rentenalter (optional)</div>
+                    <div className="mb-1 text-xs text-slate-400">Rentenalter (optional)</div>
                     <input
                         value={typeof self.retireAtAge === "number" ? String(self.retireAtAge) : ""}
                         onChange={(e) => {
                             const s = e.target.value.trim();
                             patchSelf({ retireAtAge: s === "" ? undefined : Number(s) });
                         }}
-                        style={{ width: "100%", padding: 10, borderRadius: 10 }}
                         placeholder="z.B. 65"
                         inputMode="numeric"
+                        className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-sky-500 focus:outline-none"
                     />
                 </label>
 
                 <label>
-                    <div style={{ fontSize: 12, color: "#94a3b8", marginBottom: 6 }}>Forecast-Horizont (1–120) *</div>
+                    <div className="mb-1 text-xs text-slate-400">Forecast-Horizont (1–120) *</div>
                     <input
                         value={String(forecastHorizonYears)}
                         onChange={(e) => patchMeta({ forecastHorizonYears: Number(e.target.value || 0) })}
-                        style={{ width: "100%", padding: 10, borderRadius: 10 }}
                         inputMode="numeric"
+                        className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-sky-500 focus:outline-none"
                     />
                 </label>
 
                 <label>
-                    <div style={{ fontSize: 12, color: "#94a3b8", marginBottom: 6 }}>Fallbeschreibung (optional)</div>
-                    <textarea
-                        value={profile.meta?.description ?? ""}
-                        onChange={(e) => patchMeta({ description: e.target.value || undefined })}
-                        rows={8}
-                        style={{ width: "100%", padding: 10, borderRadius: 10, resize: "vertical", fontFamily: "inherit" }}
-                        placeholder="z.B. Familie mit Eigenheim und Hypothek"
+                    <div className="mb-1 text-xs text-slate-400">Startjahr (fix)</div>
+                    <input
+                        value={String(startYear)}
+                        disabled
+                        className="w-full rounded-lg border border-slate-700 bg-slate-900/50 px-3 py-2 text-sm text-slate-400 opacity-70"
                     />
                 </label>
 
-                <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 8 }}>
-                    <a href="/app-static/finance" style={{ padding: "10px 12px", borderRadius: 10, border: "1px solid #334155", textDecoration: "none" }}>
-                        Zum Workflow
-                    </a>
-                    <button
-                        onClick={onSave}
-                        disabled={saving}
-                        style={{ padding: "10px 12px", borderRadius: 10, border: "1px solid #0ea5e9", background: "rgba(14,165,233,0.12)" }}
-                    >
-                        {saving ? "Speichern…" : "Speichern"}
-                    </button>
-                </div>
+                <label className="sm:col-span-2">
+                    <div className="mb-1 text-xs text-slate-400">Fallbeschreibung (optional)</div>
+                    <textarea
+                        value={profile.meta?.description ?? ""}
+                        onChange={(e) => patchMeta({ description: e.target.value || undefined })}
+                        rows={3}
+                        placeholder="z.B. Familie mit Eigenheim und Hypothek"
+                        className="w-full resize-vertical rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-sky-500 focus:outline-none"
+                    />
+                </label>
             </div>
+
+            {/* Über Silverline */}
+            <section className="mt-10 rounded-2xl border border-slate-800 bg-slate-900/50 px-5 py-5">
+                <h2 className="text-base font-semibold text-slate-200">Über Silverline</h2>
+                <p className="mt-2 text-sm leading-relaxed text-slate-400">
+                    Silverline hilft dir, deine Finanzen transparent darzustellen und daraus
+                    Rückschlüsse für deine finanzielle Vorsorge zu gewinnen.
+                </p>
+
+                <ol className="mt-4 grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
+                    <li className="flex items-start gap-2 text-slate-300">
+                        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-sky-500/15 text-xs font-bold text-sky-400">1</span>
+                        <span><strong className="text-slate-100">Bilanz erstellen</strong> – Vermögen, Schulden, Liquidität</span>
+                    </li>
+                    <li className="flex items-start gap-2 text-slate-300">
+                        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-sky-500/15 text-xs font-bold text-sky-400">2</span>
+                        <span><strong className="text-slate-100">Zukunft planen</strong> – Forecast, Pensionierung, Ziele</span>
+                    </li>
+                    <li className="flex items-start gap-2 text-slate-300">
+                        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-sky-500/15 text-xs font-bold text-sky-400">3</span>
+                        <span><strong className="text-slate-100">Justieren</strong> – Sparrate, Risiko, Liquidität</span>
+                    </li>
+                    <li className="flex items-start gap-2 text-slate-300">
+                        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-sky-500/15 text-xs font-bold text-sky-400">4</span>
+                        <span><strong className="text-slate-100">Wiederholen</strong> – Regelmässig prüfen und anpassen</span>
+                    </li>
+                </ol>
+
+                <p className="mt-4 text-sm text-slate-500">
+                    Mehr erfahren auf{" "}
+                    <a
+                        href="https://mysilverline.it-pin.ch"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sky-400 underline underline-offset-2 hover:text-sky-300 transition"
+                    >
+                        mysilverline.it-pin.ch
+                    </a>
+                </p>
+            </section>
         </div>
     );
 }

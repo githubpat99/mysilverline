@@ -10,6 +10,7 @@
  */
 import { SL_API_BASE } from "@/lib/config";
 import { STORAGE_KEYS, uuidv4 } from "./storageKeys";
+import { getApiHeaders } from "@/lib/profileApi";
 
 const NS = SL_API_BASE?.replace(/\/+$/, "") || "/wp-json/silverline/v1";
 const WHOAMI_URL = `${NS}/whoami`;
@@ -64,7 +65,7 @@ export async function getAuthState(): Promise<{
       method: "GET",
       credentials: "include",
       cache: "no-store",
-      headers: { Accept: "application/json" },
+      headers: { Accept: "application/json", ...getApiHeaders() },
     });
     if (!res.ok) return { online: true, hasSession: false };
     const json = (await res.json().catch(() => null)) as { logged_in?: boolean } | null;
@@ -86,7 +87,7 @@ export async function fetchFreshNonce(): Promise<string> {
       method: "GET",
       credentials: "include",
       cache: "no-store",
-      headers: { Accept: "application/json" },
+      headers: { Accept: "application/json", ...getApiHeaders() },
     });
     if (!res.ok) return "";
     const json = (await res.json().catch(() => null)) as { nonce?: string } | null;

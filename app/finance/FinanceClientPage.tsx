@@ -1,7 +1,7 @@
 // app/finance/FinanceClientPage.tsx
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { bootstrapProfileV2 } from "@/lib/bootstrapProfileV2";
 
@@ -12,13 +12,30 @@ import { mapFormStateToProfileV2 } from "@/lib/mapping";
 
 import type { ProfileV2 } from "@/lib/types/v2";
 
-import { CreditCard, Receipt, Wallet } from "lucide-react";
+import { BarChart3, CreditCard, ArrowDownUp } from "lucide-react";
 import Step1Form from "@/app/finance/components/steps/Step1Form";
 import Step2Form from "@/app/finance/components/steps/Step2Form";
 import Step3Form from "@/app/finance/components/steps/Step3Form";
 import { mapFormStateToPositions } from "@/lib/mapping/mapFormStateToPositions";
+import TemplatePicker from "@/app/finance/components/TemplatePicker";
+import { makeEmptyProfileV2 } from "@/lib/profile/makeEmptyProfileV2";
 
 type Bucket = "LIQ" | "ST" | "LT" | "REAL";
+
+function isFormEmpty(f: FormState): boolean {
+  const hasRealAssets = f.step1.positions.some(
+    (p) => p.amountChf > 0 && !p.isSystem,
+  );
+  const hasLiqValue = f.step1.positions.some(
+    (p) => p.amountChf > 0 && p.isSystem,
+  );
+  const hasDebts = f.step2.positions.some(
+    (p) => p.balanceChf > 0 && !p.isSystem,
+  );
+  const hasIncome = f.step3.annualsV2.income.some((i) => i.amountCHF > 0);
+  const hasExpense = f.step3.annualsV2.expense.some((e) => e.amountCHF > 0);
+  return !hasRealAssets && !hasLiqValue && !hasDebts && !hasIncome && !hasExpense;
+}
 
 const INITIAL_FORM: FormState = {
   base: {
@@ -53,14 +70,14 @@ function TopStepNav({
   completion: CompletionState;
   onStepClick: (s: StepId) => void;
 }) {
-  const items: Array<{ step: StepId; label: string; icon: React.ReactNode }> = [
-    { step: 1 as StepId, label: "Aktiven", icon: <Wallet size={18} /> },
-    { step: 2 as StepId, label: "Passiven", icon: <CreditCard size={18} /> },
-    { step: 3 as StepId, label: "Einnahmen/Ausgaben", icon: <Receipt size={18} /> },
+  const items: Array<{ step: StepId; label: string; shortLabel: string; icon: React.ReactNode }> = [
+    { step: 1 as StepId, label: "Vermögen", shortLabel: "Vermögen", icon: <BarChart3 size={20} /> },
+    { step: 2 as StepId, label: "Schulden", shortLabel: "Schulden", icon: <CreditCard size={20} /> },
+    { step: 3 as StepId, label: "Einnahmen / Ausgaben", shortLabel: "Ein/Aus", icon: <ArrowDownUp size={20} /> },
   ];
 
   return (
-    <div className="flex flex-wrap items-center gap-1 sm:gap-2">
+    <div className="flex items-center gap-1.5 sm:gap-2">
       {items.map((it) => {
         const active = currentStep === it.step;
         const done = !!completion[it.step];
@@ -72,16 +89,17 @@ function TopStepNav({
             onClick={() => onStepClick(it.step)}
             title={it.label}
             className={[
-              "rounded-full border p-2 sm:px-3 sm:py-1 sm:p-0 text-sm transition flex items-center justify-center gap-1.5",
+              "rounded-full border px-3 py-1.5 text-sm transition flex items-center gap-1.5",
               active
                 ? "border-sky-500/60 bg-slate-950/40 text-sky-200"
                 : "border-slate-700 bg-slate-950/20 text-slate-300 hover:border-slate-600 hover:text-slate-100",
             ].join(" ")}
             aria-current={active ? "step" : undefined}
           >
-            <span className="sm:hidden">{it.icon}</span>
+            {it.icon}
+            <span className="sm:hidden text-xs">{it.shortLabel}</span>
             <span className="hidden sm:inline">{it.label}</span>
-            {done ? <span className="hidden sm:inline ml-1 text-xs text-slate-400">✓</span> : null}
+            {done ? <span className="ml-0.5 text-xs text-slate-400">✓</span> : null}
           </button>
         );
       })}
@@ -106,6 +124,9 @@ export default function FinanceClientPage() {
   const [annualsOpen, setAnnualsOpen] = useState<null | "income" | "expense">(null);
   const [eventOpenId, setEventOpenId] = useState<string | null>(null);
 
+  const [showPicker, setShowPicker] = useState(false);
+  const checkedEmpty = useRef(false);
+
   useEffect(() => {
     bootstrapProfileV2({
       setProfileV2,
@@ -113,6 +134,24 @@ export default function FinanceClientPage() {
       setLoading,
     });
   }, []);
+
+  useEffect(() => {
+    if (!loading && !checkedEmpty.current) {
+      checkedEmpty.current = true;
+      if (isFormEmpty(form)) setShowPicker(true);
+    }
+  }, [loading]);
+
+  async function handleTemplateSelect(templateForm: FormState) {
+    setForm(templateForm);
+    const emptyProfile = makeEmptyProfileV2();
+    const nextProfile = mapFormStateToProfileV2(templateForm, emptyProfile);
+    const nextPositions = mapFormStateToPositions(templateForm);
+    await saveProfile(nextProfile);
+    await savePositions(nextPositions);
+    setProfileV2(nextProfile);
+    setShowPicker(false);
+  }
 
   const isValid = useMemo(() => validateStep(currentStep, form), [currentStep, form]);
 
@@ -156,20 +195,18 @@ export default function FinanceClientPage() {
 
   async function handleAutosave() {
     setSaveError("");
-
-    // Optional: wenn Profil nicht geladen ist, einfach nichts tun
     if (!profileV2) return;
-
-    // Keine validateStep hier!
     await buildAndSaveV2();
   }
 
-  const setStep1 = (next: FormState["step1"]) => setForm((prev) => ({ ...prev, step1: next }));
+  const setStep1 = (next: FormState["step1"]) =>
+    setForm((prev) => ({ ...prev, step1: next }));
 
   const setStep2 = (next: FormState["step2"]) =>
     setForm((prev) => ({ ...prev, step2: next }));
 
-  const setStep3 = (next: FormState["step3"]) => setForm((prev) => ({ ...prev, step3: next }));
+  const setStep3 = (next: FormState["step3"]) =>
+    setForm((prev) => ({ ...prev, step3: next }));
 
   const stepForm = useMemo(() => {
     switch (currentStep) {
@@ -217,10 +254,21 @@ export default function FinanceClientPage() {
       <main className="min-h-screen bg-slate-950 text-slate-50">
         <div className="mx-auto max-w-5xl px-4 py-8">
           <header className="mb-6">
-            <h1 className="text-xl font-semibold">Silverline – Finanz-Workflow</h1>
+            <h1 className="text-xl font-semibold">Silverline – Finanzen</h1>
             <p className="mt-1 text-sm text-slate-300">Daten werden geladen…</p>
           </header>
         </div>
+      </main>
+    );
+  }
+
+  if (showPicker) {
+    return (
+      <main className="min-h-screen bg-slate-950 text-slate-50">
+        <TemplatePicker
+          onSelect={handleTemplateSelect}
+          onSkip={() => setShowPicker(false)}
+        />
       </main>
     );
   }
@@ -234,15 +282,10 @@ export default function FinanceClientPage() {
             <TopStepNav
               currentStep={currentStep}
               completion={completed}
-              onStepClick={async (step) => {
+              onStepClick={(step) => {
                 setSaveError("");
-
                 const ok = validateStep(currentStep, form);
                 if (!ok) return;
-
-                const saved = await buildAndSaveV2();
-                if (!saved.ok) return;
-
                 setCurrentStep(step);
               }}
             />

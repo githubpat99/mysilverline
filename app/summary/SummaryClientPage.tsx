@@ -206,7 +206,7 @@ export default function SummaryPage() {
           </p>
           <div className="mt-6">
             <Link href="/finance" className="rounded-lg border border-slate-700 px-4 py-2 hover:border-slate-500">
-              Zum Finanz-Workflow
+              Zu Finanzen
             </Link>
           </div>
         </div>

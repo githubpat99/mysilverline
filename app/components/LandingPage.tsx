@@ -12,6 +12,15 @@ export default function LandingPage() {
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
+    const isStandalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (navigator as unknown as { standalone?: boolean }).standalone === true;
+
+    if (isStandalone) {
+      router.replace("/finance");
+      return;
+    }
+
     const timer = setTimeout(() => setChecked(true), AUTH_CHECK_TIMEOUT_MS);
 
     whoAmI().then((me) => {

@@ -20,6 +20,24 @@
  * Token-Auth (PWA): GET /auth-token für X-SL-Auth-Token Fallback
  */
 
+// CORS: OPTIONS Preflight für Cross-Origin POST-Requests (localhost Dev)
+add_action('init', function () {
+  if ($_SERVER['REQUEST_METHOD'] !== 'OPTIONS') return;
+  if (strpos($_SERVER['REQUEST_URI'], '/wp-json/') === false) return;
+  $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+  $allow = $origin === 'https://mysilverline.it-pin.ch'
+    || $origin === 'http://mysilverline.it-pin.ch'
+    || preg_match('/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/', $origin);
+  if (!$allow) return;
+  header('Access-Control-Allow-Origin: ' . $origin);
+  header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+  header('Access-Control-Allow-Headers: Authorization, Content-Type, X-WP-Nonce, X-SL-Auth-Token, Accept');
+  header('Access-Control-Allow-Credentials: true');
+  header('Access-Control-Max-Age: 86400');
+  header('HTTP/1.1 204 No Content');
+  exit;
+}, 1);
+
 // ------------------------------
 // Routes
 // ------------------------------
@@ -104,10 +122,22 @@ add_action('rest_api_init', function () {
   register_rest_route('silverline/v1', '/musterfall', [
     'methods'  => 'GET',
     'callback' => 'sl_musterfall_get',
-    'permission_callback' => 'sl_perm_logged_in_cookie_only',
+    'permission_callback' => '__return_true',
   ]);
 
   // Offline-First Sync
+  register_rest_route('silverline/v1', '/auth/login', [
+    'methods'  => 'POST',
+    'callback' => 'sl_auth_login',
+    'permission_callback' => '__return_true',
+  ]);
+
+  register_rest_route('silverline/v1', '/auth/register', [
+    'methods'  => 'POST',
+    'callback' => 'sl_auth_register',
+    'permission_callback' => '__return_true',
+  ]);
+
   register_rest_route('silverline/v1', '/sync/link-user', [
     'methods'  => 'POST',
     'callback' => 'sl_sync_link_user',
@@ -120,12 +150,34 @@ add_action('rest_api_init', function () {
   ]);
 });
 
-// CORS: X-SL-Auth-Token für PWA (insbesondere Android) erlauben
+// CORS: Custom-Headers erlauben + Origin für localhost (Dev) und Produktion
 add_filter('rest_allowed_cors_headers', function ($headers) {
   $headers[] = 'X-SL-Auth-Token';
   $headers[] = 'X-WP-Nonce';
   return $headers;
 }, 10, 1);
+
+add_action('rest_api_init', function () {
+  remove_filter('rest_pre_serve_request', 'rest_send_cors_headers');
+  add_filter('rest_pre_serve_request', function ($value) {
+    $origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : '';
+    $allowed = [
+      'https://mysilverline.it-pin.ch',
+      'http://mysilverline.it-pin.ch',
+    ];
+    if (preg_match('/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/', $origin)) {
+      $allowed[] = $origin;
+    }
+    if (in_array($origin, $allowed, true)) {
+      header('Access-Control-Allow-Origin: ' . $origin);
+      header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+      header('Access-Control-Allow-Headers: Authorization, Content-Type, X-WP-Nonce, X-SL-Auth-Token, Accept');
+      header('Access-Control-Allow-Credentials: true');
+      header('Access-Control-Max-Age: 3600');
+    }
+    return $value;
+  });
+}, 15);
 
 // Login-Redirect: Nach Anmeldung direkt in die Finanz-App
 add_filter('login_redirect', function ($redirect_to, $requested_redirect_to, $user) {
@@ -186,7 +238,14 @@ function sl_ensure_current_user_from_cookie_or_token(WP_REST_Request $req) {
   if ($user_id) wp_set_current_user($user_id);
 }
 
-function sl_create_auth_token($user_id) {
+function sl_create_auth_token($user_id, $force_new = false) {
+  if (!$force_new) {
+    $existing = get_user_meta($user_id, SL_AUTH_TOKEN_META_KEY, true);
+    $expiry   = (int) get_user_meta($user_id, SL_AUTH_TOKEN_EXPIRY_META_KEY, true);
+    if ($existing && $expiry > time()) {
+      return ['token' => $existing, 'expires_at' => $expiry, 'expires_in' => $expiry - time()];
+    }
+  }
   $token = bin2hex(random_bytes(24));
   $expiry = time() + (SL_AUTH_TOKEN_TTL_DAYS * DAY_IN_SECONDS);
   update_user_meta($user_id, SL_AUTH_TOKEN_META_KEY, $token);
@@ -311,6 +370,74 @@ function sl_auth_token(WP_REST_Request $req) {
   return new WP_REST_Response(['ok' => true, 'token' => $data['token'], 'expires_in' => $data['expires_in']], 200);
 }
 
+function sl_auth_login(WP_REST_Request $req) {
+  $username = sanitize_text_field($req->get_param('username') ?? '');
+  $password = $req->get_param('password') ?? '';
+
+  if (empty($username) || empty($password)) {
+    return new WP_REST_Response(['ok' => false, 'error' => 'Username und Passwort erforderlich.'], 400);
+  }
+
+  $user = wp_authenticate($username, $password);
+  if (is_wp_error($user)) {
+    return new WP_REST_Response(['ok' => false, 'error' => 'Ungültige Anmeldedaten.'], 401);
+  }
+
+  $data = sl_create_auth_token($user->ID);
+  return new WP_REST_Response([
+    'ok'      => true,
+    'token'   => $data['token'],
+    'expires_in' => $data['expires_in'],
+    'user'    => [
+      'user_id' => (int) $user->ID,
+      'name'    => $user->display_name ?: $user->user_login,
+      'email'   => $user->user_email,
+    ],
+  ], 200);
+}
+
+function sl_auth_register(WP_REST_Request $req) {
+  $username = sanitize_user($req->get_param('username') ?? '', true);
+  $email    = sanitize_email($req->get_param('email') ?? '');
+  $password = $req->get_param('password') ?? '';
+
+  if (empty($username) || strlen($username) < 3) {
+    return new WP_REST_Response(['ok' => false, 'error' => 'Benutzername muss mindestens 3 Zeichen haben.'], 400);
+  }
+  if (empty($email) || !is_email($email)) {
+    return new WP_REST_Response(['ok' => false, 'error' => 'Bitte gib eine gültige E-Mail-Adresse ein.'], 400);
+  }
+  if (empty($password) || strlen($password) < 6) {
+    return new WP_REST_Response(['ok' => false, 'error' => 'Passwort muss mindestens 6 Zeichen haben.'], 400);
+  }
+  if (username_exists($username)) {
+    return new WP_REST_Response(['ok' => false, 'error' => 'Dieser Benutzername ist bereits vergeben.'], 409);
+  }
+  if (email_exists($email)) {
+    return new WP_REST_Response(['ok' => false, 'error' => 'Diese E-Mail-Adresse ist bereits registriert.'], 409);
+  }
+
+  $user_id = wp_create_user($username, $password, $email);
+  if (is_wp_error($user_id)) {
+    $msg = $user_id->get_error_message();
+    return new WP_REST_Response(['ok' => false, 'error' => $msg ?: 'Registrierung fehlgeschlagen.'], 500);
+  }
+
+  wp_update_user(['ID' => $user_id, 'display_name' => $username, 'role' => 'subscriber']);
+
+  $data = sl_create_auth_token($user_id);
+  return new WP_REST_Response([
+    'ok'         => true,
+    'token'      => $data['token'],
+    'expires_in' => $data['expires_in'],
+    'user'       => [
+      'user_id' => (int) $user_id,
+      'name'    => $username,
+      'email'   => $email,
+    ],
+  ], 201);
+}
+
 function sl_logout(WP_REST_Request $req) {
   wp_logout();
   return new WP_REST_Response(['ok' => true], 200);
@@ -367,9 +494,6 @@ function sl_profile_v2_get(WP_REST_Request $req) {
 
 function sl_musterfall_get(WP_REST_Request $req) {
   if (get_current_user_id() === 0) sl_ensure_current_user_from_cookie_or_token($req);
-  if (get_current_user_id() <= 0) {
-    return new WP_REST_Response(['ok' => false, 'error' => 'not_logged_in'], 401);
-  }
   $musterfall_uid = (int)SL_MUSTERFALL_UID;
   if ($musterfall_uid <= 0) {
     return new WP_REST_Response(['ok' => false, 'error' => 'musterfall_not_configured'], 500);

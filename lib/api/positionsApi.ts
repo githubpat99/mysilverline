@@ -1,7 +1,8 @@
 import type { PositionDTO } from "@/lib/types/v2/positions.dto";
 import { getApiHeaders } from "@/lib/profileApi";
+import { SL_API_BASE } from "@/lib/config";
 
-const NS = "/wp-json/silverline/v1";
+const NS = SL_API_BASE || "/wp-json/silverline/v1";
 
 type GetOut = { ok: true; positions: PositionDTO[] };
 type ReplaceIn = { positions: PositionDTO[] };

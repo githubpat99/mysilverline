@@ -9,10 +9,11 @@ import type { ProfileV2 } from "@/lib/types/v2";
 import type { StepId, FormState } from "@/lib/types";
 import { getApiHeaders } from "@/lib/profileApi";
 
-// ---- Endpoints (relativ, da du im WP-Kontext läufst)
-const API_WHOAMI = "/wp-json/silverline/v1/whoami";
-const API_NONCE = "/wp-json/silverline/v1/nonce";
-const API_PROFILE_V2 = "/wp-json/silverline/v1/profile-v2";
+import { SL_API_BASE } from "@/lib/config";
+const _NS = SL_API_BASE || "/wp-json/silverline/v1";
+const API_WHOAMI = `${_NS}/whoami`;
+const API_NONCE = `${_NS}/nonce`;
+const API_PROFILE_V2 = `${_NS}/profile-v2`;
 
 // Legacy (falls du es noch brauchst; sonst kannst du saveProfile löschen)
 const API_PROFILE_LEGACY = "/wp-json/silverline/v1/profile";

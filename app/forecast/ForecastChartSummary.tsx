@@ -12,7 +12,9 @@ import {
   YAxis,
   Tooltip,
   ReferenceLine,
+  ReferenceDot,
 } from "recharts";
+import { AlertTriangle } from "lucide-react";
 
 export type Buckets = {
   liq: number;
@@ -33,12 +35,10 @@ export type YearRow = {
   longD?: number;
   start?: Buckets;
 
-  // optional extras (ignored here)
   netFlow?: number;
   assetCF?: number;
   events?: number;
 
-  // optional future fields (ignored here)
   assetCashflowToLiq?: number;
   assetCashflowReinvest?: number;
   debtInterest?: number;
@@ -73,26 +73,59 @@ function formatCHF(v: number) {
   return Math.trunc(n(v)).toLocaleString("de-CH");
 }
 
-function LineTooltipContent({ active, label, payload }: any) {
+function ChartTooltipContent({ active, label, payload }: any) {
   if (!active || !payload?.length) return null;
   const p = payload[0]?.payload;
   if (!p) return null;
+  const liqCritical = p.liq <= 0;
   return (
     <div
       style={{
         background: "rgba(2,6,23,0.95)",
-        border: "1px solid rgba(148,163,184,0.2)",
+        border: `1px solid ${liqCritical ? "rgba(245,158,11,0.5)" : "rgba(148,163,184,0.2)"}`,
         padding: "10px 14px",
         borderRadius: 12,
         boxShadow: "0 12px 40px rgba(0,0,0,0.4)",
+        minWidth: 140,
       }}
     >
       <div style={{ color: "rgba(148,163,184,0.9)", fontSize: 12 }}>Jahr {label}</div>
-      <div style={{ color: "#38bdf8", fontSize: 15, fontWeight: 600, marginTop: 4 }}>
+      <div
+        style={{
+          color: p.net >= (p.prevNet ?? p.net) ? "#10b981" : "#f43f5e",
+          fontSize: 15,
+          fontWeight: 600,
+          marginTop: 4,
+        }}
+      >
         {formatCHF(p.net)} CHF
+      </div>
+      <div
+        style={{
+          color: liqCritical ? "#f59e0b" : "#94a3b8",
+          fontSize: 12,
+          marginTop: 4,
+          fontWeight: liqCritical ? 600 : 400,
+        }}
+      >
+        {liqCritical && "⚠ "}Liquidität: {formatCHF(p.liq)} CHF
       </div>
     </div>
   );
+}
+
+function buildStrokeGradient(data: { year: number; net: number }[]) {
+  if (data.length < 2) return [];
+  const total = data.length - 1;
+  const stops: { offset: string; color: string }[] = [];
+  for (let i = 0; i < total; i++) {
+    const pctStart = (i / total) * 100;
+    const pctEnd = ((i + 1) / total) * 100;
+    const color = data[i + 1].net >= data[i].net ? "#10b981" : "#f43f5e";
+    stops.push({ offset: `${pctStart.toFixed(1)}%`, color });
+    stops.push({ offset: `${pctEnd.toFixed(1)}%`, color });
+  }
+  return stops;
 }
 
 const PERIOD_OPTIONS = [
@@ -113,10 +146,18 @@ export default function ForecastChartSummary({
 
   const lineData = useMemo(() => {
     const safe = rows ?? [];
-    return safe.map((r) => {
+    return safe.map((r, i) => {
       const end = endBucketsOf(r);
       const eNW = netWorth(end);
-      return { year: r.year, net: eNW.assets - eNW.debts };
+      const netVal = eNW.assets - eNW.debts;
+      const prevNet =
+        i > 0
+          ? (() => {
+              const pe = endBucketsOf(safe[i - 1]);
+              return netWorth(pe).net;
+            })()
+          : netVal;
+      return { year: r.year, net: netVal, liq: n(r.liq), prevNet };
     });
   }, [rows]);
 
@@ -126,7 +167,7 @@ export default function ForecastChartSummary({
     return PERIOD_OPTIONS.filter((o) => {
       if (o.key === "Gesamt") return true;
       if (o.key === "3J") return n >= 4 && n < 6;
-      if (o.key === "5J") return n > 5; // erst wenn Basis > 5 (wie 10J erst bei > 10)
+      if (o.key === "5J") return n > 5;
       if (o.key === "10J") return n > 10;
       return true;
     });
@@ -146,6 +187,14 @@ export default function ForecastChartSummary({
     const pct = start !== 0 ? (delta / start) * 100 : 0;
     return { delta, pct, end };
   }, [visibleLineData]);
+
+  const strokeStops = useMemo(() => buildStrokeGradient(visibleLineData), [visibleLineData]);
+
+  const liqWarnings = useMemo(
+    () => visibleLineData.filter((d) => d.liq <= 0),
+    [visibleLineData],
+  );
+  const firstLiqCriticalYear = liqWarnings.length > 0 ? liqWarnings[0].year : null;
 
   if (!lineData.length) return null;
 
@@ -171,14 +220,39 @@ export default function ForecastChartSummary({
         </div>
       </div>
 
+      {firstLiqCriticalYear != null && (
+        <div className="mb-3 flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-950/30 px-3 py-2 text-sm text-amber-200">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+          <span>
+            <strong>Liquiditäts-Warnung:</strong> Ab {firstLiqCriticalYear} sinkt die
+            Liquidität auf 0 oder darunter.
+            {liqWarnings.length > 1 && ` (${liqWarnings.length} Jahre betroffen)`}
+          </span>
+        </div>
+      )}
+
       <div className="h-56 min-h-[180px] w-full rounded-xl bg-slate-950/25 ring-1 ring-white/5">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={visibleLineData} margin={{ top: 28, right: 12, bottom: 4, left: 4 }}>
             <defs>
-              <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#38bdf8" stopOpacity={0.4} />
+              <linearGradient id="areaFillGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#38bdf8" stopOpacity={0.25} />
                 <stop offset="100%" stopColor="#38bdf8" stopOpacity={0.02} />
               </linearGradient>
+              {strokeStops.length > 0 && (
+                <linearGradient id="strokeDirectionGrad" x1="0" y1="0" x2="1" y2="0">
+                  {strokeStops.map((s, i) => (
+                    <stop key={i} offset={s.offset} stopColor={s.color} />
+                  ))}
+                </linearGradient>
+              )}
+              {strokeStops.length > 0 && (
+                <linearGradient id="fillDirectionGrad" x1="0" y1="0" x2="1" y2="0">
+                  {strokeStops.map((s, i) => (
+                    <stop key={i} offset={s.offset} stopColor={s.color} stopOpacity={0.12} />
+                  ))}
+                </linearGradient>
+              )}
             </defs>
             <XAxis
               dataKey="year"
@@ -187,7 +261,7 @@ export default function ForecastChartSummary({
               tickLine={false}
             />
             <YAxis hide domain={["auto", "auto"]} />
-            <Tooltip content={<LineTooltipContent />} />
+            <Tooltip content={<ChartTooltipContent />} />
             <ReferenceLine y={0} stroke="rgba(148,163,184,0.35)" strokeDasharray="4 4" strokeWidth={1} />
             {visibleLineData.length > 0 && (
               <ReferenceLine
@@ -216,11 +290,22 @@ export default function ForecastChartSummary({
             <Area
               type="monotone"
               dataKey="net"
-              stroke="#38bdf8"
-              strokeWidth={2}
-              fill="url(#areaGrad)"
+              stroke={strokeStops.length > 0 ? "url(#strokeDirectionGrad)" : "#38bdf8"}
+              strokeWidth={2.5}
+              fill={strokeStops.length > 0 ? "url(#fillDirectionGrad)" : "url(#areaFillGrad)"}
               isAnimationActive={true}
             />
+            {liqWarnings.map((d) => (
+              <ReferenceDot
+                key={`liq-${d.year}`}
+                x={d.year}
+                y={d.net}
+                r={5}
+                fill="#f59e0b"
+                stroke="#fbbf24"
+                strokeWidth={2}
+              />
+            ))}
           </AreaChart>
         </ResponsiveContainer>
       </div>

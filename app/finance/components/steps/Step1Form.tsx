@@ -1,7 +1,7 @@
 // app/finance/components/steps/Step1Form.tsx
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type {
   FormState,
   AssetPosition,
@@ -13,7 +13,7 @@ import type {
 import { Amount, InlineAmount } from "../Amount";
 import { FieldMoneyInt } from "../fields/FieldMoney";
 import { bucketFromAvailability, bucketLabel, type Bucket } from "@/lib/forecast/buckets";
-import { Plus, Trash2, X } from "lucide-react";
+import { ChevronDown, Plus, Trash2, X } from "lucide-react";
 import CustomSelect from "../CustomSelect";
 
 type Step1Data = FormState["step1"];
@@ -42,6 +42,26 @@ const BUCKET_META: Record<Bucket, { title: string; subtitle: string; pill: strin
 function bucketToAvailability(b: Bucket): Availability {
   return b === "LIQ" ? "instant" : b === "ST" ? "3m_3y" : b === "LT" ? "gt_3y" : "locked";
 }
+
+const ASSET_CLASS_OPTIONS: { v: AssetClass; l: string }[] = [
+  { v: "cash", l: "Cash" },
+  { v: "bank", l: "Bank" },
+  { v: "securities", l: "Wertschr." },
+  { v: "pension", l: "Vorsorge" },
+  { v: "real_estate", l: "Immo" },
+  { v: "gold", l: "Gold" },
+  { v: "crypto", l: "Krypto" },
+  { v: "other", l: "Sonstiges" },
+];
+const ASSET_CLASS_LABEL: Record<string, string> = Object.fromEntries(
+  ASSET_CLASS_OPTIONS.map((o) => [o.v, o.l]),
+);
+const AVAILABILITY_OPTIONS: { v: Availability; l: string }[] = [
+  { v: "instant", l: "sofort" },
+  { v: "3m_3y", l: "3M–3J" },
+  { v: "gt_3y", l: ">3J" },
+  { v: "locked", l: "gebunden" },
+];
 
 /**
  * Gegenkonto-Regeln (targetAccountKey):
@@ -129,6 +149,16 @@ export default function Step1Form({
     const t = window.setTimeout(() => setEntered(true), 20);
     return () => window.clearTimeout(t);
   }, [isModalOpen]);
+
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const toggleExpand = (id: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   // "dirty per position id"
   const dirtyIdsRef = useRef<Set<string>>(new Set());
@@ -584,65 +614,61 @@ export default function Step1Form({
                       <div
                         key={p.id}
                         tabIndex={-1}
-                        className="rounded-2xl border border-slate-800 bg-slate-950 p-3 overflow-x-hidden"
+                        className="rounded-2xl border border-slate-800 bg-slate-950 overflow-hidden"
                         onBlurCapture={(e) => {
                           const next = e.relatedTarget as Node | null;
                           if (next && e.currentTarget.contains(next)) return;
                           void commitIfDirty(p.id);
                         }}
                       >
+                        <div
+                          className="flex w-full items-center gap-2 px-3 py-3 cursor-pointer"
+                          onClick={() => toggleExpand(p.id)}
+                        >
+                          {!p.isSystem && (
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); removePosition(p.id); }}
+                              className="shrink-0 p-1 text-slate-500 hover:text-red-400 transition"
+                              title="Entfernen"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                          <div className="min-w-0 flex-1 truncate text-sm text-slate-100">
+                            {p.label || "Neue Position"}
+                          </div>
+                          <span className="shrink-0 rounded-md border border-slate-700 bg-slate-900 px-2 py-0.5 text-[11px] text-slate-400">
+                            {ASSET_CLASS_LABEL[p.assetClass] || "–"}
+                          </span>
+                          <span className="shrink-0 text-sm tabular-nums text-slate-200">
+                            {(p.amountChf ?? 0).toLocaleString("de-CH")}
+                          </span>
+                          <ChevronDown
+                            size={16}
+                            className={`shrink-0 text-slate-500 transition-transform ${expandedIds.has(p.id) ? "rotate-180" : ""}`}
+                          />
+                        </div>
+                        {expandedIds.has(p.id) && (
+                        <div className="border-t border-slate-800/60 px-3 pb-3 pt-2">
                         <div className="grid gap-3">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="min-w-0 flex-1">
-                              <label className="block text-xs text-slate-400 mb-1">Bezeichnung</label>
+                          <div>
+                            <label className="block text-xs text-slate-400 mb-1">Bezeichnung</label>
                             <input
                               value={p.label}
                               onChange={(e) => upsert(p.id, { label: e.target.value })}
                               placeholder="z.B. Sparkonto, ETF, Bargeld…"
                               className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-600"
                             />
-                            </div>
-                            {!p.isSystem && (
-                              <button
-                                type="button"
-                                onClick={() => removePosition(p.id)}
-                                className="flex shrink-0 items-center justify-center rounded-xl border border-slate-800 bg-slate-950 p-2 text-slate-300 hover:border-slate-700 hover:text-slate-100 transition"
-                                title="Entfernen"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            )}
                           </div>
 
-                          <div>
-                            <label className="block text-xs text-slate-400 mb-1.5">Typ</label>
-                            <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Typ">
-                              {([
-                                { v: "cash" as AssetClass, l: "Cash" },
-                                { v: "bank" as AssetClass, l: "Bank" },
-                                { v: "securities" as AssetClass, l: "Wertschr." },
-                                { v: "pension" as AssetClass, l: "Vorsorge" },
-                                { v: "real_estate" as AssetClass, l: "Immo" },
-                                { v: "gold" as AssetClass, l: "Gold" },
-                                { v: "crypto" as AssetClass, l: "Krypto" },
-                                { v: "other" as AssetClass, l: "Sonstiges" },
-                              ]).map((o) => (
-                                <button
-                                  key={o.v}
-                                  type="button"
-                                  role="radio"
-                                  aria-checked={p.assetClass === o.v}
-                                  onClick={() => upsert(p.id, { assetClass: o.v })}
-                                  className={[
-                                    "rounded-lg border px-2.5 py-1.5 text-xs transition",
-                                    p.assetClass === o.v ? "border-sky-500/60 bg-slate-800 text-sky-200" : "border-slate-700 bg-slate-950/50 text-slate-400 hover:border-slate-600 hover:text-slate-200",
-                                  ].join(" ")}
-                                >
-                                  {o.l}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
+                          <CustomSelect
+                            label="Typ"
+                            options={ASSET_CLASS_OPTIONS.map((o) => ({ value: o.v, label: o.l }))}
+                            value={p.assetClass}
+                            onChange={(v) => upsert(p.id, { assetClass: v as AssetClass })}
+                            placeholder="Typ wählen…"
+                          />
 
                           <FieldMoneyInt
                             label="Wert"
@@ -650,31 +676,13 @@ export default function Step1Form({
                             onChangeChf={(n) => upsert(p.id, { amountChf: n })}
                           />
 
-                          <div>
-                            <label className="block text-xs text-slate-400 mb-1.5">Verfügbarkeit</label>
-                            <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Verfügbarkeit">
-                              {([
-                                { v: "instant" as Availability, l: "sofort" },
-                                { v: "3m_3y" as Availability, l: "3M–3J" },
-                                { v: "gt_3y" as Availability, l: ">3J" },
-                                { v: "locked" as Availability, l: "gebunden" },
-                              ]).map((o) => (
-                                <button
-                                  key={o.v}
-                                  type="button"
-                                  role="radio"
-                                  aria-checked={p.availability === o.v}
-                                  onClick={() => upsert(p.id, { availability: o.v })}
-                                  className={[
-                                    "rounded-lg border px-2.5 py-1.5 text-xs transition",
-                                    p.availability === o.v ? "border-sky-500/60 bg-slate-800 text-sky-200" : "border-slate-700 bg-slate-950/50 text-slate-400 hover:border-slate-600 hover:text-slate-200",
-                                  ].join(" ")}
-                                >
-                                  {o.l}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
+                          <CustomSelect
+                            label="Verfügbarkeit"
+                            options={AVAILABILITY_OPTIONS.map((o) => ({ value: o.v, label: o.l }))}
+                            value={p.availability}
+                            onChange={(v) => upsert(p.id, { availability: v as Availability })}
+                            placeholder="Verfügbarkeit…"
+                          />
 
                           <FieldMoneyInt
                             label="Ertrag p.a."
@@ -682,29 +690,16 @@ export default function Step1Form({
                             onChangeChf={(n) => upsert(p.id, { cashflowPa: n })}
                           />
 
-                          <div>
-                            <label className="block text-xs text-slate-400 mb-1.5">Ziel</label>
-                            <div className="flex gap-1.5" role="radiogroup" aria-label="Ziel">
-                              {[
-                                { v: "liq" as Goal, l: "Liquidität" },
-                                { v: "reinvest" as Goal, l: "Wiederanlage" },
-                              ].map((o) => (
-                                <button
-                                  key={o.v}
-                                  type="button"
-                                  role="radio"
-                                  aria-checked={p.goal === o.v}
-                                  onClick={() => upsert(p.id, { goal: o.v })}
-                                  className={[
-                                    "rounded-lg border px-3 py-1.5 text-xs transition",
-                                    p.goal === o.v ? "border-sky-500/60 bg-slate-800 text-sky-200" : "border-slate-700 bg-slate-950/50 text-slate-400 hover:border-slate-600 hover:text-slate-200",
-                                  ].join(" ")}
-                                >
-                                  {o.l}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
+                          <CustomSelect
+                            label="Ziel"
+                            options={[
+                              { value: "liq", label: "Liquidität" },
+                              { value: "reinvest", label: "Wiederanlage" },
+                            ]}
+                            value={p.goal}
+                            onChange={(v) => upsert(p.id, { goal: v as Goal })}
+                            placeholder="Ziel…"
+                          />
 
                           {hasCashflow(p) && (
                             <div>
@@ -735,6 +730,8 @@ export default function Step1Form({
                             />
                           </div>
                         </div>
+                        </div>
+                        )}
                       </div>
                     );
                   })}
@@ -746,37 +743,34 @@ export default function Step1Form({
                   )}
                 </div>
 
-                {/* Desktop: Table (nur ab lg, sonst Karten ohne Scrollbalken) */}
+                {/* Desktop: Table (nur ab lg) */}
                 <div className="hidden lg:block overflow-hidden">
-                  <table className="w-full text-sm table-fixed">
+                  <table className="w-full text-sm">
                     <thead className="text-slate-400">
                       <tr className="border-b border-slate-800">
-                        <th className="py-2 w-[7%]"> </th>
-                        <th className="text-left py-2 px-3 w-[14%]">Bezeichnung</th>
-                        <th className="text-left py-2 px-3 w-[10%]">Typ</th>
-                        <th className="text-left py-2 px-3 w-[10%]">Wert</th>
-                        <th className="text-left py-2 px-3 w-[9%]">Verf.</th>
-                        <th className="text-left py-2 px-3 w-[10%]">Ertrag</th>
-                        <th className="text-left py-2 px-3 min-w-[7.5rem] w-[14%]">Ziel</th>
-                        <th className="text-left py-2 px-3 w-[16%]">Gegenkonto</th>
-                        <th className="text-left py-2 px-3 w-[10%]">Notiz</th>
+                        <th className="py-2 w-10"> </th>
+                        <th className="text-left py-2 px-3">Bezeichnung</th>
+                        <th className="text-left py-2 px-3 w-[15%]">Typ</th>
+                        <th className="text-left py-2 px-3 w-[14%]">Wert</th>
+                        <th className="text-left py-2 px-3 w-[14%]">Verf.</th>
+                        <th className="py-2 w-10"> </th>
                       </tr>
                     </thead>
 
-                    <tbody>
-                      {activeItems.map((p) => {
-                        const err = counterError(p);
+                    {activeItems.map((p) => {
+                      const err = counterError(p);
+                      const isExp = expandedIds.has(p.id);
 
-                        return (
-                          <tr
-                            key={p.id}
-                            className="border-b border-slate-900"
-                            onBlur={(e) => {
-                              const next = e.relatedTarget as Node | null;
-                              if (next && e.currentTarget.contains(next)) return;
-                              void commitIfDirty(p.id);
-                            }}
-                          >
+                      return (
+                        <tbody
+                          key={p.id}
+                          onBlur={(e) => {
+                            const next = e.relatedTarget as Node | null;
+                            if (next && e.currentTarget.contains(next)) return;
+                            void commitIfDirty(p.id);
+                          }}
+                        >
+                          <tr className="border-b border-slate-900">
                             <td className="py-2 pr-1">
                               {!p.isSystem ? (
                                 <button
@@ -790,7 +784,7 @@ export default function Step1Form({
                               ) : null}
                             </td>
 
-                            <td className="py-2 pr-3">
+                            <td className="py-2 px-3">
                               <input
                                 value={p.label}
                                 onChange={(e) => upsert(p.id, { label: e.target.value })}
@@ -798,36 +792,16 @@ export default function Step1Form({
                               />
                             </td>
 
-                            <td className="py-2 pr-3">
-                              <div className="flex flex-wrap gap-1" role="radiogroup" aria-label="Typ">
-                                {([
-                                  { v: "cash" as AssetClass, l: "Cash" },
-                                  { v: "bank" as AssetClass, l: "Bank" },
-                                  { v: "securities" as AssetClass, l: "Wertschr." },
-                                  { v: "pension" as AssetClass, l: "Vorsorge" },
-                                  { v: "real_estate" as AssetClass, l: "Immo" },
-                                  { v: "gold" as AssetClass, l: "Gold" },
-                                  { v: "crypto" as AssetClass, l: "Krypto" },
-                                  { v: "other" as AssetClass, l: "Sonstiges" },
-                                ]).map((o) => (
-                                  <button
-                                    key={o.v}
-                                    type="button"
-                                    role="radio"
-                                    aria-checked={p.assetClass === o.v}
-                                    onClick={() => upsert(p.id, { assetClass: o.v })}
-                                    className={[
-                                      "rounded border px-1.5 py-0.5 text-[11px] transition",
-                                      p.assetClass === o.v ? "border-sky-500/60 bg-slate-800 text-sky-200" : "border-slate-700 bg-slate-950/50 text-slate-400 hover:border-slate-600",
-                                    ].join(" ")}
-                                  >
-                                    {o.l}
-                                  </button>
-                                ))}
-                              </div>
+                            <td className="py-2 px-3">
+                              <CustomSelect
+                                options={ASSET_CLASS_OPTIONS.map((o) => ({ value: o.v, label: o.l }))}
+                                value={p.assetClass}
+                                onChange={(v) => upsert(p.id, { assetClass: v as AssetClass })}
+                                placeholder="Typ…"
+                              />
                             </td>
 
-                            <td className="py-2 pr-3">
+                            <td className="py-2 px-3">
                               <FieldMoneyInt
                                 label=""
                                 valueChf={p.amountChf}
@@ -835,104 +809,99 @@ export default function Step1Form({
                               />
                             </td>
 
-                            <td className="py-2 pr-3">
-                              <div className="flex flex-wrap gap-1" role="radiogroup" aria-label="Verfügbarkeit">
-                                {[
-                                  { v: "instant" as Availability, l: "sofort" },
-                                  { v: "3m_3y" as Availability, l: "3M–3J" },
-                                  { v: "gt_3y" as Availability, l: ">3J" },
-                                  { v: "locked" as Availability, l: "gebunden" },
-                                ].map((o) => (
-                                  <button
-                                    key={o.v}
-                                    type="button"
-                                    role="radio"
-                                    aria-checked={p.availability === o.v}
-                                    onClick={() => upsert(p.id, { availability: o.v })}
-                                    className={[
-                                      "rounded border px-1.5 py-0.5 text-[11px] transition",
-                                      p.availability === o.v ? "border-sky-500/60 bg-slate-800 text-sky-200" : "border-slate-700 bg-slate-950/50 text-slate-400 hover:border-slate-600",
-                                    ].join(" ")}
-                                  >
-                                    {o.l}
-                                  </button>
-                                ))}
-                              </div>
-                            </td>
-
-                            <td className="py-2 pr-3">
-                              <FieldMoneyInt
-                                label=""
-                                valueChf={p.cashflowPa}
-                                onChangeChf={(n) => upsert(p.id, { cashflowPa: n })}
+                            <td className="py-2 px-3">
+                              <CustomSelect
+                                options={AVAILABILITY_OPTIONS.map((o) => ({ value: o.v, label: o.l }))}
+                                value={p.availability}
+                                onChange={(v) => upsert(p.id, { availability: v as Availability })}
+                                placeholder="Verf.…"
                               />
                             </td>
 
-                            <td className="py-2 pr-3 min-w-[7.5rem]">
-                              <div className="flex gap-1" role="radiogroup" aria-label="Ziel">
-                                {[
-                                  { v: "liq" as Goal, l: "Liquidität" },
-                                  { v: "reinvest" as Goal, l: "Wiederanlage" },
-                                ].map((o) => (
-                                  <button
-                                    key={o.v}
-                                    type="button"
-                                    role="radio"
-                                    aria-checked={p.goal === o.v}
-                                    onClick={() => upsert(p.id, { goal: o.v })}
-                                    className={[
-                                      "rounded border px-2 py-0.5 text-xs transition",
-                                      p.goal === o.v ? "border-sky-500/60 bg-slate-800 text-sky-200" : "border-slate-700 bg-slate-950/50 text-slate-400 hover:border-slate-600",
-                                    ].join(" ")}
-                                  >
-                                    {o.l}
-                                  </button>
-                                ))}
-                              </div>
-                            </td>
-
-                            <td className="py-2 pr-3 align-top">
-                              {hasCashflow(p) ? (
-                                <>
-                                  <CustomSelect
-                                    options={[
-                                      { value: "", label: "Gegenkonto wählen…" },
-                                      ...counterOptionsFor(p).map((o) => ({
-                                        value: o.key,
-                                        label: o.label + (o.key === makeKey("asset", p.id) ? " (intern)" : ""),
-                                      })),
-                                    ]}
-                                    value={p.targetAccountKey ?? ""}
-                                    onChange={(v) => upsert(p.id, { targetAccountKey: v || undefined })}
-                                    placeholder="Gegenkonto wählen…"
-                                  />
-                                  {err && <div className="mt-1 text-xs text-amber-400/90">{err}</div>}
-                                </>
-                              ) : (
-                                <div className="text-xs text-slate-500 italic"></div>
-                              )}
-                            </td>
-
-                            <td className="py-2 pr-3">
-                              <input
-                                value={p.notes ?? ""}
-                                onChange={(e) => upsert(p.id, { notes: e.target.value })}
-                                className="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2"
-                                placeholder="optional"
-                              />
+                            <td className="py-2 text-center">
+                              <button
+                                type="button"
+                                onClick={() => toggleExpand(p.id)}
+                                className="inline-flex items-center justify-center rounded-lg p-1.5 text-slate-400 hover:text-slate-100 transition"
+                                title={isExp ? "Zuklappen" : "Details"}
+                              >
+                                <ChevronDown
+                                  size={16}
+                                  className={`transition-transform ${isExp ? "rotate-180" : ""}`}
+                                />
+                              </button>
                             </td>
                           </tr>
-                        );
-                      })}
 
-                      {activeItems.length === 0 && (
+                          {isExp && (
+                            <tr className="border-b border-slate-800/50 bg-slate-950/40">
+                              <td />
+                              <td colSpan={5} className="px-3 pb-3 pt-2">
+                                <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+                                  <FieldMoneyInt
+                                    label="Ertrag p.a."
+                                    valueChf={p.cashflowPa}
+                                    onChangeChf={(n) => upsert(p.id, { cashflowPa: n })}
+                                  />
+
+                                  <CustomSelect
+                                    label="Ziel"
+                                    options={[
+                                      { value: "liq", label: "Liquidität" },
+                                      { value: "reinvest", label: "Wiederanlage" },
+                                    ]}
+                                    value={p.goal}
+                                    onChange={(v) => upsert(p.id, { goal: v as Goal })}
+                                    placeholder="Ziel…"
+                                  />
+
+                                  {hasCashflow(p) ? (
+                                    <div>
+                                      <CustomSelect
+                                        label="Gegenkonto"
+                                        options={[
+                                          { value: "", label: "Gegenkonto wählen…" },
+                                          ...counterOptionsFor(p).map((o) => ({
+                                            value: o.key,
+                                            label: o.label + (o.key === makeKey("asset", p.id) ? " (intern)" : ""),
+                                          })),
+                                        ]}
+                                        value={p.targetAccountKey ?? ""}
+                                        onChange={(v) => upsert(p.id, { targetAccountKey: v || undefined })}
+                                        placeholder="Gegenkonto wählen…"
+                                      />
+                                      {err && <div className="mt-1 text-xs text-amber-400/90">{err}</div>}
+                                    </div>
+                                  ) : (
+                                    <div />
+                                  )}
+
+                                  <div>
+                                    <label className="mb-1 block text-xs text-slate-400">Notiz</label>
+                                    <input
+                                      value={p.notes ?? ""}
+                                      onChange={(e) => upsert(p.id, { notes: e.target.value })}
+                                      className="w-full rounded-xl border border-slate-800 bg-slate-950/30 px-3 py-2 text-slate-100"
+                                      placeholder="optional"
+                                    />
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      );
+                    })}
+
+                    {activeItems.length === 0 && (
+                      <tbody>
                         <tr>
-                          <td colSpan={10} className="py-6 text-center text-slate-500">
+                          <td colSpan={6} className="py-6 text-center text-slate-500">
                             Keine Positionen in {BUCKET_META[activeBucket].title}.
                           </td>
                         </tr>
-                      )}
-                    </tbody>
+                      </tbody>
+                    )}
                   </table>
                 </div>
 

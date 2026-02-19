@@ -3,6 +3,16 @@
 <!-- Ersetzt oder ergänzt den bestehenden Hero-Bereich -->
 
 <style>
+/* Astra-Theme Overrides */
+#primary, .content-area, .site-content,
+.ast-single-post, .ast-page-builder-template,
+.entry-content, article.page, article.post {
+  background:transparent !important;
+}
+#primary, .content-area.primary { margin-top:0 !important; padding-top:0 !important; }
+.site-content > .ast-container { padding-top:0 !important; }
+.site-main { margin-top:0 !important; padding-top:0 !important; }
+
 .sl-lp { max-width:780px; margin:0 auto; font-family:inherit; }
 
 /* Hero */
@@ -22,11 +32,11 @@
   margin:0 auto 2em; line-height:1.7;
 }
 .sl-lp-cta {
-  display:inline-block; background:linear-gradient(135deg,#0ea5e9,#0284c7);
-  color:#fff; font-weight:700; font-size:1.1em; padding:15px 36px;
-  border-radius:12px; text-decoration:none; box-shadow:0 4px 24px #0ea5e933;
+  display:inline-block; background:linear-gradient(135deg,#2563eb,#1e40af);
+  color:#fff; font-weight:600; font-size:1em; padding:12px 28px;
+  border-radius:10px; text-decoration:none; box-shadow:0 2px 12px rgba(37,99,235,0.25);
 }
-.sl-lp-cta:hover { opacity:.9; }
+.sl-lp-cta:hover { opacity:.92; }
 .sl-lp-hero .sl-no-account {
   display:block; margin-top:.9em; font-size:.82em; color:#64748b;
 }
@@ -34,13 +44,14 @@
 /* App-Preview Container */
 .sl-app-preview {
   margin:2.5em 0; border-radius:16px; overflow:hidden;
-  border:1px solid #1e3a5f; background:#070d1a;
+  border:1px solid #1e293b; background:#0b1120;
   font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+  box-shadow:0 4px 32px rgba(0,0,0,0.5);
 }
 /* Chrome-Leiste */
 .sl-app-chrome {
   display:flex; align-items:center; gap:.4em; padding:.6em 1em;
-  background:#0d1424; border-bottom:1px solid #1e293b;
+  background:#0f172a; border-bottom:1px solid #1e293b;
 }
 .sl-chrome-dot {
   width:9px; height:9px; border-radius:50%; background:#1e3a5f;
@@ -50,7 +61,7 @@
 }
 
 /* Bilanz-Screen */
-.sl-screen { padding:1.2em 1.4em; }
+.sl-screen { padding:1.2em 1.4em; background:#0b1120; }
 .sl-screen-title {
   font-size:.75em; font-weight:600; color:#334155;
   letter-spacing:.04em; text-transform:uppercase; margin-bottom:.8em;
@@ -75,29 +86,37 @@
 
 /* Balance-Bar */
 .sl-bal-wrap { margin:1em 0 .3em; }
-.sl-bal-labels { display:flex; justify-content:space-between; font-size:.72em; color:#475569; margin-bottom:.4em; }
+.sl-bal-labels {
+  display:flex; justify-content:space-between; align-items:flex-end;
+  margin-bottom:.5em;
+}
+.sl-bal-labels .sl-bal-l-ek { color:#4ade80; font-weight:400; font-size:1.05em; font-variant-numeric:tabular-nums; }
+.sl-bal-labels .sl-bal-l-pa { color:#fca5a5; font-weight:400; font-size:1.05em; font-variant-numeric:tabular-nums; }
 .sl-bal-track {
-  height:5px; background:#1e293b; border-radius:3px; position:relative; overflow:visible;
+  height:6px; background:#1e293b; border-radius:99px; position:relative; overflow:visible;
 }
 .sl-bal-fill {
-  position:absolute; left:0; top:0; height:100%;
-  width:63%; background:linear-gradient(90deg,#22d3ee,#818cf8);
-  border-radius:3px;
+  position:absolute; left:0; top:0; height:100%; width:63%;
+  background:linear-gradient(90deg,#22d3ee,#818cf8);
+  border-radius:99px;
 }
 .sl-bal-marker {
   position:absolute; left:63%; top:50%;
   transform:translate(-50%,-50%);
-  width:10px; height:10px; background:#e2e8f0;
+  width:12px; height:12px; background:#e2e8f0;
   border-radius:50%; border:2px solid #0f172a;
-  box-shadow:0 0 0 1px #64748b;
+  box-shadow:0 0 0 1px rgba(100,116,139,0.5);
 }
-.sl-bal-total { text-align:center; font-size:.8em; color:#64748b; margin-top:.5em; }
+.sl-bal-total {
+  text-align:center; font-size:1.05em; font-weight:400;
+  color:#86efac; margin-top:.5em; font-variant-numeric:tabular-nums;
+}
 
 /* Divider zwischen den zwei Screens */
 .sl-screen-divider { height:1px; background:#1e293b; margin:0 1.4em; }
 
 /* Forecast-Screen */
-.sl-screen-forecast { padding:1.2em 1.4em; }
+.sl-screen-forecast { padding:1.2em 1.4em; background:#0b1120; }
 .sl-stat-block { margin-bottom:.9em; }
 .sl-stat-lbl { font-size:.7em; color:#64748b; display:block; margin-bottom:.2em; letter-spacing:.02em; }
 .sl-stat-val { font-size:1.1em; font-weight:700; color:#f87171; }
@@ -116,14 +135,16 @@
 
 /* Warning Caption */
 .sl-warn-caption {
-  font-size:.75em; color:#f87171; margin-top:.8em;
+  font-size:.78em; color:#f59e0b; margin-top:.8em; padding:.5em .8em;
   display:flex; align-items:center; gap:.4em;
+  background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.2);
+  border-radius:8px;
 }
 
 /* Preview Caption */
 .sl-preview-caption {
-  text-align:center; font-size:.75em; color:#334155;
-  padding:.6em 1em .8em; background:#070d1a;
+  text-align:center; font-size:.75em; color:#475569;
+  padding:.6em 1em .8em; background:#0b1120;
 }
 
 /* Drei Kernversprechen */
@@ -149,9 +170,9 @@
 /* Zweiter CTA */
 .sl-lp-cta2 { text-align:center; margin:2.5em 0 1em; }
 .sl-lp-cta2 a {
-  display:inline-block; background:linear-gradient(135deg,#0ea5e9,#0284c7);
-  color:#fff; font-weight:700; font-size:1.05em; padding:13px 32px;
-  border-radius:10px; text-decoration:none;
+  display:inline-block; background:linear-gradient(135deg,#2563eb,#1e40af);
+  color:#fff; font-weight:600; font-size:1em; padding:12px 28px;
+  border-radius:10px; text-decoration:none; box-shadow:0 2px 12px rgba(37,99,235,0.25);
 }
 .sl-lp-cta2 .sl-no-account { display:block; margin-top:.75em; font-size:.8em; color:#64748b; }
 
@@ -175,8 +196,8 @@
       Silverline rechnet dir in Minuten durch, wie sich dein Vermögen über die nächsten
       10, 20 oder 30 Jahre entwickelt – mit deinen echten Zahlen.
     </p>
-    <a href="/app-static/" class="sl-lp-cta">Jetzt kostenlos ausprobieren →</a>
-    <span class="sl-no-account">Kein Account nötig · Läuft offline · Daten bleiben bei dir</span>
+    <a href="/app-static/finance" class="sl-lp-cta">Zur Finanz-Applikation →</a>
+    <span class="sl-no-account">Rechne deinen Fall direkt in der App.</span>
   </div>
 
   <!-- AHA-MOMENT: App-Vorschau -->
@@ -214,42 +235,31 @@
 
       <!-- Balance-Bar -->
       <div class="sl-bal-wrap">
+        <div class="sl-bal-labels">
+          <span class="sl-bal-l-ek">230'200</span>
+          <span class="sl-bal-l-pa">135'000</span>
+        </div>
         <div class="sl-bal-track">
           <div class="sl-bal-fill"></div>
           <div class="sl-bal-marker"></div>
         </div>
-        <div class="sl-bal-total">Eigenkapital CHF 230'200</div>
+        <div class="sl-bal-total">365'200</div>
       </div>
     </div>
 
     <div class="sl-screen-divider"></div>
 
-    <!-- Screen 2: Forecast (emotional) -->
+    <!-- Screen 2: Forecast -->
     <div class="sl-screen-forecast">
       <div class="sl-screen-title">Forecast</div>
 
-      <!-- SVG Line Chart: rote Linie, Pensionierung als Wendepunkt -->
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 75" style="width:100%;display:block;">
-        <!-- Baseline -->
-        <line x1="0" y1="63" x2="300" y2="63" style="stroke:#1e293b;stroke-width:1"/>
-        <!-- Dashed grid -->
-        <line x1="0" y1="38" x2="300" y2="38" style="stroke:#1e293b;stroke-width:0.5;stroke-dasharray:4,3;opacity:.6"/>
-        <!-- Pensionierung marker -->
-        <line x1="105" y1="6" x2="105" y2="63" style="stroke:#f59e0b;stroke-width:1;stroke-dasharray:3,3"/>
-        <text x="108" y="14" font-size="6.5" fill="#f59e0b" font-family="-apple-system,BlinkMacSystemFont,sans-serif">Pensionierung 2027</text>
-        <!-- Red declining line -->
-        <polyline points="0,16 55,18 105,24 170,42 220,52 300,62"
-                  style="fill:none;stroke:#f87171;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round"/>
-        <!-- Start dot -->
-        <circle cx="0" cy="16" r="3.5" style="fill:#f87171;stroke:#070d1a;stroke-width:1.5"/>
-        <!-- Warning marker at 2029 (x≈171) -->
-        <circle cx="171" cy="42" r="6" style="fill:#f87171"/>
-        <text x="179" y="38" font-size="6.5" fill="#f87171" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-weight="600">⚠ Lücke 2029</text>
-        <!-- Year labels -->
-        <text x="0"   y="73" font-size="6.5" fill="#475569" font-family="-apple-system,BlinkMacSystemFont,sans-serif">2025</text>
-        <text x="99"  y="73" font-size="6.5" fill="#f59e0b" font-family="-apple-system,BlinkMacSystemFont,sans-serif">2027</text>
-        <text x="270" y="73" font-size="6.5" fill="#475569" font-family="-apple-system,BlinkMacSystemFont,sans-serif">2032</text>
-      </svg>
+      <div class="sl-stat-block">
+        <span class="sl-stat-lbl">Δ Eigenkapital im Zeitraum</span>
+        <span class="sl-stat-val">−86'925 CHF <span class="sl-stat-pct">(−23.8 %)</span></span>
+      </div>
+
+      <!-- Forecast-Chart als Base64-Image (WordPress-sicher) -->
+      <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MjAgMTEwIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0icyIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjAiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjMTBiOTgxIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMzglIiBzdG9wLWNvbG9yPSIjMTBiOTgxIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iNDIlIiBzdG9wLWNvbG9yPSIjZjQzZjVlIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iI2Y0M2Y1ZSIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iZiIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjAiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjMTBiOTgxIiBzdG9wLW9wYWNpdHk9IjAuMTIiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIzOCUiIHN0b3AtY29sb3I9IiMxMGI5ODEiIHN0b3Atb3BhY2l0eT0iMC4xMCIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjQyJSIgc3RvcC1jb2xvcj0iI2Y0M2Y1ZSIgc3RvcC1vcGFjaXR5PSIwLjEwIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iI2Y0M2Y1ZSIgc3RvcC1vcGFjaXR5PSIwLjA0Ii8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8cmVjdCB3aWR0aD0iNDIwIiBoZWlnaHQ9IjExMCIgZmlsbD0iIzA3MGQxYSIgcng9IjAiLz4KICA8bGluZSB4MT0iMzAiIHkxPSI4MiIgeDI9IjQwMCIgeTI9IjgyIiBzdHJva2U9IiMxZTI5M2IiIHN0cm9rZS13aWR0aD0iMC44Ii8+CiAgPGxpbmUgeDE9IjMwIiB5MT0iMjIiIHgyPSI0MDAiIHkyPSIyMiIgc3Ryb2tlPSIjMzM0MTU1IiBzdHJva2Utd2lkdGg9IjAuNSIgc3Ryb2tlLWRhc2hhcnJheT0iNCwzIiBvcGFjaXR5PSIwLjUiLz4KICA8bGluZSB4MT0iMzAiIHkxPSI3OCIgeDI9IjQwMCIgeTI9Ijc4IiBzdHJva2U9IiM0NzU1NjkiIHN0cm9rZS13aWR0aD0iMC41IiBzdHJva2UtZGFzaGFycmF5PSI0LDMiIG9wYWNpdHk9IjAuNCIvPgogIDxsaW5lIHgxPSI5MiIgeTE9IjgiIHgyPSI5MiIgeTI9IjgyIiBzdHJva2U9IiM5NGEzYjgiIHN0cm9rZS13aWR0aD0iMSIgc3Ryb2tlLWRhc2hhcnJheT0iNCwzIiBvcGFjaXR5PSIwLjYiLz4KICA8dGV4dCB4PSI5NiIgeT0iMTQiIGZvbnQtc2l6ZT0iNyIgZmlsbD0iIzk0YTNiOCIgZm9udC1mYW1pbHk9Ii1hcHBsZS1zeXN0ZW0sQmxpbmtNYWNTeXN0ZW1Gb250LHNhbnMtc2VyaWYiIG9wYWNpdHk9IjAuOSI+UGVuc2lvbmllcnVuZzwvdGV4dD4KICA8cGF0aCBkPSJNMzAsMjIgQzYwLDIxIDgwLDE5IDEyMCwxOCBDMTUwLDE3IDE3MCwxOCAxOTAsMjYgQzIyMCwzOCAyNjAsNTggMzAwLDY4IEMzMzAsNzMgMzcwLDc2IDQwMCw3OCBMNDAwLDgyIEwzMCw4MiBaIiBmaWxsPSJ1cmwoI2YpIi8+CiAgPHBhdGggZD0iTTMwLDIyIEM2MCwyMSA4MCwxOSAxMjAsMTggQzE1MCwxNyAxNzAsMTggMTkwLDI2IEMyMjAsMzggMjYwLDU4IDMwMCw2OCBDMzMwLDczIDM3MCw3NiA0MDAsNzgiIGZpbGw9Im5vbmUiIHN0cm9rZT0idXJsKCNzKSIgc3Ryb2tlLXdpZHRoPSIyLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgogIDxjaXJjbGUgY3g9IjIyMCIgY3k9IjQyIiByPSI1IiBmaWxsPSIjZjU5ZTBiIiBzdHJva2U9IiNmYmJmMjQiIHN0cm9rZS13aWR0aD0iMS41Ii8+CiAgPGNpcmNsZSBjeD0iMzAwIiBjeT0iNjgiIHI9IjQiIGZpbGw9IiNmNTllMGIiIHN0cm9rZT0iI2ZiYmYyNCIgc3Ryb2tlLXdpZHRoPSIxLjUiLz4KICA8Y2lyY2xlIGN4PSIzNTAiIGN5PSI3MyIgcj0iNCIgZmlsbD0iI2Y1OWUwYiIgc3Ryb2tlPSIjZmJiZjI0IiBzdHJva2Utd2lkdGg9IjEuNSIvPgogIDxjaXJjbGUgY3g9IjQwMCIgY3k9Ijc4IiByPSI0IiBmaWxsPSIjZjU5ZTBiIiBzdHJva2U9IiNmYmJmMjQiIHN0cm9rZS13aWR0aD0iMS41Ii8+CiAgPHRleHQgeD0iMzAiIHk9Ijk1IiBmb250LXNpemU9IjcuNSIgZmlsbD0iIzY0NzQ4YiIgZm9udC1mYW1pbHk9Ii1hcHBsZS1zeXN0ZW0sQmxpbmtNYWNTeXN0ZW1Gb250LHNhbnMtc2VyaWYiPjIwMjY8L3RleHQ+CiAgPHRleHQgeD0iODciIHk9Ijk1IiBmb250LXNpemU9IjcuNSIgZmlsbD0iIzk0YTNiOCIgZm9udC1mYW1pbHk9Ii1hcHBsZS1zeXN0ZW0sQmxpbmtNYWNTeXN0ZW1Gb250LHNhbnMtc2VyaWYiPjIwMjc8L3RleHQ+CiAgPHRleHQgeD0iMTUyIiB5PSI5NSIgZm9udC1zaXplPSI3LjUiIGZpbGw9IiM2NDc0OGIiIGZvbnQtZmFtaWx5PSItYXBwbGUtc3lzdGVtLEJsaW5rTWFjU3lzdGVtRm9udCxzYW5zLXNlcmlmIj4yMDI4PC90ZXh0PgogIDx0ZXh0IHg9IjIxNSIgeT0iOTUiIGZvbnQtc2l6ZT0iNy41IiBmaWxsPSIjZjU5ZTBiIiBmb250LWZhbWlseT0iLWFwcGxlLXN5c3RlbSxCbGlua01hY1N5c3RlbUZvbnQsc2Fucy1zZXJpZiI+MjAyOTwvdGV4dD4KICA8dGV4dCB4PSIyOTAiIHk9Ijk1IiBmb250LXNpemU9IjcuNSIgZmlsbD0iIzY0NzQ4YiIgZm9udC1mYW1pbHk9Ii1hcHBsZS1zeXN0ZW0sQmxpbmtNYWNTeXN0ZW1Gb250LHNhbnMtc2VyaWYiPjIwMzA8L3RleHQ+CiAgPHRleHQgeD0iMzQ1IiB5PSI5NSIgZm9udC1zaXplPSI3LjUiIGZpbGw9IiM2NDc0OGIiIGZvbnQtZmFtaWx5PSItYXBwbGUtc3lzdGVtLEJsaW5rTWFjU3lzdGVtRm9udCxzYW5zLXNlcmlmIj4yMDMxPC90ZXh0PgogIDx0ZXh0IHg9IjM5MCIgeT0iOTUiIGZvbnQtc2l6ZT0iNy41IiBmaWxsPSIjNjQ3NDhiIiBmb250LWZhbWlseT0iLWFwcGxlLXN5c3RlbSxCbGlua01hY1N5c3RlbUZvbnQsc2Fucy1zZXJpZiI+MjAzMjwvdGV4dD4KPC9zdmc+Cg==" alt="Forecast-Grafik: Eigenkapital sinkt nach Pensionierung, Liquiditätswarnung ab 2029" style="width:100%; display:block; border-radius:8px;"/>
 
       <div class="sl-warn-caption">⚠ Liquidität reicht ab 2029 nicht mehr aus</div>
     </div>
@@ -293,8 +303,8 @@
 
   <!-- ZWEITER CTA -->
   <div class="sl-lp-cta2">
-    <a href="/app-static/">Forecast starten →</a>
-    <span class="sl-no-account">Kostenlos · Offline · Keine Registrierung</span>
+    <a href="/app-static/finance">Zur Finanz-Applikation →</a>
+    <span class="sl-no-account">Rechne deinen Fall direkt in der App.</span>
   </div>
 
   <!-- LINKS ZU DETAILS -->

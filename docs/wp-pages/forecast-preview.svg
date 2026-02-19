@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 110">
+  <defs>
+    <linearGradient id="s" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#10b981"/>
+      <stop offset="38%" stop-color="#10b981"/>
+      <stop offset="42%" stop-color="#f43f5e"/>
+      <stop offset="100%" stop-color="#f43f5e"/>
+    </linearGradient>
+    <linearGradient id="f" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#10b981" stop-opacity="0.12"/>
+      <stop offset="38%" stop-color="#10b981" stop-opacity="0.10"/>
+      <stop offset="42%" stop-color="#f43f5e" stop-opacity="0.10"/>
+      <stop offset="100%" stop-color="#f43f5e" stop-opacity="0.04"/>
+    </linearGradient>
+  </defs>
+  <rect width="420" height="110" fill="#070d1a" rx="0"/>
+  <line x1="30" y1="82" x2="400" y2="82" stroke="#1e293b" stroke-width="0.8"/>
+  <line x1="30" y1="22" x2="400" y2="22" stroke="#334155" stroke-width="0.5" stroke-dasharray="4,3" opacity="0.5"/>
+  <line x1="30" y1="78" x2="400" y2="78" stroke="#475569" stroke-width="0.5" stroke-dasharray="4,3" opacity="0.4"/>
+  <line x1="92" y1="8" x2="92" y2="82" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,3" opacity="0.6"/>
+  <text x="96" y="14" font-size="7" fill="#94a3b8" font-family="-apple-system,BlinkMacSystemFont,sans-serif" opacity="0.9">Pensionierung</text>
+  <path d="M30,22 C60,21 80,19 120,18 C150,17 170,18 190,26 C220,38 260,58 300,68 C330,73 370,76 400,78 L400,82 L30,82 Z" fill="url(#f)"/>
+  <path d="M30,22 C60,21 80,19 120,18 C150,17 170,18 190,26 C220,38 260,58 300,68 C330,73 370,76 400,78" fill="none" stroke="url(#s)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="220" cy="42" r="5" fill="#f59e0b" stroke="#fbbf24" stroke-width="1.5"/>
+  <circle cx="300" cy="68" r="4" fill="#f59e0b" stroke="#fbbf24" stroke-width="1.5"/>
+  <circle cx="350" cy="73" r="4" fill="#f59e0b" stroke="#fbbf24" stroke-width="1.5"/>
+  <circle cx="400" cy="78" r="4" fill="#f59e0b" stroke="#fbbf24" stroke-width="1.5"/>
+  <text x="30" y="95" font-size="7.5" fill="#64748b" font-family="-apple-system,BlinkMacSystemFont,sans-serif">2026</text>
+  <text x="87" y="95" font-size="7.5" fill="#94a3b8" font-family="-apple-system,BlinkMacSystemFont,sans-serif">2027</text>
+  <text x="152" y="95" font-size="7.5" fill="#64748b" font-family="-apple-system,BlinkMacSystemFont,sans-serif">2028</text>
+  <text x="215" y="95" font-size="7.5" fill="#f59e0b" font-family="-apple-system,BlinkMacSystemFont,sans-serif">2029</text>
+  <text x="290" y="95" font-size="7.5" fill="#64748b" font-family="-apple-system,BlinkMacSystemFont,sans-serif">2030</text>
+  <text x="345" y="95" font-size="7.5" fill="#64748b" font-family="-apple-system,BlinkMacSystemFont,sans-serif">2031</text>
+  <text x="390" y="95" font-size="7.5" fill="#64748b" font-family="-apple-system,BlinkMacSystemFont,sans-serif">2032</text>
+</svg>

@@ -112,6 +112,8 @@ export default function FinanceClientPage() {
 
   const [currentStep, setCurrentStep] = useState<StepId>(1);
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
+  const formRef = useRef(form);
+  formRef.current = form;
   const [completed, setCompleted] = useState<CompletionState>(INITIAL_COMPLETED);
   const [loading, setLoading] = useState(true);
   const [saveError, setSaveError] = useState<string>("");
@@ -161,8 +163,9 @@ export default function FinanceClientPage() {
       return { ok: false };
     }
 
-    const nextProfile = mapFormStateToProfileV2(form, profileV2);
-    const nextPositions = mapFormStateToPositions(form);
+    const currentForm = formRef.current;
+    const nextProfile = mapFormStateToProfileV2(currentForm, profileV2);
+    const nextPositions = mapFormStateToPositions(currentForm);
 
     const r = await saveProfile(nextProfile);
     if (!r.ok) {
@@ -284,8 +287,6 @@ export default function FinanceClientPage() {
               completion={completed}
               onStepClick={(step) => {
                 setSaveError("");
-                const ok = validateStep(currentStep, form);
-                if (!ok) return;
                 setCurrentStep(step);
               }}
             />

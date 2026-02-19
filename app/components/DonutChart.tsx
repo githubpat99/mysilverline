@@ -20,64 +20,43 @@ export default function BalanceSummaryChart({
     return { saldo: s, passiven: p, aktiven: a, boundaryPct: pct };
   }, [totalAssets, totalLiabilities]);
 
+  const markerLeft = `${4.4 + (boundaryPct / 100) * 91.1}%`;
+
   return (
     <div className="rounded-2xl bg-slate-900/35 p-4 shadow-xl ring-1 ring-white/5">
-      <div className="relative aspect-[900/110] w-full min-h-[88px]">
-        {/* SVG: nur die Linie */}
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 900 110"
-          className="absolute inset-0 h-full w-full"
-          preserveAspectRatio="xMidYMid meet"
-        >
-          <defs>
-            <linearGradient
-              id="lineBlue"
-              x1="40"
-              y1="0"
-              x2="860"
-              y2="0"
-              gradientUnits="userSpaceOnUse"
-            >
-              <stop offset="0" stopColor="#3B82F6" />
-              <stop offset="1" stopColor="#60A5FA" />
-            </linearGradient>
-          </defs>
-          <line
-            x1="40"
-            y1="55"
-            x2="860"
-            y2="55"
-            stroke="url(#lineBlue)"
-            strokeWidth="4"
-            strokeLinecap="round"
-          />
-        </svg>
-
-        {/* Labels als HTML – exakt wie Total (text-lg), responsive */}
-        <div className="absolute inset-0">
-          {/* Netto links */}
-          <div className="absolute left-[4.4%] top-[28%] -translate-y-1/2 text-lg font-normal text-white tabular-nums">
+      <div className="relative w-full" style={{ minHeight: 72 }}>
+        {/* Labels row */}
+        <div className="flex items-end justify-between mb-3">
+          <div className="text-lg font-normal text-white tabular-nums">
             {formatCHF(saldo)}
           </div>
-
-          {/* ▼ – grösser auf Mobile */}
-          <div
-            className="absolute top-[50%] -translate-x-1/2 -translate-y-1/2 w-4 h-4 sm:w-3 sm:h-3"
-            style={{ left: `${4.4 + (boundaryPct / 100) * 91.1}%` }}
-          >
-            <div className="w-full h-full [clip-path:polygon(0%_0%,100%_0%,50%_100%)] bg-white" />
-          </div>
-
-          {/* Passiven rechts */}
-          <div className="absolute top-[28%] right-[4.4%] -translate-y-1/2 text-right text-lg font-normal text-red-300 tabular-nums">
+          <div className="text-lg font-normal text-red-300 tabular-nums">
             {formatCHF(passiven)}
           </div>
+        </div>
 
-          {/* Aktiven unten mittig */}
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-center text-lg font-normal text-green-300 tabular-nums">
-            {formatCHF(aktiven)}
-          </div>
+        {/* Track + Fill + Marker */}
+        <div className="relative h-[6px] rounded-full bg-slate-800">
+          <div
+            className="absolute inset-y-0 left-0 rounded-full"
+            style={{
+              width: markerLeft,
+              background: "linear-gradient(90deg, #22d3ee, #818cf8)",
+            }}
+          />
+          <div
+            className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 h-3 w-3 rounded-full bg-white shadow-sm"
+            style={{
+              left: markerLeft,
+              border: "2px solid #0f172a",
+              boxShadow: "0 0 0 1px rgba(100,116,139,0.5)",
+            }}
+          />
+        </div>
+
+        {/* Aktiven total */}
+        <div className="mt-2 text-center text-lg font-normal text-green-300 tabular-nums">
+          {formatCHF(aktiven)}
         </div>
       </div>
     </div>

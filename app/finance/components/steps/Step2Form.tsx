@@ -1,13 +1,13 @@
 // app/finance/components/steps/Step2Form.tsx
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { FormState, DebtPosition, AssetPosition } from "@/lib/types";
 import { FieldMoneyInt } from "../fields/FieldMoney";
 import { Amount, InlineAmount } from "../Amount";
 import { bucketFromAvailability, availabilityFromBucket } from "@/lib/forecast/buckets";
 import type { Availability, Bucket } from "@/lib/forecast/buckets";
-import { Plus, Trash2, X } from "lucide-react";
+import { ChevronDown, Plus, Trash2, X } from "lucide-react";
 import CustomSelect from "../CustomSelect";
 
 /**
@@ -52,6 +52,23 @@ function typeLabel(t: DebtType) {
       return "Andere";
   }
 }
+
+const DEBT_TYPE_OPTIONS: { v: DebtType; l: string }[] = [
+  { v: "mortgage", l: "Hypothek" },
+  { v: "loan", l: "Darlehen" },
+  { v: "consumer", l: "Konsumkredit" },
+  { v: "creditcard", l: "Kreditkarte" },
+  { v: "other", l: "Andere" },
+];
+const DEBT_TYPE_LABEL: Record<string, string> = Object.fromEntries(
+  DEBT_TYPE_OPTIONS.map((o) => [o.v, o.l]),
+);
+const AVAIL_OPTIONS: { v: Availability; l: string }[] = [
+  { v: "instant", l: "sofort" },
+  { v: "3m_3y", l: "3M–3J" },
+  { v: "gt_3y", l: ">3J" },
+  { v: "locked", l: "gebunden" },
+];
 
 type AccountOption = {
   key: string; // "asset:<id>" | "debt:<id>"
@@ -204,6 +221,15 @@ export default function Step2Form({
     return () => window.clearTimeout(t);
   }, [isModalOpen]);
 
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const toggleExpand = (id: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   function ensureSourceForShortBuckets(p: DebtPosition): DebtPosition {
     if (!defaultLiquidityAccountKey) return p;
@@ -457,56 +483,61 @@ export default function Step2Form({
                       <div
                         key={it.id}
                         tabIndex={-1}
-                        className="rounded-2xl border border-slate-800 bg-slate-950 p-3"
+                        className="rounded-2xl border border-slate-800 bg-slate-950 overflow-hidden"
                         onBlurCapture={(e) => {
                           const next = e.relatedTarget as Node | null;
                           if (next && e.currentTarget.contains(next)) return;
                           void commitIfDirty(it.id);
                         }}
                       >
+                        <div
+                          className="flex w-full items-center gap-2 px-3 py-3 cursor-pointer"
+                          onClick={() => toggleExpand(it.id)}
+                        >
+                          {!it.isSystem && (
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); removePosition(it.id); }}
+                              className="shrink-0 p-1 text-slate-500 hover:text-red-400 transition"
+                              title="Entfernen"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                          <div className="min-w-0 flex-1 truncate text-sm text-slate-100">
+                            {it.label || "Neue Schuld"}
+                          </div>
+                          <span className="shrink-0 rounded-md border border-slate-700 bg-slate-900 px-2 py-0.5 text-[11px] text-slate-400">
+                            {DEBT_TYPE_LABEL[it.debtType] || "–"}
+                          </span>
+                          <span className="shrink-0 text-sm tabular-nums text-slate-200">
+                            {(it.balanceChf ?? 0).toLocaleString("de-CH")}
+                          </span>
+                          <ChevronDown
+                            size={16}
+                            className={`shrink-0 text-slate-500 transition-transform ${expandedIds.has(it.id) ? "rotate-180" : ""}`}
+                          />
+                        </div>
+                        {expandedIds.has(it.id) && (
+                        <div className="border-t border-slate-800/60 px-3 pb-3 pt-2">
                         <div className="grid gap-3">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="min-w-0 flex-1">
-                              <label className="block text-xs text-slate-400 mb-1">Bezeichnung</label>
+                          <div>
+                            <label className="block text-xs text-slate-400 mb-1">Bezeichnung</label>
                             <input
                               value={it.label}
                               onChange={(e) => updatePosition(it.id, { label: e.target.value })}
                               placeholder="z.B. Raiffeisen Hypothek, Visa, Autokredit…"
                               className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-600"
                             />
-                            </div>
-                            {!it.isSystem && (
-                              <button
-                                type="button"
-                                onClick={() => removePosition(it.id)}
-                                className="flex shrink-0 items-center justify-center rounded-xl border border-slate-800 bg-slate-950 p-2 text-slate-300 hover:border-slate-700 hover:text-slate-100 transition"
-                                title="Entfernen"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            )}
                           </div>
 
-                          <div>
-                            <label className="block text-xs text-slate-400 mb-1.5">Typ</label>
-                            <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Typ">
-                              {(["mortgage", "loan", "consumer", "creditcard", "other"] as DebtType[]).map((dv) => (
-                                <button
-                                  key={dv}
-                                  type="button"
-                                  role="radio"
-                                  aria-checked={it.debtType === dv}
-                                  onClick={() => updatePosition(it.id, { debtType: dv })}
-                                  className={[
-                                    "rounded-lg border px-2.5 py-1.5 text-xs transition",
-                                    it.debtType === dv ? "border-sky-500/60 bg-slate-800 text-sky-200" : "border-slate-700 bg-slate-950/50 text-slate-400 hover:border-slate-600 hover:text-slate-200",
-                                  ].join(" ")}
-                                >
-                                  {typeLabel(dv)}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
+                          <CustomSelect
+                            label="Typ"
+                            options={DEBT_TYPE_OPTIONS.map((o) => ({ value: o.v, label: o.l }))}
+                            value={it.debtType}
+                            onChange={(v) => updatePosition(it.id, { debtType: v as DebtType })}
+                            placeholder="Typ wählen…"
+                          />
 
                           <FieldMoneyInt
                             label="Wert"
@@ -519,31 +550,13 @@ export default function Step2Form({
                             }}
                           />
 
-                          <div>
-                            <label className="block text-xs text-slate-400 mb-1.5">Verfügbarkeit</label>
-                            <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Verfügbarkeit">
-                              {[
-                                { v: "instant" as Availability, l: "sofort" },
-                                { v: "3m_3y" as Availability, l: "3M–3J" },
-                                { v: "gt_3y" as Availability, l: ">3J" },
-                                { v: "locked" as Availability, l: "gebunden" },
-                              ].map((o) => (
-                                <button
-                                  key={o.v}
-                                  type="button"
-                                  role="radio"
-                                  aria-checked={it.availability === o.v}
-                                  onClick={() => updatePosition(it.id, { availability: o.v })}
-                                  className={[
-                                    "rounded-lg border px-2.5 py-1.5 text-xs transition",
-                                    it.availability === o.v ? "border-sky-500/60 bg-slate-800 text-sky-200" : "border-slate-700 bg-slate-950/50 text-slate-400 hover:border-slate-600 hover:text-slate-200",
-                                  ].join(" ")}
-                                >
-                                  {o.l}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
+                          <CustomSelect
+                            label="Verfügbarkeit"
+                            options={AVAIL_OPTIONS.map((o) => ({ value: o.v, label: o.l }))}
+                            value={it.availability}
+                            onChange={(v) => updatePosition(it.id, { availability: v as Availability })}
+                            placeholder="Verfügbarkeit…"
+                          />
 
                           <div>
                             <label className="block text-xs text-slate-400 mb-1">Zins (%)</label>
@@ -597,44 +610,43 @@ export default function Step2Form({
                             Laufzeit: <span className="text-slate-300">{BUCKET_META[activeBucket].title}</span>
                           </div>
                         </div>
+                        </div>
+                        )}
                       </div>
                     );
                   })}
                 </div>
 
                 {/* Desktop: Table */}
-                <div className="hidden md:block overflow-x-hidden">
-                  <table className="w-full text-sm table-fixed">
+                <div className="hidden md:block overflow-hidden">
+                  <table className="w-full text-sm">
                     <thead className="text-slate-400">
                       <tr className="border-b border-slate-800">
-                        <th className="py-2 w-[7%]"> </th>
-                        <th className="text-left py-2 px-3 w-[15%]">Bezeichnung</th>
-                        <th className="text-left py-2 px-3 w-[11%]">Typ</th>
-                        <th className="text-left py-2 px-3 w-[12%]">Wert</th>
-                        <th className="text-left py-2 px-3 w-[12%]">Verf.</th>
-                        <th className="text-left py-2 px-3 w-[12%]">Amort.</th>
-                        <th className="text-left py-2 px-3 w-[10%]">Zins (%)</th>
-                        <th className="text-left py-2 px-3 w-[15%]">Quelle</th>
-                        <th className="text-left py-2 px-3 w-[13%]">Notiz</th>
+                        <th className="py-2 w-10"> </th>
+                        <th className="text-left py-2 px-3">Bezeichnung</th>
+                        <th className="text-left py-2 px-3 w-[15%]">Typ</th>
+                        <th className="text-left py-2 px-3 w-[14%]">Wert</th>
+                        <th className="text-left py-2 px-3 w-[14%]">Verf.</th>
+                        <th className="py-2 w-10"> </th>
                       </tr>
                     </thead>
 
-                    <tbody>
-                      {activeItems.map((it) => {
-                        const needsSource =
-                          (activeBucket === "LT" || activeBucket === "REAL") && !isValidSourceKey(it.sourceAccountKey);
-                        const sourceLocked = isShortBucket(activeBucket);
+                    {activeItems.map((it) => {
+                      const needsSource =
+                        (activeBucket === "LT" || activeBucket === "REAL") && !isValidSourceKey(it.sourceAccountKey);
+                      const sourceLocked = isShortBucket(activeBucket);
+                      const isExp = expandedIds.has(it.id);
 
-                        return (
-                          <tr
-                            key={it.id}
-                            className="border-b border-slate-900"
-                            onBlur={(e) => {
-                              const next = e.relatedTarget as Node | null;
-                              if (next && e.currentTarget.contains(next)) return;
-                              void commitIfDirty(it.id);
-                            }}
-                          >
+                      return (
+                        <tbody
+                          key={it.id}
+                          onBlur={(e) => {
+                            const next = e.relatedTarget as Node | null;
+                            if (next && e.currentTarget.contains(next)) return;
+                            void commitIfDirty(it.id);
+                          }}
+                        >
+                          <tr className="border-b border-slate-900">
                             <td className="py-2 pr-1">
                               {!it.isSystem ? (
                                 <button
@@ -648,8 +660,7 @@ export default function Step2Form({
                               ) : null}
                             </td>
 
-                            {/* Bezeichnung */}
-                            <td className="py-2 pr-3">
+                            <td className="py-2 px-3">
                               <input
                                 value={it.label}
                                 onChange={(e) => updatePosition(it.id, { label: e.target.value })}
@@ -658,29 +669,16 @@ export default function Step2Form({
                               />
                             </td>
 
-                            {/* Typ */}
-                            <td className="py-2 pr-3">
-                              <div className="flex flex-wrap gap-1" role="radiogroup" aria-label="Typ">
-                                {(["mortgage", "loan", "consumer", "creditcard", "other"] as DebtType[]).map((dv) => (
-                                  <button
-                                    key={dv}
-                                    type="button"
-                                    role="radio"
-                                    aria-checked={it.debtType === dv}
-                                    onClick={() => updatePosition(it.id, { debtType: dv })}
-                                    className={[
-                                      "rounded border px-1.5 py-0.5 text-[11px] transition",
-                                      it.debtType === dv ? "border-sky-500/60 bg-slate-800 text-sky-200" : "border-slate-700 bg-slate-950/50 text-slate-400 hover:border-slate-600",
-                                    ].join(" ")}
-                                  >
-                                    {typeLabel(dv)}
-                                  </button>
-                                ))}
-                              </div>
+                            <td className="py-2 px-3">
+                              <CustomSelect
+                                options={DEBT_TYPE_OPTIONS.map((o) => ({ value: o.v, label: o.l }))}
+                                value={it.debtType}
+                                onChange={(v) => updatePosition(it.id, { debtType: v as DebtType })}
+                                placeholder="Typ…"
+                              />
                             </td>
 
-                            {/* Wert */}
-                            <td className="py-2 pr-3">
+                            <td className="py-2 px-3">
                               <FieldMoneyInt
                                 label=""
                                 valueChf={it.balanceChf}
@@ -693,106 +691,109 @@ export default function Step2Form({
                               />
                             </td>
 
-                            {/* Verfügbarkeit */}
-                            <td className="py-2 pr-3">
-                              <div className="flex flex-wrap gap-1" role="radiogroup" aria-label="Verfügbarkeit">
-                                {[
-                                  { v: "instant" as Availability, l: "sofort" },
-                                  { v: "3m_3y" as Availability, l: "3M–3J" },
-                                  { v: "gt_3y" as Availability, l: ">3J" },
-                                  { v: "locked" as Availability, l: "gebunden" },
-                                ].map((o) => (
-                                  <button
-                                    key={o.v}
-                                    type="button"
-                                    role="radio"
-                                    aria-checked={it.availability === o.v}
-                                    onClick={() => updatePosition(it.id, { availability: o.v })}
-                                    className={[
-                                      "rounded border px-1.5 py-0.5 text-[11px] transition",
-                                      it.availability === o.v ? "border-sky-500/60 bg-slate-800 text-sky-200" : "border-slate-700 bg-slate-950/50 text-slate-400 hover:border-slate-600",
-                                    ].join(" ")}
-                                  >
-                                    {o.l}
-                                  </button>
-                                ))}
-                              </div>
-                            </td>
-
-                            {/* Amortisation p.a. */}
-                            <td className="py-2 pr-3">
-                              <FieldMoneyInt
-                                label=""
-                                valueChf={typeof it.amortizationPaChf === "number" ? it.amortizationPaChf : 0}
-                                onChangeChf={(n) => updatePosition(it.id, { amortizationPaChf: n })}
-                              />
-                            </td>
-
-                            {/* Zins % */}
-                            <td className="py-2 pr-3">
-                              <input
-                                type="number"
-                                step="0.01"
-                                min={0}
-                                max={100}
-                                inputMode="decimal"
-                                value={
-                                  typeof it.interestRatePct === "number" && Number.isFinite(it.interestRatePct)
-                                    ? String(it.interestRatePct)
-                                    : ""
-                                }
-                                onChange={(e) => {
-                                  const raw = e.target.value;
-                                  const n = raw.trim() === "" ? undefined : Number(String(raw).replace(",", "."));
-                                  updatePosition(it.id, {
-                                    interestRatePct: typeof n === "number" && Number.isFinite(n) ? n : undefined,
-                                  });
-                                }}
-                                className="w-full rounded-lg border border-slate-800 bg-slate-950 px-1.5 py-2 text-right"
-                                placeholder="1.80"
-                              />
-                            </td>
-
-                            {/* Quelle (Gegenkonto) */}
-                            <td className="py-2 pr-3 align-top">
+                            <td className="py-2 px-3">
                               <CustomSelect
-                                options={[
-                                  { value: "", label: sourceLocked ? "Liquidität (Default)" : "Quelle wählen…" },
-                                  ...sourceAccountOptions.map((o) => ({ value: o.key, label: o.label })),
-                                ]}
-                                value={it.sourceAccountKey ?? ""}
-                                onChange={(v) => updatePosition(it.id, { sourceAccountKey: v || undefined })}
-                                placeholder={sourceLocked ? "Liquidität (Default)" : "Quelle wählen…"}
-                                disabled={sourceAccountOptions.length <= 1}
+                                options={AVAIL_OPTIONS.map((o) => ({ value: o.v, label: o.l }))}
+                                value={it.availability}
+                                onChange={(v) => updatePosition(it.id, { availability: v as Availability })}
+                                placeholder="Verf.…"
                               />
-                              {needsSource && (
-                                <div className="mt-1 text-xs text-amber-400/90">
-                                  Quelle fehlt – muss ein bestehendes Konto sein.
-                                </div>
-                              )}
                             </td>
 
-                            {/* Notiz */}
-                            <td className="py-2 pr-3">
-                              <input
-                                value={it.notes ?? ""}
-                                onChange={(e) => updatePosition(it.id, { notes: e.target.value })}
-                                className="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2"
-                                placeholder="optional"
-                              />
+                            <td className="py-2 text-center">
+                              <button
+                                type="button"
+                                onClick={() => toggleExpand(it.id)}
+                                className="inline-flex items-center justify-center rounded-lg p-1.5 text-slate-400 hover:text-slate-100 transition"
+                                title={isExp ? "Zuklappen" : "Details"}
+                              >
+                                <ChevronDown
+                                  size={16}
+                                  className={`transition-transform ${isExp ? "rotate-180" : ""}`}
+                                />
+                              </button>
                             </td>
                           </tr>
-                        );
-                      })}
 
-                      {activeItems.length === 0 && (
+                          {isExp && (
+                            <tr className="border-b border-slate-800/50 bg-slate-950/40">
+                              <td />
+                              <td colSpan={5} className="px-3 pb-3 pt-2">
+                                <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+                                  <FieldMoneyInt
+                                    label="Amortisation p.a."
+                                    valueChf={typeof it.amortizationPaChf === "number" ? it.amortizationPaChf : 0}
+                                    onChangeChf={(n) => updatePosition(it.id, { amortizationPaChf: n })}
+                                  />
+
+                                  <div>
+                                    <label className="mb-1 block text-xs text-slate-400">Zins (%)</label>
+                                    <input
+                                      type="number"
+                                      step="0.01"
+                                      min={0}
+                                      max={100}
+                                      inputMode="decimal"
+                                      value={
+                                        typeof it.interestRatePct === "number" && Number.isFinite(it.interestRatePct)
+                                          ? String(it.interestRatePct)
+                                          : ""
+                                      }
+                                      onChange={(e) => {
+                                        const raw = e.target.value;
+                                        const n = raw.trim() === "" ? undefined : Number(String(raw).replace(",", "."));
+                                        updatePosition(it.id, {
+                                          interestRatePct: typeof n === "number" && Number.isFinite(n) ? n : undefined,
+                                        });
+                                      }}
+                                      className="w-full rounded-xl border border-slate-800 bg-slate-950/30 px-3 py-2 text-slate-100"
+                                      placeholder="1.80"
+                                    />
+                                  </div>
+
+                                  <div>
+                                    <CustomSelect
+                                      label="Quelle (Gegenkonto)"
+                                      options={[
+                                        { value: "", label: sourceLocked ? "Liquidität (Default)" : "Quelle wählen…" },
+                                        ...sourceAccountOptions.map((o) => ({ value: o.key, label: o.label })),
+                                      ]}
+                                      value={it.sourceAccountKey ?? ""}
+                                      onChange={(v) => updatePosition(it.id, { sourceAccountKey: v || undefined })}
+                                      placeholder={sourceLocked ? "Liquidität (Default)" : "Quelle wählen…"}
+                                      disabled={sourceAccountOptions.length <= 1}
+                                    />
+                                    {needsSource && (
+                                      <div className="mt-1 text-xs text-amber-400/90">Quelle fehlt</div>
+                                    )}
+                                  </div>
+
+                                  <div>
+                                    <label className="mb-1 block text-xs text-slate-400">Notiz</label>
+                                    <input
+                                      value={it.notes ?? ""}
+                                      onChange={(e) => updatePosition(it.id, { notes: e.target.value })}
+                                      className="w-full rounded-xl border border-slate-800 bg-slate-950/30 px-3 py-2 text-slate-100"
+                                      placeholder="optional"
+                                    />
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      );
+                    })}
+
+                    {activeItems.length === 0 && (
+                      <tbody>
                         <tr>
-                          <td colSpan={9} className="py-6 text-center text-slate-500">
+                          <td colSpan={6} className="py-6 text-center text-slate-500">
                             Keine Positionen in {BUCKET_META[activeBucket].title}.
                           </td>
                         </tr>
-                      )}
-                    </tbody>
+                      </tbody>
+                    )}
                   </table>
                 </div>
                 <div className="mt-3 text-xs text-slate-500">

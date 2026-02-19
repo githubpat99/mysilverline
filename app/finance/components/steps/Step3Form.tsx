@@ -296,6 +296,7 @@ export default function Step3Form({
     const next = (events ?? []).filter((e) => e.client_id !== client_id);
     setEvents(next);
     if (eventOpenId === client_id) onEventOpenIdChange(null);
+    setTimeout(() => void commitIfDirty(), 50);
   }
 
   function updateEvent(client_id: string, patch: Partial<ProfileEvent>) {
@@ -321,6 +322,7 @@ export default function Step3Form({
     };
     setEvents([...(events ?? []), copy]);
     onEventOpenIdChange(copy.client_id);
+    setTimeout(() => void commitIfDirty(), 50);
   }
 
   function onChangeEventType(client_id: string, nextType: EventLineType) {

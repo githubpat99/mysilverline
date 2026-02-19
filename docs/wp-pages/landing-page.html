@@ -1,0 +1,307 @@
+<!-- WordPress Startseite / Landing Page -->
+<!-- Einfügen als: "Eigenes HTML"-Block, Volle Breite -->
+<!-- Ersetzt oder ergänzt den bestehenden Hero-Bereich -->
+
+<style>
+.sl-lp { max-width:780px; margin:0 auto; font-family:inherit; }
+
+/* Hero */
+.sl-lp-hero { text-align:center; padding:0.5em 1em 2em; }
+.sl-lp-hero .sl-eyebrow {
+  display:inline-block; font-size:0.78em; font-weight:600;
+  letter-spacing:.1em; text-transform:uppercase;
+  color:#38bdf8; margin-bottom:1em;
+}
+.sl-lp-hero h1 {
+  font-size:clamp(1.8em,5vw,2.8em); font-weight:700;
+  color:#f1f5f9; line-height:1.25; margin:0 0 0.6em;
+}
+.sl-lp-hero h1 em { color:#38bdf8; font-style:normal; }
+.sl-lp-hero .sl-sub {
+  font-size:1.05em; color:#94a3b8; max-width:520px;
+  margin:0 auto 2em; line-height:1.7;
+}
+.sl-lp-cta {
+  display:inline-block; background:linear-gradient(135deg,#0ea5e9,#0284c7);
+  color:#fff; font-weight:700; font-size:1.1em; padding:15px 36px;
+  border-radius:12px; text-decoration:none; box-shadow:0 4px 24px #0ea5e933;
+}
+.sl-lp-cta:hover { opacity:.9; }
+.sl-lp-hero .sl-no-account {
+  display:block; margin-top:.9em; font-size:.82em; color:#64748b;
+}
+
+/* App-Preview Container */
+.sl-app-preview {
+  margin:2.5em 0; border-radius:16px; overflow:hidden;
+  border:1px solid #1e3a5f; background:#070d1a;
+  font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+}
+/* Chrome-Leiste */
+.sl-app-chrome {
+  display:flex; align-items:center; gap:.4em; padding:.6em 1em;
+  background:#0d1424; border-bottom:1px solid #1e293b;
+}
+.sl-chrome-dot {
+  width:9px; height:9px; border-radius:50%; background:#1e3a5f;
+}
+.sl-chrome-label {
+  margin-left:.5em; font-size:.72em; color:#475569; font-weight:500;
+}
+
+/* Bilanz-Screen */
+.sl-screen { padding:1.2em 1.4em; }
+.sl-screen-title {
+  font-size:.75em; font-weight:600; color:#334155;
+  letter-spacing:.04em; text-transform:uppercase; margin-bottom:.8em;
+}
+.sl-bilanz-grid { display:grid; grid-template-columns:1fr 1fr; gap:.75em; }
+.sl-bilanz-card {
+  background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:.9em 1em;
+}
+.sl-bcard-title { font-size:.8em; font-weight:600; margin-bottom:.3em; color:#64748b; }
+.sl-bcard-total { font-size:1.6em; font-weight:800; margin-bottom:.6em; }
+.sl-aktiven .sl-bcard-total { color:#4ade80; }
+.sl-passiven .sl-bcard-total { color:#f87171; }
+.sl-bcard-section {
+  font-size:.62em; font-weight:600; letter-spacing:.08em;
+  text-transform:uppercase; color:#475569; margin:.6em 0 .3em;
+}
+.sl-bcard-row {
+  display:flex; justify-content:space-between; font-size:.78em;
+  color:#94a3b8; padding:.25em 0; border-bottom:1px solid #1e293b11;
+}
+.sl-bcard-row span:last-child { color:#cbd5e1; font-variant-numeric:tabular-nums; }
+
+/* Balance-Bar */
+.sl-bal-wrap { margin:1em 0 .3em; }
+.sl-bal-labels { display:flex; justify-content:space-between; font-size:.72em; color:#475569; margin-bottom:.4em; }
+.sl-bal-track {
+  height:5px; background:#1e293b; border-radius:3px; position:relative; overflow:visible;
+}
+.sl-bal-fill {
+  position:absolute; left:0; top:0; height:100%;
+  width:63%; background:linear-gradient(90deg,#22d3ee,#818cf8);
+  border-radius:3px;
+}
+.sl-bal-marker {
+  position:absolute; left:63%; top:50%;
+  transform:translate(-50%,-50%);
+  width:10px; height:10px; background:#e2e8f0;
+  border-radius:50%; border:2px solid #0f172a;
+  box-shadow:0 0 0 1px #64748b;
+}
+.sl-bal-total { text-align:center; font-size:.8em; color:#64748b; margin-top:.5em; }
+
+/* Divider zwischen den zwei Screens */
+.sl-screen-divider { height:1px; background:#1e293b; margin:0 1.4em; }
+
+/* Forecast-Screen */
+.sl-screen-forecast { padding:1.2em 1.4em; }
+.sl-stat-block { margin-bottom:.9em; }
+.sl-stat-lbl { font-size:.7em; color:#64748b; display:block; margin-bottom:.2em; letter-spacing:.02em; }
+.sl-stat-val { font-size:1.1em; font-weight:700; color:#f87171; }
+.sl-stat-pct { font-size:.78em; color:#94a3b8; font-weight:400; }
+
+/* SVG Chart */
+.sl-chart-svg { width:100%; display:block; }
+
+/* Time Buttons */
+.sl-time-btns { display:flex; gap:.5em; margin-top:.9em; }
+.sl-time-btn {
+  font-size:.75em; padding:.3em .9em; border-radius:6px;
+  border:1px solid #334155; color:#64748b; cursor:default;
+}
+.sl-time-active { background:#1e293b; color:#e2e8f0; border-color:#475569; }
+
+/* Warning Caption */
+.sl-warn-caption {
+  font-size:.75em; color:#f87171; margin-top:.8em;
+  display:flex; align-items:center; gap:.4em;
+}
+
+/* Preview Caption */
+.sl-preview-caption {
+  text-align:center; font-size:.75em; color:#334155;
+  padding:.6em 1em .8em; background:#070d1a;
+}
+
+/* Drei Kernversprechen */
+.sl-promises { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:1em; margin:2.5em 0; }
+.sl-promise {
+  padding:1.4em; background:#0f172a; border:1px solid #1e293b;
+  border-radius:12px;
+}
+.sl-promise .sl-p-icon { font-size:1.8em; margin-bottom:.5em; }
+.sl-promise h3 { color:#e2e8f0; font-size:1em; margin:0 0 .4em; }
+.sl-promise p { color:#64748b; font-size:.88em; margin:0; line-height:1.6; }
+
+/* Zitat / Szenario */
+.sl-scenario {
+  margin:2.5em 0; padding:1.4em 1.8em;
+  border-left:3px solid #38bdf8; background:#0c1929;
+  border-radius:0 12px 12px 0;
+}
+.sl-scenario p { color:#cbd5e1; line-height:1.75; margin:0 0 .6em; font-size:.97em; }
+.sl-scenario p:last-child { margin:0; }
+.sl-scenario strong { color:#e2e8f0; }
+
+/* Zweiter CTA */
+.sl-lp-cta2 { text-align:center; margin:2.5em 0 1em; }
+.sl-lp-cta2 a {
+  display:inline-block; background:linear-gradient(135deg,#0ea5e9,#0284c7);
+  color:#fff; font-weight:700; font-size:1.05em; padding:13px 32px;
+  border-radius:10px; text-decoration:none;
+}
+.sl-lp-cta2 .sl-no-account { display:block; margin-top:.75em; font-size:.8em; color:#64748b; }
+
+/* Links-Leiste */
+.sl-lp-nav {
+  display:flex; justify-content:center; gap:2em; flex-wrap:wrap;
+  padding-top:2em; border-top:1px solid #1e293b;
+  font-size:.88em;
+}
+.sl-lp-nav a { color:#38bdf8; text-decoration:none; }
+.sl-lp-nav a:hover { text-decoration:underline; }
+</style>
+
+<div class="sl-lp">
+
+  <!-- HERO -->
+  <div class="sl-lp-hero">
+    <span class="sl-eyebrow">Persönliche Finanzplanung</span>
+    <h1>Weisst du,<br>ob dein Geld <em>reicht</em>?</h1>
+    <p class="sl-sub">
+      Silverline rechnet dir in Minuten durch, wie sich dein Vermögen über die nächsten
+      10, 20 oder 30 Jahre entwickelt – mit deinen echten Zahlen.
+    </p>
+    <a href="/app-static/" class="sl-lp-cta">Jetzt kostenlos ausprobieren →</a>
+    <span class="sl-no-account">Kein Account nötig · Läuft offline · Daten bleiben bei dir</span>
+  </div>
+
+  <!-- AHA-MOMENT: App-Vorschau -->
+  <div class="sl-app-preview">
+
+    <!-- Chrome-Leiste -->
+    <div class="sl-app-chrome">
+      <div class="sl-chrome-dot"></div>
+      <div class="sl-chrome-dot"></div>
+      <div class="sl-chrome-dot"></div>
+      <span class="sl-chrome-label">Silverline App</span>
+    </div>
+
+    <!-- Screen 1: Bilanzübersicht (kompakt) -->
+    <div class="sl-screen">
+      <div class="sl-screen-title">Bilanzübersicht</div>
+      <div class="sl-bilanz-grid">
+
+        <div class="sl-bilanz-card sl-aktiven">
+          <div class="sl-bcard-title">Aktiven</div>
+          <div class="sl-bcard-total">CHF 365'200</div>
+          <div class="sl-bcard-row"><span>Konten &amp; Depot</span><span>120'800</span></div>
+          <div class="sl-bcard-row"><span>Immobilien</span><span>220'000</span></div>
+          <div class="sl-bcard-row"><span>Säule 3a</span><span>24'400</span></div>
+        </div>
+
+        <div class="sl-bilanz-card sl-passiven">
+          <div class="sl-bcard-title">Passiven</div>
+          <div class="sl-bcard-total">CHF 135'000</div>
+          <div class="sl-bcard-row"><span>Hypothek</span><span>133'800</span></div>
+          <div class="sl-bcard-row"><span>Kreditkarte</span><span>1'200</span></div>
+        </div>
+
+      </div>
+
+      <!-- Balance-Bar -->
+      <div class="sl-bal-wrap">
+        <div class="sl-bal-track">
+          <div class="sl-bal-fill"></div>
+          <div class="sl-bal-marker"></div>
+        </div>
+        <div class="sl-bal-total">Eigenkapital CHF 230'200</div>
+      </div>
+    </div>
+
+    <div class="sl-screen-divider"></div>
+
+    <!-- Screen 2: Forecast (emotional) -->
+    <div class="sl-screen-forecast">
+      <div class="sl-screen-title">Forecast</div>
+
+      <!-- SVG Line Chart: rote Linie, Pensionierung als Wendepunkt -->
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 75" style="width:100%;display:block;">
+        <!-- Baseline -->
+        <line x1="0" y1="63" x2="300" y2="63" style="stroke:#1e293b;stroke-width:1"/>
+        <!-- Dashed grid -->
+        <line x1="0" y1="38" x2="300" y2="38" style="stroke:#1e293b;stroke-width:0.5;stroke-dasharray:4,3;opacity:.6"/>
+        <!-- Pensionierung marker -->
+        <line x1="105" y1="6" x2="105" y2="63" style="stroke:#f59e0b;stroke-width:1;stroke-dasharray:3,3"/>
+        <text x="108" y="14" font-size="6.5" fill="#f59e0b" font-family="-apple-system,BlinkMacSystemFont,sans-serif">Pensionierung 2027</text>
+        <!-- Red declining line -->
+        <polyline points="0,16 55,18 105,24 170,42 220,52 300,62"
+                  style="fill:none;stroke:#f87171;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round"/>
+        <!-- Start dot -->
+        <circle cx="0" cy="16" r="3.5" style="fill:#f87171;stroke:#070d1a;stroke-width:1.5"/>
+        <!-- Warning marker at 2029 (x≈171) -->
+        <circle cx="171" cy="42" r="6" style="fill:#f87171"/>
+        <text x="179" y="38" font-size="6.5" fill="#f87171" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-weight="600">⚠ Lücke 2029</text>
+        <!-- Year labels -->
+        <text x="0"   y="73" font-size="6.5" fill="#475569" font-family="-apple-system,BlinkMacSystemFont,sans-serif">2025</text>
+        <text x="99"  y="73" font-size="6.5" fill="#f59e0b" font-family="-apple-system,BlinkMacSystemFont,sans-serif">2027</text>
+        <text x="270" y="73" font-size="6.5" fill="#475569" font-family="-apple-system,BlinkMacSystemFont,sans-serif">2032</text>
+      </svg>
+
+      <div class="sl-warn-caption">⚠ Liquidität reicht ab 2029 nicht mehr aus</div>
+    </div>
+
+    <div class="sl-preview-caption">Illustrativ · Dein Forecast basiert auf deinen eigenen Zahlen</div>
+  </div>
+
+  <!-- SZENARIO: Konkret denken lassen -->
+  <div class="sl-scenario">
+    <p>
+      <strong>Stell dir vor:</strong> Du gibst einmal dein Vermögen, deine Hypothek,
+      deinen Lohn und deine monatlichen Ausgaben ein.
+    </p>
+    <p>
+      Silverline zeigt dir sofort: <strong>Wann reicht die Liquidität nicht mehr?
+      Wann ist die Hypothek abbezahlt? Wie lange hält dein Vermögen in der Pension?</strong>
+    </p>
+    <p>
+      Keine Excel-Tabellen. Keine Beratungskosten. Keine Registrierung.
+    </p>
+  </div>
+
+  <!-- DREI KERNVERSPRECHEN -->
+  <div class="sl-promises">
+    <div class="sl-promise">
+      <div class="sl-p-icon">🔒</div>
+      <h3>Deine Daten gehören dir</h3>
+      <p>Alles bleibt lokal auf deinem Gerät. Kein Server, keine Cloud, keine fremden Augen.</p>
+    </div>
+    <div class="sl-promise">
+      <div class="sl-p-icon">✈️</div>
+      <h3>Funktioniert offline</h3>
+      <p>Im Flugzeug, im Zug, ohne WLAN – Silverline ist immer verfügbar.</p>
+    </div>
+    <div class="sl-promise">
+      <div class="sl-p-icon">⚡</div>
+      <h3>In 5 Minuten startklar</h3>
+      <p>Einfach öffnen, Vorlage wählen, Zahlen eingeben – fertig. Kein App Store, kein Account.</p>
+    </div>
+  </div>
+
+  <!-- ZWEITER CTA -->
+  <div class="sl-lp-cta2">
+    <a href="/app-static/">Forecast starten →</a>
+    <span class="sl-no-account">Kostenlos · Offline · Keine Registrierung</span>
+  </div>
+
+  <!-- LINKS ZU DETAILS -->
+  <div class="sl-lp-nav">
+    <a href="/anwendungsfaelle/">Anwendungsbeispiele</a>
+    <a href="/erklaerungen/">Wie funktioniert es?</a>
+    <a href="/wissen/">Finanzwissen</a>
+  </div>
+
+</div>

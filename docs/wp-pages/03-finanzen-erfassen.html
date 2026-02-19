@@ -1,0 +1,120 @@
+<!-- WordPress Seite: "Finanzen erfassen" -->
+<!-- Slug: /erklaerungen/finanzen-erfassen/ -->
+<!-- Einfügen als: "Eigenes HTML"-Block im WordPress Editor -->
+
+<style>
+.sl-docs { max-width:720px; margin:0 auto; font-family:inherit; }
+.sl-docs p { color:#c8d0dc; line-height:1.7; }
+.sl-docs .sl-intro { font-size:1.05em; }
+.sl-docs .sl-step {
+  margin:2em 0; padding:1.4em; border:1px solid #334155;
+  border-radius:12px; background:#0f172a;
+}
+.sl-docs .sl-step-header {
+  display:flex; align-items:center; gap:0.6em; margin-bottom:0.8em;
+}
+.sl-docs .sl-step-num {
+  display:inline-flex; align-items:center; justify-content:center;
+  width:28px; height:28px; border-radius:50%; font-weight:700; font-size:0.85em;
+}
+.sl-docs .sl-step-num--green { background:rgba(16,185,129,0.15); color:#10b981; }
+.sl-docs .sl-step-num--red { background:rgba(244,63,94,0.15); color:#f43f5e; }
+.sl-docs .sl-step-num--blue { background:rgba(14,165,233,0.15); color:#0ea5e9; }
+.sl-docs .sl-step h3 { margin:0; color:#e2e8f0; font-size:1.1em; }
+.sl-docs .sl-step .sl-hint { font-size:0.85em; color:#94a3b8; margin:1em 0 0; line-height:1.5; }
+.sl-docs .sl-tags { margin:1em 0 0; }
+.sl-docs .sl-tag {
+  display:inline-block; padding:0.4em 0.8em; margin:0 0.4em 0.4em 0;
+  background:#1e293b; border-radius:8px; font-size:0.85em;
+}
+.sl-docs .sl-tag strong { font-size:0.95em; }
+.sl-docs .sl-tag span { display:block; font-size:0.85em; color:#94a3b8; margin-top:0.15em; }
+.sl-docs .sl-tag--green strong { color:#10b981; }
+.sl-docs .sl-tag--red strong { color:#f43f5e; }
+.sl-docs .sl-tip {
+  margin:2em 0; padding:1em 1.4em; border-left:3px solid #0ea5e9;
+  background:#0c1929; border-radius:0 8px 8px 0;
+}
+.sl-docs .sl-tip p { margin:0; line-height:1.6; }
+.sl-docs ul { padding-left:1.4em; color:#c8d0dc; line-height:1.8; }
+.sl-docs .sl-nav {
+  display:flex; justify-content:space-between; margin-top:3em;
+  padding-top:1.5em; border-top:1px solid #1e293b; font-size:0.9em;
+}
+.sl-docs .sl-nav a { color:#0ea5e9; text-decoration:none; }
+.sl-docs .sl-nav a:hover { text-decoration:underline; }
+</style>
+
+<div class="sl-docs">
+
+<p class="sl-intro">
+Der Kern der App: Hier erfasst du deine finanzielle Situation in drei Schritten.
+Deine Änderungen werden <strong>automatisch lokal gespeichert</strong> – du verlierst keine Daten.
+</p>
+
+<!-- Schritt 1 -->
+<div class="sl-step">
+<div class="sl-step-header">
+<span class="sl-step-num sl-step-num--green">1</span>
+<h3>Vermögen (Aktiven)</h3>
+</div>
+<p>Erfasse alle deine Vermögenswerte, aufgeteilt nach Verfügbarkeit:</p>
+<div class="sl-tags">
+<span class="sl-tag sl-tag--green"><strong>Liquidität</strong><span>Bankkonten, Bargeld</span></span>
+<span class="sl-tag sl-tag--green"><strong>Kurzfristig</strong><span>Festgeld, kurzfristige Anlagen</span></span>
+<span class="sl-tag sl-tag--green"><strong>Langfristig</strong><span>Wertschriften, ETFs, Säule 3a</span></span>
+<span class="sl-tag sl-tag--green"><strong>Sachwerte</strong><span>Immobilien, Fahrzeuge</span></span>
+</div>
+<p class="sl-hint">
+Pro Position gibst du den Betrag in CHF und eine Bezeichnung an. Optional: jährlicher Cashflow und Zielkonto.
+</p>
+</div>
+
+<!-- Schritt 2 -->
+<div class="sl-step">
+<div class="sl-step-header">
+<span class="sl-step-num sl-step-num--red">2</span>
+<h3>Schulden (Passiven)</h3>
+</div>
+<p>Erfasse alle deine Verbindlichkeiten:</p>
+<div class="sl-tags">
+<span class="sl-tag sl-tag--red"><strong>Hypothek</strong><span>Eigenheim-Finanzierung</span></span>
+<span class="sl-tag sl-tag--red"><strong>Darlehen</strong><span>Privatdarlehen</span></span>
+<span class="sl-tag sl-tag--red"><strong>Konsumkredit</strong><span>Ratenzahlung</span></span>
+<span class="sl-tag sl-tag--red"><strong>Kreditkarte</strong><span>Offene Schulden</span></span>
+</div>
+<p class="sl-hint">
+Pro Schuld gibst du den Betrag, den Zinssatz und optional die Amortisation (Rückzahlung pro Jahr) an.
+</p>
+</div>
+
+<!-- Schritt 3 -->
+<div class="sl-step">
+<div class="sl-step-header">
+<span class="sl-step-num sl-step-num--blue">3</span>
+<h3>Einnahmen / Ausgaben</h3>
+</div>
+<p>Erfasse deine jährlichen Einnahmen und Ausgaben:</p>
+<ul>
+<li><strong>Einnahmen:</strong> Lohn, Renten, Mieteinnahmen</li>
+<li><strong>Ausgaben:</strong> Lebenshaltung, Versicherungen, Steuern</li>
+</ul>
+<p>
+Zusätzlich kannst du <strong>Ereignisse</strong> definieren – einmalige oder wiederkehrende
+finanzielle Veränderungen wie Hauskauf, Erbschaft oder Pensionierung.
+</p>
+</div>
+
+<div class="sl-tip">
+<p>
+<strong>Tipp:</strong> Je genauer deine Daten sind, desto aussagekräftiger werden Bilanz und Forecast.
+Du kannst jederzeit zurückkommen und Werte anpassen.
+</p>
+</div>
+
+<div class="sl-nav">
+<a href="/erklaerungen/erste-schritte/">← Erste Schritte</a>
+<a href="/erklaerungen/bilanz-forecast/">Bilanz &amp; Forecast →</a>
+</div>
+
+</div>

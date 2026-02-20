@@ -192,29 +192,36 @@ function DesktopInstallGuide({ canPrompt, onPrompt }: { canPrompt: boolean; onPr
   );
 }
 
-function BrowserInstallView() {
-  const { platform, androidBrowser, canPrompt, installed, promptInstall } = useInstallPrompt();
+function AlreadyInstalledView() {
+  return (
+    <div className="flex flex-col items-center gap-4 text-center">
+      <div className="rounded-full border border-emerald-700 bg-emerald-950/40 p-3">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-8 w-8 text-emerald-400">
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+      </div>
+      <p className="text-lg font-medium text-emerald-300">App bereits installiert</p>
+      <p className="text-sm text-slate-400">
+        Bitte öffne <span className="font-medium text-slate-200">Silverline</span> über deinen Home-Bildschirm.
+      </p>
+    </div>
+  );
+}
 
-  if (installed) {
+function BrowserInstallView() {
+  const { platform, androidBrowser, canPrompt, justInstalled, likelyInstalled, promptSettled, promptInstall } = useInstallPrompt();
+
+  if (justInstalled) return <AlreadyInstalledView />;
+
+  if (!promptSettled) {
     return (
-      <div className="flex flex-col items-center gap-4 text-center">
-        <div className="rounded-full border border-emerald-700 bg-emerald-950/40 p-3">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-8 w-8 text-emerald-400">
-            <polyline points="20 6 9 17 4 12" />
-          </svg>
-        </div>
-        <p className="text-lg font-medium text-emerald-300">App installiert!</p>
-        <Link
-          href="/finance"
-          prefetch={false}
-          className="mt-2 inline-flex min-h-12 min-w-[220px] items-center justify-center gap-2 rounded-lg bg-sky-500 px-8 font-medium text-white transition hover:bg-sky-400 touch-manipulation"
-        >
-          Weiter zur App
-          <ArrowRightIcon />
-        </Link>
+      <div className="flex justify-center py-4">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-sky-500 border-t-transparent" />
       </div>
     );
   }
+
+  if (likelyInstalled) return <AlreadyInstalledView />;
 
   return (
     <>

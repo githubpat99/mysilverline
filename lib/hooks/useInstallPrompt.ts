@@ -28,40 +28,40 @@ function detectAndroidBrowser(): AndroidBrowser {
   return "other";
 }
 
-const INSTALLED_KEY = "sl_pwa_installed";
-
-function readInstalled(): boolean {
-  try { return localStorage.getItem(INSTALLED_KEY) === "1"; } catch { return false; }
-}
-
-function writeInstalled() {
-  try { localStorage.setItem(INSTALLED_KEY, "1"); } catch { /* noop */ }
-}
-
 export function useInstallPrompt() {
   const [platform] = useState<Platform>(detectPlatform);
   const [androidBrowser] = useState<AndroidBrowser>(detectAndroidBrowser);
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [installed, setInstalled] = useState(readInstalled);
+  const [justInstalled, setJustInstalled] = useState(false);
+  const [promptSettled, setPromptSettled] = useState(false);
 
   useEffect(() => {
+    let gotPrompt = false;
+
     function onBeforeInstall(e: Event) {
       e.preventDefault();
+      gotPrompt = true;
       setDeferredPrompt(e as BeforeInstallPromptEvent);
+      setPromptSettled(true);
     }
 
     function onAppInstalled() {
-      writeInstalled();
-      setInstalled(true);
+      setJustInstalled(true);
       setDeferredPrompt(null);
+      setPromptSettled(true);
     }
 
     window.addEventListener("beforeinstallprompt", onBeforeInstall);
     window.addEventListener("appinstalled", onAppInstalled);
 
+    const timer = setTimeout(() => {
+      if (!gotPrompt) setPromptSettled(true);
+    }, 2000);
+
     return () => {
       window.removeEventListener("beforeinstallprompt", onBeforeInstall);
       window.removeEventListener("appinstalled", onAppInstalled);
+      clearTimeout(timer);
     };
   }, []);
 
@@ -71,17 +71,20 @@ export function useInstallPrompt() {
     const { outcome } = await deferredPrompt.userChoice;
     setDeferredPrompt(null);
     if (outcome === "accepted") {
-      writeInstalled();
-      setInstalled(true);
+      setJustInstalled(true);
     }
     return outcome === "accepted";
   }, [deferredPrompt]);
+
+  const likelyInstalled = promptSettled && !deferredPrompt && platform !== "ios";
 
   return {
     platform,
     androidBrowser,
     canPrompt: !!deferredPrompt,
-    installed,
+    justInstalled,
+    likelyInstalled,
+    promptSettled,
     promptInstall,
   };
 }

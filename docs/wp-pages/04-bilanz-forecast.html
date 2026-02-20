@@ -1,5 +1,20 @@
 <style>
-.sl-docs { max-width:720px; margin:0 auto; font-family:inherit; }
+/* Astra-Theme Overrides */
+#primary, .content-area, .site-content,
+.ast-single-post, .ast-page-builder-template,
+.entry-content, article.page, article.post {
+  background:transparent !important;
+  border:none !important;
+  box-shadow:none !important;
+}
+#primary, .content-area.primary { margin-top:0 !important; padding-top:0 !important; }
+.site-content > .ast-container { padding-top:0 !important; }
+.site-main { margin-top:0 !important; padding-top:0 !important; }
+.entry-content { padding-top:0 !important; }
+.entry-content table, .entry-content td, .entry-content th,
+table, td, th { border:none !important; }
+
+.sl-docs { max-width:780px; margin:0 auto; font-family:inherit; }
 .sl-docs p { color:#c8d0dc; line-height:1.7; }
 .sl-docs h2 { font-size:1.2em; color:#e2e8f0; }
 .sl-docs .sl-boxes { margin:1.5em 0; }
@@ -69,9 +84,33 @@ Die <strong>Bilanzübersicht</strong> zeigt dir deine gesamte finanzielle Situat
 </div>
 
 <p>
-Eine <strong>Donut-Grafik</strong> zeigt dir den visuellen Vergleich von Aktiven und Passiven.
-So siehst du sofort, wie dein <strong>Nettovermögen</strong> (Eigenkapital = Aktiven minus Passiven) aussieht.
+Ein dezenter <strong>Bilanzbalken</strong> zeigt dir das Verhältnis von Aktiven und Passiven auf einen Blick.
+So siehst du sofort, wie dein <strong>Eigenkapital</strong> (Aktiven minus Passiven) aussieht:
 </p>
+
+<div style="margin:1.2em 0 1.5em;padding:16px 20px;background:#0f172a;border:1px solid #334155;border-radius:10px;">
+
+<div style="display:flex;align-items:flex-end;margin-bottom:6px;">
+<div style="width:calc(55% - 2px);text-align:center;font-size:0.85em;color:#86efac;font-weight:600;">Eigenkapital</div>
+<div style="width:4px;"></div>
+<div style="width:calc(45% - 2px);text-align:center;font-size:0.85em;color:#fca5a5;font-weight:600;">Passiven</div>
+</div>
+
+<div style="display:flex;align-items:center;height:7px;">
+<div style="width:calc(55% - 2px);height:100%;background:linear-gradient(90deg,#22d3ee,#818cf8);border-radius:99px 0 0 99px;"></div>
+<div style="width:4px;display:flex;align-items:center;justify-content:center;">
+<div style="width:7px;height:7px;background:#e2e8f0;border-radius:2px;"></div>
+</div>
+<div style="width:calc(45% - 2px);height:100%;background:#334155;border-radius:0 99px 99px 0;"></div>
+</div>
+
+<div style="display:flex;align-items:flex-start;margin-top:6px;">
+<div style="width:1px;height:8px;background:#475569;"></div>
+<div style="flex:1;text-align:center;font-size:0.82em;color:#94a3b8;">Aktiven</div>
+<div style="width:1px;height:8px;background:#475569;"></div>
+</div>
+
+</div>
 
 <h2 style="margin-top:2.5em;">Forecast</h2>
 
@@ -95,7 +134,7 @@ basierend auf deinen erfassten Daten, Zinsen, Amortisationen und Ereignissen.
 <span class="sl-row-icon">🔍</span>
 <div>
 <strong>Details (aufklappbar)</strong>
-<p>Bewegungen pro Kategorie: Zinsen, Amortisation, Cashflow, Liquidität.</p>
+<p>Bewegungen pro Kategorie: Zinsen, Amortisation, Erträge, Liquidität.</p>
 </div>
 </div>
 

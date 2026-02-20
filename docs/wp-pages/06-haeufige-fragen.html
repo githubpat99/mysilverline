@@ -1,5 +1,20 @@
 <style>
-.sl-docs { max-width:720px; margin:0 auto; font-family:inherit; }
+/* Astra-Theme Overrides */
+#primary, .content-area, .site-content,
+.ast-single-post, .ast-page-builder-template,
+.entry-content, article.page, article.post {
+  background:transparent !important;
+  border:none !important;
+  box-shadow:none !important;
+}
+#primary, .content-area.primary { margin-top:0 !important; padding-top:0 !important; }
+.site-content > .ast-container { padding-top:0 !important; }
+.site-main { margin-top:0 !important; padding-top:0 !important; }
+.entry-content { padding-top:0 !important; }
+.entry-content table, .entry-content td, .entry-content th,
+table, td, th { border:none !important; }
+
+.sl-docs { max-width:780px; margin:0 auto; font-family:inherit; }
 .sl-docs p { color:#c8d0dc; line-height:1.7; }
 .sl-docs .sl-intro { font-size:1.05em; }
 .sl-docs .sl-faq {
@@ -32,70 +47,58 @@ Antworten auf die häufigsten Fragen rund um Silverline.
 <div class="sl-faq">
 <h3>Wo sind meine Daten gespeichert?</h3>
 <p>
-Lokal auf deinem Gerät, in der Browser-Datenbank. Sie werden <strong>nicht automatisch</strong>
-an einen Server gesendet – nur wenn du dich anmeldest und aktiv synchronisierst.
+Lokal auf deinem Gerät, in der Browser-Datenbank. Sie werden <strong>nicht automatisch</strong> an einen Server gesendet – nur wenn du dich anmeldest und aktiv synchronisierst.
 </p>
 </div>
 
 <div class="sl-faq">
 <h3>Kann ich die App auf mehreren Geräten nutzen?</h3>
 <p>
-Ja. Erstelle ein Konto, erfasse deine Daten auf einem Gerät und synchronisiere.
-Melde dich auf dem anderen Gerät an und tippe auf Sync – du hast dieselben Daten.
+Ja. Erstelle ein Konto, erfasse deine Daten auf einem Gerät und synchronisiere. Melde dich auf dem anderen Gerät an und tippe auf Sync – du hast dieselben Daten.
 </p>
 </div>
 
 <div class="sl-faq">
 <h3>Muss ich ein Konto erstellen?</h3>
 <p>
-Nein. Silverline funktioniert vollständig ohne Anmeldung. Ein Konto ist nur nötig,
-wenn du deine Daten auf dem Server sichern oder zwischen Geräten synchronisieren möchtest.
+Nein. Silverline funktioniert vollständig ohne Anmeldung. Ein Konto ist nur nötig, wenn du deine Daten auf dem Server sichern oder zwischen Geräten synchronisieren möchtest.
 </p>
 </div>
 
 <div class="sl-faq">
 <h3>Wie lösche ich meine Daten?</h3>
 <p>
-Öffne die <strong>Einstellungen</strong> deines Browsers und lösche die Website-Daten für
-<strong>mysilverline.it-pin.ch</strong>. Damit werden alle lokal gespeicherten Daten entfernt.
+Öffne die <strong>Einstellungen</strong> deines Browsers und lösche die Website-Daten für <strong>mysilverline.it-pin.ch</strong>. Damit werden alle lokal gespeicherten Daten entfernt.
 </p>
 </div>
 
 <div class="sl-faq">
 <h3>Muss ich die App aktualisieren?</h3>
 <p>
-Nein. Silverline aktualisiert sich <strong>automatisch</strong> im Hintergrund, wenn du online bist.
-Du hast immer die neueste Version – ohne manuelles Update.
+Nein. Silverline aktualisiert sich <strong>automatisch</strong> im Hintergrund, wenn du online bist. Du hast immer die neueste Version – ohne manuelles Update.
 </p>
 </div>
 
 <div class="sl-faq">
 <h3>Was passiert bei einem Vorlagen-Wechsel?</h3>
 <p>
-Deine bestehenden Daten werden <strong>überschrieben</strong>. Du wirst vorher gefragt,
-ob du fortfahren möchtest. Tipp: Synchronisiere vorher, um eine Sicherung auf dem Server zu haben.
+Deine bestehenden Daten werden <strong>überschrieben</strong>. Du wirst vorher gefragt, ob du fortfahren möchtest. Tipp: Synchronisiere vorher, um eine Sicherung auf dem Server zu haben.
 </p>
 </div>
 
 <div class="sl-faq">
 <h3>Funktioniert die App auch ohne Internet?</h3>
 <p>
-Ja, vollständig. Du kannst Daten erfassen, die Bilanz anschauen und den Forecast berechnen –
-alles offline. Nur die Synchronisation mit dem Server braucht eine Internetverbindung.
+Ja, vollständig. Du kannst Daten erfassen, die Bilanz anschauen und den Forecast berechnen – alles offline. Nur die Synchronisation mit dem Server braucht eine Internetverbindung.
 </p>
 </div>
 
 <div class="sl-faq">
 <h3>Welche Browser werden unterstützt?</h3>
 <p>
-Silverline funktioniert in allen modernen Browsern: <strong>Chrome</strong>, <strong>Edge</strong>,
-<strong>Safari</strong>, <strong>Samsung Internet</strong> und <strong>Firefox</strong>.
+Silverline funktioniert in allen modernen Browsern: <strong>Chrome</strong>, <strong>Edge</strong>, <strong>Safari</strong>, <strong>Samsung Internet</strong> und <strong>Firefox</strong>.
 Die PWA-Installation funktioniert am besten in Chrome (Desktop + Android) und Safari (iOS).
 </p>
-</div>
-
-<div class="sl-cta">
-<a href="/app-static/">App herunterladen →</a>
 </div>
 
 <div class="sl-nav">

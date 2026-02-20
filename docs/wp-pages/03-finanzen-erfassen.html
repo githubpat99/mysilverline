@@ -1,5 +1,20 @@
 <style>
-.sl-docs { max-width:720px; margin:0 auto; font-family:inherit; }
+/* Astra-Theme Overrides */
+#primary, .content-area, .site-content,
+.ast-single-post, .ast-page-builder-template,
+.entry-content, article.page, article.post {
+  background:transparent !important;
+  border:none !important;
+  box-shadow:none !important;
+}
+#primary, .content-area.primary { margin-top:0 !important; padding-top:0 !important; }
+.site-content > .ast-container { padding-top:0 !important; }
+.site-main { margin-top:0 !important; padding-top:0 !important; }
+.entry-content { padding-top:0 !important; }
+.entry-content table, .entry-content td, .entry-content th,
+table, td, th { border:none !important; }
+
+.sl-docs { max-width:780px; margin:0 auto; font-family:inherit; }
 .sl-docs p { color:#c8d0dc; line-height:1.7; }
 .sl-docs .sl-intro { font-size:1.05em; }
 .sl-docs .sl-step {
@@ -18,10 +33,11 @@
 .sl-docs .sl-step-num--blue { background:rgba(56,189,248,0.15); color:#38bdf8; }
 .sl-docs .sl-step h3 { margin:0; color:#e2e8f0; font-size:1.1em; }
 .sl-docs .sl-step .sl-hint { font-size:0.85em; color:#94a3b8; margin:1em 0 0; line-height:1.5; }
-.sl-docs .sl-tags { margin:1em 0 0; }
+.sl-docs .sl-tags {
+  margin:1em 0 0; display:grid !important; grid-template-columns:1fr 1fr; gap:0.5em;
+}
 .sl-docs .sl-tag {
-  display:inline-block; padding:0.4em 0.8em; margin:0 0.4em 0.4em 0;
-  background:#1e293b; border-radius:8px; font-size:0.85em;
+  padding:0.4em 0.8em; background:#1e293b; border-radius:8px; font-size:0.85em;
 }
 .sl-docs .sl-tag strong { font-size:0.95em; }
 .sl-docs .sl-tag span { display:block; font-size:0.85em; color:#94a3b8; margin-top:0.15em; }
@@ -55,12 +71,16 @@ Deine Änderungen werden <strong>automatisch lokal gespeichert</strong> – du v
 <h3>Vermögen (Aktiven)</h3>
 </div>
 <p>Erfasse alle deine Vermögenswerte, aufgeteilt nach Verfügbarkeit:</p>
-<div class="sl-tags">
-<span class="sl-tag sl-tag--green"><strong>Liquidität</strong><span>Bankkonten, Bargeld</span></span>
-<span class="sl-tag sl-tag--green"><strong>Kurzfristig</strong><span>Festgeld, kurzfristige Anlagen</span></span>
-<span class="sl-tag sl-tag--green"><strong>Langfristig</strong><span>Wertschriften, ETFs, Säule 3a</span></span>
-<span class="sl-tag sl-tag--green"><strong>Sachwerte</strong><span>Immobilien, Fahrzeuge</span></span>
-</div>
+<table style="width:100%;border-collapse:separate;border-spacing:6px;table-layout:fixed;margin:1em 0 0;" cellpadding="0" cellspacing="0">
+<tr>
+<td style="padding:0.4em 0.8em;background:#1e293b;border-radius:8px;border:none !important;"><strong style="color:#10b981;font-size:0.95em;">Liquidität</strong><br><span style="font-size:0.8em;color:#94a3b8;">Bankkonten, Bargeld</span></td>
+<td style="padding:0.4em 0.8em;background:#1e293b;border-radius:8px;border:none !important;"><strong style="color:#10b981;font-size:0.95em;">Kurzfristig</strong><br><span style="font-size:0.8em;color:#94a3b8;">Festgeld, kurzfristige Anlagen</span></td>
+</tr>
+<tr>
+<td style="padding:0.4em 0.8em;background:#1e293b;border-radius:8px;border:none !important;"><strong style="color:#10b981;font-size:0.95em;">Langfristig</strong><br><span style="font-size:0.8em;color:#94a3b8;">Wertschriften, ETFs, Säule 3a</span></td>
+<td style="padding:0.4em 0.8em;background:#1e293b;border-radius:8px;border:none !important;"><strong style="color:#10b981;font-size:0.95em;">Sachwerte</strong><br><span style="font-size:0.8em;color:#94a3b8;">Immobilien, Fahrzeuge</span></td>
+</tr>
+</table>
 <p class="sl-hint">
 Pro Position gibst du den Betrag in CHF und eine Bezeichnung an. Optional: jährlicher Cashflow und Zielkonto.
 </p>
@@ -73,12 +93,16 @@ Pro Position gibst du den Betrag in CHF und eine Bezeichnung an. Optional: jähr
 <h3>Schulden (Passiven)</h3>
 </div>
 <p>Erfasse alle deine Verbindlichkeiten:</p>
-<div class="sl-tags">
-<span class="sl-tag sl-tag--red"><strong>Hypothek</strong><span>Eigenheim-Finanzierung</span></span>
-<span class="sl-tag sl-tag--red"><strong>Darlehen</strong><span>Privatdarlehen</span></span>
-<span class="sl-tag sl-tag--red"><strong>Konsumkredit</strong><span>Ratenzahlung</span></span>
-<span class="sl-tag sl-tag--red"><strong>Kreditkarte</strong><span>Offene Schulden</span></span>
-</div>
+<table style="width:100%;border-collapse:separate;border-spacing:6px;table-layout:fixed;margin:1em 0 0;" cellpadding="0" cellspacing="0">
+<tr>
+<td style="padding:0.4em 0.8em;background:#1e293b;border-radius:8px;border:none !important;"><strong style="color:#f43f5e;font-size:0.95em;">Kreditkarte</strong><br><span style="font-size:0.8em;color:#94a3b8;">Offene Schulden</span></td>
+<td style="padding:0.4em 0.8em;background:#1e293b;border-radius:8px;border:none !important;"><strong style="color:#f43f5e;font-size:0.95em;">Kredit</strong><br><span style="font-size:0.8em;color:#94a3b8;">Ratenzahlung</span></td>
+</tr>
+<tr>
+<td style="padding:0.4em 0.8em;background:#1e293b;border-radius:8px;border:none !important;"><strong style="color:#f43f5e;font-size:0.95em;">Darlehen</strong><br><span style="font-size:0.8em;color:#94a3b8;">Privatdarlehen</span></td>
+<td style="padding:0.4em 0.8em;background:#1e293b;border-radius:8px;border:none !important;"><strong style="color:#f43f5e;font-size:0.95em;">Hypothek</strong><br><span style="font-size:0.8em;color:#94a3b8;">Eigenheim-Finanzierung</span></td>
+</tr>
+</table>
 <p class="sl-hint">
 Pro Schuld gibst du den Betrag, den Zinssatz und optional die Amortisation (Rückzahlung pro Jahr) an.
 </p>

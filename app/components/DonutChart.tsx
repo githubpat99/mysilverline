@@ -12,51 +12,64 @@ export default function BalanceSummaryChart({
   totalAssets,
   totalLiabilities,
 }: Props) {
-  const { saldo, passiven, aktiven, boundaryPct } = useMemo(() => {
+  const { saldo, passiven, aktiven, ekPct } = useMemo(() => {
     const a = Math.max(0, Math.trunc(totalAssets));
     const p = Math.max(0, Math.trunc(totalLiabilities));
     const s = Math.max(0, a - p);
-    const pct = a > 0 ? (s / a) * 100 : 0;
-    return { saldo: s, passiven: p, aktiven: a, boundaryPct: pct };
+    const pct = a > 0 ? Math.min(100, (s / a) * 100) : 0;
+    return { saldo: s, passiven: p, aktiven: a, ekPct: pct };
   }, [totalAssets, totalLiabilities]);
 
-  const markerLeft = `${4.4 + (boundaryPct / 100) * 91.1}%`;
+  const passPct = 100 - ekPct;
 
   return (
     <div className="rounded-2xl bg-slate-900/35 p-4 shadow-xl ring-1 ring-white/5">
-      <div className="relative w-full" style={{ minHeight: 72 }}>
-        {/* Labels row */}
-        <div className="flex items-end justify-between mb-3">
-          <div className="text-lg font-normal text-white tabular-nums">
+      <div className="w-full" style={{ minHeight: 72 }}>
+        {/* EK / Passiven labels */}
+        <div className="flex items-end mb-1.5">
+          <div
+            className="text-center text-sm font-semibold text-green-300 tabular-nums"
+            style={{ width: `calc(${ekPct}% - 2px)` }}
+          >
             {formatCHF(saldo)}
           </div>
-          <div className="text-lg font-normal text-red-300 tabular-nums">
+          <div style={{ width: 4 }} />
+          <div
+            className="text-center text-sm font-semibold text-red-300 tabular-nums"
+            style={{ width: `calc(${passPct}% - 2px)` }}
+          >
             {formatCHF(passiven)}
           </div>
         </div>
 
-        {/* Track + Fill + Marker */}
-        <div className="relative h-[6px] rounded-full bg-slate-800">
+        {/* Bar segments with gap */}
+        <div className="flex items-center" style={{ height: 7 }}>
           <div
-            className="absolute inset-y-0 left-0 rounded-full"
+            className="h-full rounded-l-full"
             style={{
-              width: markerLeft,
+              width: `calc(${ekPct}% - 2px)`,
               background: "linear-gradient(90deg, #22d3ee, #818cf8)",
             }}
           />
+          <div className="flex items-center justify-center" style={{ width: 4 }}>
+            <div
+              className="bg-slate-200"
+              style={{ width: 7, height: 7, borderRadius: 2 }}
+            />
+          </div>
           <div
-            className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 h-3 w-3 rounded-full bg-white shadow-sm"
-            style={{
-              left: markerLeft,
-              border: "2px solid #0f172a",
-              boxShadow: "0 0 0 1px rgba(100,116,139,0.5)",
-            }}
+            className="h-full rounded-r-full bg-slate-700"
+            style={{ width: `calc(${passPct}% - 2px)` }}
           />
         </div>
 
-        {/* Aktiven total */}
-        <div className="mt-2 text-center text-lg font-normal text-green-300 tabular-nums">
-          {formatCHF(aktiven)}
+        {/* Aktiven total with end markers */}
+        <div className="flex items-start mt-1.5">
+          <div className="bg-slate-600" style={{ width: 1, height: 8 }} />
+          <div className="flex-1 text-center text-sm text-slate-400 tabular-nums">
+            {formatCHF(aktiven)}
+          </div>
+          <div className="bg-slate-600" style={{ width: 1, height: 8 }} />
         </div>
       </div>
     </div>

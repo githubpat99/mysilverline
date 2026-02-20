@@ -1,7 +1,3 @@
-<!-- WordPress Startseite / Landing Page -->
-<!-- Einfügen als: "Eigenes HTML"-Block, Volle Breite -->
-<!-- Ersetzt oder ergänzt den bestehenden Hero-Bereich -->
-
 <style>
 /* Astra-Theme Overrides */
 #primary, .content-area, .site-content,
@@ -12,143 +8,127 @@
 #primary, .content-area.primary { margin-top:0 !important; padding-top:0 !important; }
 .site-content > .ast-container { padding-top:0 !important; }
 .site-main { margin-top:0 !important; padding-top:0 !important; }
+.entry-content { padding-top:0 !important; }
 
 .sl-lp { max-width:780px; margin:0 auto; font-family:inherit; }
 
-/* Hero */
-.sl-lp-hero { text-align:center; padding:0.5em 1em 2em; }
-.sl-lp-hero .sl-eyebrow {
-  display:inline-block; font-size:0.78em; font-weight:600;
-  letter-spacing:.1em; text-transform:uppercase;
-  color:#38bdf8; margin-bottom:1em;
+/* Eye-Catcher Fragen */
+.sl-questions { display:flex; flex-direction:column; gap:1em; margin:1em 0 2.5em; }
+.sl-q-card {
+  position:relative; padding:1.6em 1.8em; border-radius:14px;
+  background:linear-gradient(135deg, #0f172a 0%, #1a1f3a 100%);
+  border:1px solid #1e293b; overflow:hidden;
+  transition:border-color .3s;
 }
-.sl-lp-hero h1 {
-  font-size:clamp(1.8em,5vw,2.8em); font-weight:700;
-  color:#f1f5f9; line-height:1.25; margin:0 0 0.6em;
+.sl-q-card:hover { border-color:#334155; }
+.sl-q-card::before {
+  content:''; position:absolute; left:0; top:0; bottom:0; width:3px;
+  border-radius:3px 0 0 3px;
 }
-.sl-lp-hero h1 em { color:#38bdf8; font-style:normal; }
-.sl-lp-hero .sl-sub {
-  font-size:1.05em; color:#94a3b8; max-width:520px;
-  margin:0 auto 2em; line-height:1.7;
+.sl-q-card:nth-child(1)::before { background:linear-gradient(180deg,#f59e0b,#f97316); }
+.sl-q-card:nth-child(2)::before { background:linear-gradient(180deg,#f43f5e,#e11d48); }
+.sl-q-card:nth-child(3)::before { background:linear-gradient(180deg,#8b5cf6,#6d28d9); }
+.sl-q-card h2 {
+  font-size:clamp(1.3em,3.5vw,1.7em); font-weight:700;
+  color:#f1f5f9; line-height:1.3; margin:0 0 .5em;
 }
-.sl-lp-cta {
-  display:inline-block; background:linear-gradient(135deg,#2563eb,#1e40af);
-  color:#fff; font-weight:600; font-size:1em; padding:12px 28px;
-  border-radius:10px; text-decoration:none; box-shadow:0 2px 12px rgba(37,99,235,0.25);
+.sl-q-stat {
+  font-size:.85em; color:#94a3b8; line-height:1.6; margin:0;
 }
+.sl-q-stat strong { color:#cbd5e1; }
+
+/* CTA Button */
 .sl-lp-cta:hover { opacity:.92; }
-.sl-lp-hero .sl-no-account {
-  display:block; margin-top:.9em; font-size:.82em; color:#64748b;
-}
 
-/* App-Preview Container */
+/* App-Preview: eigener sichtbarer Container */
 .sl-app-preview {
-  margin:2.5em 0; border-radius:16px; overflow:hidden;
-  border:1px solid #1e293b; background:#0b1120;
+  margin:2.5em 0 !important; border-radius:14px !important; overflow:hidden !important;
+  border:1px solid #334155 !important;
+  background:#1e293b !important;
   font-family:-apple-system,BlinkMacSystemFont,sans-serif;
-  box-shadow:0 4px 32px rgba(0,0,0,0.5);
-}
-/* Chrome-Leiste */
-.sl-app-chrome {
-  display:flex; align-items:center; gap:.4em; padding:.6em 1em;
-  background:#0f172a; border-bottom:1px solid #1e293b;
-}
-.sl-chrome-dot {
-  width:9px; height:9px; border-radius:50%; background:#1e3a5f;
-}
-.sl-chrome-label {
-  margin-left:.5em; font-size:.72em; color:#475569; font-weight:500;
+  padding:0 !important;
 }
 
-/* Bilanz-Screen */
-.sl-screen { padding:1.2em 1.4em; background:#0b1120; }
+/* App-Titel: Logo links, Name rechts, eine Zeile */
+.sl-app-header {
+  display:flex !important; flex-direction:row !important;
+  align-items:center !important; gap:10px;
+  padding:14px 20px 10px;
+}
+.sl-app-header img {
+  width:26px; height:26px; border-radius:6px;
+  display:inline-block; flex-shrink:0;
+}
+.sl-app-name {
+  font-size:1.05em; font-weight:700; color:#f1f5f9;
+  letter-spacing:.02em; line-height:26px;
+}
+
+/* Bilanz kompakt */
+.sl-screen { padding:.8em 20px 1em; }
 .sl-screen-title {
-  font-size:.75em; font-weight:600; color:#334155;
-  letter-spacing:.04em; text-transform:uppercase; margin-bottom:.8em;
+  font-size:.72em; font-weight:600; color:#64748b;
+  letter-spacing:.06em; text-transform:uppercase; margin-bottom:.7em;
 }
 .sl-bilanz-grid { display:grid; grid-template-columns:1fr 1fr; gap:.75em; }
 .sl-bilanz-card {
-  background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:.9em 1em;
+  background:#0f172a !important; border:1px solid #334155 !important; border-radius:10px !important; padding:.9em 1em !important;
 }
-.sl-bcard-title { font-size:.8em; font-weight:600; margin-bottom:.3em; color:#64748b; }
-.sl-bcard-total { font-size:1.6em; font-weight:800; margin-bottom:.6em; }
+.sl-bcard-title { font-size:.78em; font-weight:600; color:#64748b; margin-bottom:.2em; }
+.sl-bcard-total { font-size:1.5em; font-weight:800; }
 .sl-aktiven .sl-bcard-total { color:#4ade80; }
 .sl-passiven .sl-bcard-total { color:#f87171; }
-.sl-bcard-section {
-  font-size:.62em; font-weight:600; letter-spacing:.08em;
-  text-transform:uppercase; color:#475569; margin:.6em 0 .3em;
-}
-.sl-bcard-row {
-  display:flex; justify-content:space-between; font-size:.78em;
-  color:#94a3b8; padding:.25em 0; border-bottom:1px solid #1e293b11;
-}
-.sl-bcard-row span:last-child { color:#cbd5e1; font-variant-numeric:tabular-nums; }
 
 /* Balance-Bar */
-.sl-bal-wrap { margin:1em 0 .3em; }
+.sl-bal-wrap { margin:.9em 0 .2em; }
 .sl-bal-labels {
-  display:flex; justify-content:space-between; align-items:flex-end;
-  margin-bottom:.5em;
+  display:flex; justify-content:space-between; margin-bottom:.4em;
 }
-.sl-bal-labels .sl-bal-l-ek { color:#4ade80; font-weight:400; font-size:1.05em; font-variant-numeric:tabular-nums; }
-.sl-bal-labels .sl-bal-l-pa { color:#fca5a5; font-weight:400; font-size:1.05em; font-variant-numeric:tabular-nums; }
+.sl-bal-labels .sl-bal-l-ek { color:#4ade80; font-size:.9em; font-variant-numeric:tabular-nums; }
+.sl-bal-labels .sl-bal-l-pa { color:#fca5a5; font-size:.9em; font-variant-numeric:tabular-nums; }
 .sl-bal-track {
-  height:6px; background:#1e293b; border-radius:99px; position:relative; overflow:visible;
+  height:5px; background:#1e293b; border-radius:99px; position:relative; overflow:visible;
 }
 .sl-bal-fill {
-  position:absolute; left:0; top:0; height:100%; width:63%;
+  position:absolute; left:0; top:0; height:100%;
   background:linear-gradient(90deg,#22d3ee,#818cf8);
   border-radius:99px;
 }
 .sl-bal-marker {
-  position:absolute; left:63%; top:50%;
-  transform:translate(-50%,-50%);
-  width:12px; height:12px; background:#e2e8f0;
+  position:absolute; top:50%; transform:translate(-50%,-50%);
+  width:11px; height:11px; background:#e2e8f0;
   border-radius:50%; border:2px solid #0f172a;
-  box-shadow:0 0 0 1px rgba(100,116,139,0.5);
+  box-shadow:0 0 0 1px rgba(100,116,139,0.4);
 }
 .sl-bal-total {
-  text-align:center; font-size:1.05em; font-weight:400;
-  color:#86efac; margin-top:.5em; font-variant-numeric:tabular-nums;
+  text-align:center; font-size:.95em; color:#86efac;
+  margin-top:.4em; font-variant-numeric:tabular-nums;
 }
 
-/* Divider zwischen den zwei Screens */
-.sl-screen-divider { height:1px; background:#1e293b; margin:0 1.4em; }
+/* Divider */
+.sl-screen-divider { height:1px; background:linear-gradient(90deg,transparent,#475569,transparent); margin:0 20px; }
 
-/* Forecast-Screen */
-.sl-screen-forecast { padding:1.2em 1.4em; background:#0b1120; }
-.sl-stat-block { margin-bottom:.9em; }
-.sl-stat-lbl { font-size:.7em; color:#64748b; display:block; margin-bottom:.2em; letter-spacing:.02em; }
-.sl-stat-val { font-size:1.1em; font-weight:700; color:#f87171; }
-.sl-stat-pct { font-size:.78em; color:#94a3b8; font-weight:400; }
+/* Forecast */
+.sl-screen-forecast { padding:.8em 20px 1em; }
+.sl-fc-chart { width:100%; display:block; border-radius:6px; margin:.4em 0; }
 
-/* SVG Chart */
-.sl-chart-svg { width:100%; display:block; }
-
-/* Time Buttons */
-.sl-time-btns { display:flex; gap:.5em; margin-top:.9em; }
-.sl-time-btn {
-  font-size:.75em; padding:.3em .9em; border-radius:6px;
-  border:1px solid #334155; color:#64748b; cursor:default;
-}
-.sl-time-active { background:#1e293b; color:#e2e8f0; border-color:#475569; }
-
-/* Warning Caption */
-.sl-warn-caption {
-  font-size:.78em; color:#f59e0b; margin-top:.8em; padding:.5em .8em;
+/* Warning */
+.sl-warn-banner {
+  font-size:.78em; color:#f59e0b; margin-top:.6em; padding:.5em .8em;
   display:flex; align-items:center; gap:.4em;
-  background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.2);
+  background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.15);
   border-radius:8px;
 }
 
-/* Preview Caption */
+/* Caption */
 .sl-preview-caption {
-  text-align:center; font-size:.75em; color:#475569;
-  padding:.6em 1em .8em; background:#0b1120;
+  text-align:center; font-size:.72em; color:#64748b;
+  padding:.5em 20px 1em;
 }
 
 /* Drei Kernversprechen */
-.sl-promises { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:1em; margin:2.5em 0; }
+.sl-promises { display:grid; grid-template-columns:repeat(3,1fr); gap:1em; margin:2.5em 0; }
+@media(max-width:640px){ .sl-promises { grid-template-columns:1fr; } }
 .sl-promise {
   padding:1.4em; background:#0f172a; border:1px solid #1e293b;
   border-radius:12px;
@@ -188,130 +168,126 @@
 
 <div class="sl-lp">
 
-  <!-- HERO -->
-  <div class="sl-lp-hero">
-    <span class="sl-eyebrow">Persönliche Finanzplanung</span>
-    <h1>Weisst du,<br>ob dein Geld <em>reicht</em>?</h1>
-    <p class="sl-sub">
-      Silverline rechnet dir in Minuten durch, wie sich dein Vermögen über die nächsten
-      10, 20 oder 30 Jahre entwickelt – mit deinen echten Zahlen.
-    </p>
-    <a href="/app-static/finance" class="sl-lp-cta">Zur Finanz-Applikation →</a>
-    <span class="sl-no-account">Rechne deinen Fall direkt in der App.</span>
+  <!-- EYE-CATCHER: 3 Fragen -->
+  <div class="sl-questions">
+
+    <div class="sl-q-card">
+      <h2>Reicht dein Geld bis 85?</h2>
+      <p class="sl-q-stat">
+        <strong>2 von 3 Schweizern glauben nicht,</strong><br>dass AHV und Pensionskasse ihren Lebensstandard sichern. Nur 23 % der Erwerbstätigen sind zuversichtlich.
+      </p>
+    </div>
+
+    <div class="sl-q-card">
+      <h2>Kennst du deine Vorsorgelücke?</h2>
+      <p class="sl-q-stat">
+        <strong>60 % schätzen ihr Finanzwissen als mittelmässig ein.</strong>
+        Nur die Hälfte weiss, was der Umwandlungssatz bedeutet – obwohl er ihre Rente bestimmt.
+      </p>
+    </div>
+
+    <div class="sl-q-card">
+      <h2>Was kostet dich Nichtstun?</h2>
+      <p class="sl-q-stat">
+        <strong>45 % sparen ohne Strategie.</strong><br>
+        Weniger als die Hälfte der Bevölkerung konnte zuletzt überhaupt Geld zur Seite legen.
+        Wer nicht plant, riskiert Liquiditätsengpässe – genau dann, wenn es zählt.
+      </p>
+    </div>
+
   </div>
 
-  <!-- AHA-MOMENT: App-Vorschau -->
-  <div class="sl-app-preview">
+  <!-- APP-KACHEL: Bridge + Vorschau als ein Block -->
+  <div class="sl-app-preview" style="background:#1e293b;border:1px solid #334155;border-radius:14px;margin:2.5em 0;overflow:hidden;padding:0;">
 
-    <!-- Chrome-Leiste -->
-    <div class="sl-app-chrome">
-      <div class="sl-chrome-dot"></div>
-      <div class="sl-chrome-dot"></div>
-      <div class="sl-chrome-dot"></div>
-      <span class="sl-chrome-label">Silverline App</span>
+    <!-- Bridge: direkt in der Kachel -->
+    <div style="padding:24px 24px 16px;text-align:center;border-bottom:1px solid #334155;">
+      <div style="font-size:clamp(1.2em,3.5vw,1.6em);font-weight:700;color:#f1f5f9;line-height:1.35;margin-bottom:10px;">
+        Damit dir das nicht passiert,<br>brauchst du eine <span style="color:#38bdf8;">solide Grundlage</span>.
+      </div>
+      <div style="font-size:.9em;color:#94a3b8;margin-bottom:16px;">
+        Silverline rechnet in Minuten, wie sich dein Vermögen über 10, 20 oder 30 Jahre entwickelt.
+      </div>
+      <a href="/app-static/finance" class="sl-lp-cta" style="display:inline-block;background:linear-gradient(135deg,#2563eb,#1e40af);color:#fff;font-weight:600;font-size:1em;padding:12px 28px;border-radius:10px;text-decoration:none;">Zur Finanz-Applikation →</a>
     </div>
 
-    <!-- Screen 1: Bilanzübersicht (kompakt) -->
-    <div class="sl-screen">
-      <div class="sl-screen-title">Bilanzübersicht</div>
-      <div class="sl-bilanz-grid">
+    <div class="sl-app-header" style="display:flex;flex-direction:row;align-items:center;gap:10px;padding:14px 20px 10px;">
+      <img src="/wp-content/uploads/2026/02/cropped-SL-logo.png" alt="SL" style="width:26px;height:26px;border-radius:6px;flex-shrink:0;"/>
+      <span class="sl-app-name" style="font-size:1.05em;font-weight:700;color:#f1f5f9;">Silverline</span>
+    </div>
 
-        <div class="sl-bilanz-card sl-aktiven">
-          <div class="sl-bcard-title">Aktiven</div>
-          <div class="sl-bcard-total">CHF 365'200</div>
-          <div class="sl-bcard-row"><span>Konten &amp; Depot</span><span>120'800</span></div>
-          <div class="sl-bcard-row"><span>Immobilien</span><span>220'000</span></div>
-          <div class="sl-bcard-row"><span>Säule 3a</span><span>24'400</span></div>
+    <!-- Bilanz: kompakt, nur Totals -->
+    <div style="padding:8px 20px 12px;">
+      <div style="font-size:.72em;font-weight:600;color:#64748b;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;">Bilanzübersicht</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:12px 14px;">
+          <div style="font-size:.78em;font-weight:600;color:#4ade80;margin-bottom:3px;">Aktiven</div>
+          <div style="font-size:1.5em;font-weight:800;color:#4ade80;">CHF 818'500</div>
         </div>
-
-        <div class="sl-bilanz-card sl-passiven">
-          <div class="sl-bcard-title">Passiven</div>
-          <div class="sl-bcard-total">CHF 135'000</div>
-          <div class="sl-bcard-row"><span>Hypothek</span><span>133'800</span></div>
-          <div class="sl-bcard-row"><span>Kreditkarte</span><span>1'200</span></div>
+        <div style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:12px 14px;">
+          <div style="font-size:.78em;font-weight:600;color:#f87171;margin-bottom:3px;">Passiven</div>
+          <div style="font-size:1.5em;font-weight:800;color:#f87171;">CHF 451'500</div>
         </div>
-
       </div>
 
-      <!-- Balance-Bar -->
-      <div class="sl-bal-wrap">
-        <div class="sl-bal-labels">
-          <span class="sl-bal-l-ek">230'200</span>
-          <span class="sl-bal-l-pa">135'000</span>
+      <div style="margin:12px 0 4px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+          <span style="color:#4ade80;font-size:.9em;">367'000</span>
+          <span style="color:#fca5a5;font-size:.9em;">451'500</span>
         </div>
-        <div class="sl-bal-track">
-          <div class="sl-bal-fill"></div>
-          <div class="sl-bal-marker"></div>
+        <div style="height:5px;background:#0f172a;border-radius:99px;position:relative;overflow:visible;">
+          <div style="position:absolute;left:0;top:0;height:100%;width:45%;background:linear-gradient(90deg,#22d3ee,#818cf8);border-radius:99px;"></div>
+          <div style="position:absolute;left:45%;top:50%;transform:translate(-50%,-50%);width:11px;height:11px;background:#e2e8f0;border-radius:50%;border:2px solid #1e293b;"></div>
         </div>
-        <div class="sl-bal-total">365'200</div>
+        <div style="text-align:center;font-size:.95em;color:#86efac;margin-top:6px;">818'500</div>
       </div>
     </div>
 
-    <div class="sl-screen-divider"></div>
+    <div style="height:1px;background:linear-gradient(90deg,transparent,#475569,transparent);margin:0 20px;"></div>
 
-    <!-- Screen 2: Forecast -->
-    <div class="sl-screen-forecast">
-      <div class="sl-screen-title">Forecast</div>
-
-      <div class="sl-stat-block">
-        <span class="sl-stat-lbl">Δ Eigenkapital im Zeitraum</span>
-        <span class="sl-stat-val">−86'925 CHF <span class="sl-stat-pct">(−23.8 %)</span></span>
-      </div>
-
-      <!-- Forecast-Chart als Base64-Image (WordPress-sicher) -->
-      <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MjAgMTEwIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0icyIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjAiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjMTBiOTgxIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMzglIiBzdG9wLWNvbG9yPSIjMTBiOTgxIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iNDIlIiBzdG9wLWNvbG9yPSIjZjQzZjVlIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iI2Y0M2Y1ZSIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iZiIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjAiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjMTBiOTgxIiBzdG9wLW9wYWNpdHk9IjAuMTIiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIzOCUiIHN0b3AtY29sb3I9IiMxMGI5ODEiIHN0b3Atb3BhY2l0eT0iMC4xMCIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjQyJSIgc3RvcC1jb2xvcj0iI2Y0M2Y1ZSIgc3RvcC1vcGFjaXR5PSIwLjEwIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iI2Y0M2Y1ZSIgc3RvcC1vcGFjaXR5PSIwLjA0Ii8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8cmVjdCB3aWR0aD0iNDIwIiBoZWlnaHQ9IjExMCIgZmlsbD0iIzA3MGQxYSIgcng9IjAiLz4KICA8bGluZSB4MT0iMzAiIHkxPSI4MiIgeDI9IjQwMCIgeTI9IjgyIiBzdHJva2U9IiMxZTI5M2IiIHN0cm9rZS13aWR0aD0iMC44Ii8+CiAgPGxpbmUgeDE9IjMwIiB5MT0iMjIiIHgyPSI0MDAiIHkyPSIyMiIgc3Ryb2tlPSIjMzM0MTU1IiBzdHJva2Utd2lkdGg9IjAuNSIgc3Ryb2tlLWRhc2hhcnJheT0iNCwzIiBvcGFjaXR5PSIwLjUiLz4KICA8bGluZSB4MT0iMzAiIHkxPSI3OCIgeDI9IjQwMCIgeTI9Ijc4IiBzdHJva2U9IiM0NzU1NjkiIHN0cm9rZS13aWR0aD0iMC41IiBzdHJva2UtZGFzaGFycmF5PSI0LDMiIG9wYWNpdHk9IjAuNCIvPgogIDxsaW5lIHgxPSI5MiIgeTE9IjgiIHgyPSI5MiIgeTI9IjgyIiBzdHJva2U9IiM5NGEzYjgiIHN0cm9rZS13aWR0aD0iMSIgc3Ryb2tlLWRhc2hhcnJheT0iNCwzIiBvcGFjaXR5PSIwLjYiLz4KICA8dGV4dCB4PSI5NiIgeT0iMTQiIGZvbnQtc2l6ZT0iNyIgZmlsbD0iIzk0YTNiOCIgZm9udC1mYW1pbHk9Ii1hcHBsZS1zeXN0ZW0sQmxpbmtNYWNTeXN0ZW1Gb250LHNhbnMtc2VyaWYiIG9wYWNpdHk9IjAuOSI+UGVuc2lvbmllcnVuZzwvdGV4dD4KICA8cGF0aCBkPSJNMzAsMjIgQzYwLDIxIDgwLDE5IDEyMCwxOCBDMTUwLDE3IDE3MCwxOCAxOTAsMjYgQzIyMCwzOCAyNjAsNTggMzAwLDY4IEMzMzAsNzMgMzcwLDc2IDQwMCw3OCBMNDAwLDgyIEwzMCw4MiBaIiBmaWxsPSJ1cmwoI2YpIi8+CiAgPHBhdGggZD0iTTMwLDIyIEM2MCwyMSA4MCwxOSAxMjAsMTggQzE1MCwxNyAxNzAsMTggMTkwLDI2IEMyMjAsMzggMjYwLDU4IDMwMCw2OCBDMzMwLDczIDM3MCw3NiA0MDAsNzgiIGZpbGw9Im5vbmUiIHN0cm9rZT0idXJsKCNzKSIgc3Ryb2tlLXdpZHRoPSIyLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgogIDxjaXJjbGUgY3g9IjIyMCIgY3k9IjQyIiByPSI1IiBmaWxsPSIjZjU5ZTBiIiBzdHJva2U9IiNmYmJmMjQiIHN0cm9rZS13aWR0aD0iMS41Ii8+CiAgPGNpcmNsZSBjeD0iMzAwIiBjeT0iNjgiIHI9IjQiIGZpbGw9IiNmNTllMGIiIHN0cm9rZT0iI2ZiYmYyNCIgc3Ryb2tlLXdpZHRoPSIxLjUiLz4KICA8Y2lyY2xlIGN4PSIzNTAiIGN5PSI3MyIgcj0iNCIgZmlsbD0iI2Y1OWUwYiIgc3Ryb2tlPSIjZmJiZjI0IiBzdHJva2Utd2lkdGg9IjEuNSIvPgogIDxjaXJjbGUgY3g9IjQwMCIgY3k9Ijc4IiByPSI0IiBmaWxsPSIjZjU5ZTBiIiBzdHJva2U9IiNmYmJmMjQiIHN0cm9rZS13aWR0aD0iMS41Ii8+CiAgPHRleHQgeD0iMzAiIHk9Ijk1IiBmb250LXNpemU9IjcuNSIgZmlsbD0iIzY0NzQ4YiIgZm9udC1mYW1pbHk9Ii1hcHBsZS1zeXN0ZW0sQmxpbmtNYWNTeXN0ZW1Gb250LHNhbnMtc2VyaWYiPjIwMjY8L3RleHQ+CiAgPHRleHQgeD0iODciIHk9Ijk1IiBmb250LXNpemU9IjcuNSIgZmlsbD0iIzk0YTNiOCIgZm9udC1mYW1pbHk9Ii1hcHBsZS1zeXN0ZW0sQmxpbmtNYWNTeXN0ZW1Gb250LHNhbnMtc2VyaWYiPjIwMjc8L3RleHQ+CiAgPHRleHQgeD0iMTUyIiB5PSI5NSIgZm9udC1zaXplPSI3LjUiIGZpbGw9IiM2NDc0OGIiIGZvbnQtZmFtaWx5PSItYXBwbGUtc3lzdGVtLEJsaW5rTWFjU3lzdGVtRm9udCxzYW5zLXNlcmlmIj4yMDI4PC90ZXh0PgogIDx0ZXh0IHg9IjIxNSIgeT0iOTUiIGZvbnQtc2l6ZT0iNy41IiBmaWxsPSIjZjU5ZTBiIiBmb250LWZhbWlseT0iLWFwcGxlLXN5c3RlbSxCbGlua01hY1N5c3RlbUZvbnQsc2Fucy1zZXJpZiI+MjAyOTwvdGV4dD4KICA8dGV4dCB4PSIyOTAiIHk9Ijk1IiBmb250LXNpemU9IjcuNSIgZmlsbD0iIzY0NzQ4YiIgZm9udC1mYW1pbHk9Ii1hcHBsZS1zeXN0ZW0sQmxpbmtNYWNTeXN0ZW1Gb250LHNhbnMtc2VyaWYiPjIwMzA8L3RleHQ+CiAgPHRleHQgeD0iMzQ1IiB5PSI5NSIgZm9udC1zaXplPSI3LjUiIGZpbGw9IiM2NDc0OGIiIGZvbnQtZmFtaWx5PSItYXBwbGUtc3lzdGVtLEJsaW5rTWFjU3lzdGVtRm9udCxzYW5zLXNlcmlmIj4yMDMxPC90ZXh0PgogIDx0ZXh0IHg9IjM5MCIgeT0iOTUiIGZvbnQtc2l6ZT0iNy41IiBmaWxsPSIjNjQ3NDhiIiBmb250LWZhbWlseT0iLWFwcGxlLXN5c3RlbSxCbGlua01hY1N5c3RlbUZvbnQsc2Fucy1zZXJpZiI+MjAzMjwvdGV4dD4KPC9zdmc+Cg==" alt="Forecast-Grafik: Eigenkapital sinkt nach Pensionierung, Liquiditätswarnung ab 2029" style="width:100%; display:block; border-radius:8px;"/>
-
-      <div class="sl-warn-caption">⚠ Liquidität reicht ab 2029 nicht mehr aus</div>
+    <!-- Forecast: Chart + Warnung -->
+    <div style="padding:8px 20px 12px;">
+      <div style="font-size:.72em;font-weight:600;color:#64748b;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;">Forecast</div>
+      <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MDAgMTIwIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0icyIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjAiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjMTBiOTgxIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMzUlIiBzdG9wLWNvbG9yPSIjMTBiOTgxIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iNDAlIiBzdG9wLWNvbG9yPSIjZjQzZjVlIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iI2Y0M2Y1ZSIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iZiIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjAiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjMTBiOTgxIiBzdG9wLW9wYWNpdHk9IjAuMTUiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIzNSUiIHN0b3AtY29sb3I9IiMxMGI5ODEiIHN0b3Atb3BhY2l0eT0iMC4xMCIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjQwJSIgc3RvcC1jb2xvcj0iI2Y0M2Y1ZSIgc3RvcC1vcGFjaXR5PSIwLjA4Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iI2Y0M2Y1ZSIgc3RvcC1vcGFjaXR5PSIwLjAzIi8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8bGluZSB4MT0iMzAiIHkxPSI4OCIgeDI9IjQ3MCIgeTI9Ijg4IiBzdHJva2U9IiMxZTI5M2IiIHN0cm9rZS13aWR0aD0iMC43Ii8+CiAgPGxpbmUgeDE9IjMwIiB5MT0iMjAiIHgyPSI0NzAiIHkyPSIyMCIgc3Ryb2tlPSIjMzM0MTU1IiBzdHJva2Utd2lkdGg9IjAuNCIgc3Ryb2tlLWRhc2hhcnJheT0iNCw0IiBvcGFjaXR5PSIwLjQiLz4KICA8bGluZSB4MT0iMzAiIHkxPSI4MiIgeDI9IjQ3MCIgeTI9IjgyIiBzdHJva2U9IiM0NzU1NjkiIHN0cm9rZS13aWR0aD0iMC40IiBzdHJva2UtZGFzaGFycmF5PSI0LDQiIG9wYWNpdHk9IjAuMyIvPgogIDxsaW5lIHgxPSIxMjAiIHkxPSI4IiB4Mj0iMTIwIiB5Mj0iODgiIHN0cm9rZT0iIzk0YTNiOCIgc3Ryb2tlLXdpZHRoPSIwLjgiIHN0cm9rZS1kYXNoYXJyYXk9IjQsMyIgb3BhY2l0eT0iMC41Ii8+CiAgPHRleHQgeD0iMTI1IiB5PSIxNSIgZm9udC1zaXplPSI3LjUiIGZpbGw9IiM5NGEzYjgiIGZvbnQtZmFtaWx5PSItYXBwbGUtc3lzdGVtLEJsaW5rTWFjU3lzdGVtRm9udCxzYW5zLXNlcmlmIiBvcGFjaXR5PSIwLjgiPlBlbnNpb25pZXJ1bmc8L3RleHQ+CiAgPHBhdGggZD0iTTMwLDIyIEM1NSwyMSA4MCwxOSAxMjAsMTggQzE1NSwxNyAxODAsMjAgMjEwLDMyIEMyNTAsNTAgMzAwLDY4IDM2MCw3OCBDNDAwLDgzIDQ0MCw4NSA0NzAsODYgTDQ3MCw4OCBMMzAsODggWiIgZmlsbD0idXJsKCNmKSIvPgogIDxwYXRoIGQ9Ik0zMCwyMiBDNTUsMjEgODAsMTkgMTIwLDE4IEMxNTUsMTcgMTgwLDIwIDIxMCwzMiBDMjUwLDUwIDMwMCw2OCAzNjAsNzggQzQwMCw4MyA0NDAsODUgNDcwLDg2IiBmaWxsPSJub25lIiBzdHJva2U9InVybCgjcykiIHN0cm9rZS13aWR0aD0iMi41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KICA8Y2lyY2xlIGN4PSIyNjAiIGN5PSI1MiIgcj0iNC41IiBmaWxsPSIjZjU5ZTBiIiBzdHJva2U9IiNmYmJmMjQiIHN0cm9rZS13aWR0aD0iMS41Ii8+CiAgPGNpcmNsZSBjeD0iMzYwIiBjeT0iNzgiIHI9IjMuNSIgZmlsbD0iI2Y1OWUwYiIgc3Ryb2tlPSIjZmJiZjI0IiBzdHJva2Utd2lkdGg9IjEuNSIvPgogIDxjaXJjbGUgY3g9IjQ3MCIgY3k9Ijg2IiByPSIzLjUiIGZpbGw9IiNmNTllMGIiIHN0cm9rZT0iI2ZiYmYyNCIgc3Ryb2tlLXdpZHRoPSIxLjUiLz4KICA8dGV4dCB4PSIzMCIgeT0iMTAyIiBmb250LXNpemU9IjgiIGZpbGw9IiM2NDc0OGIiIGZvbnQtZmFtaWx5PSItYXBwbGUtc3lzdGVtLEJsaW5rTWFjU3lzdGVtRm9udCxzYW5zLXNlcmlmIj4yMDI2PC90ZXh0PgogIDx0ZXh0IHg9IjExNSIgeT0iMTAyIiBmb250LXNpemU9IjgiIGZpbGw9IiM5NGEzYjgiIGZvbnQtZmFtaWx5PSItYXBwbGUtc3lzdGVtLEJsaW5rTWFjU3lzdGVtRm9udCxzYW5zLXNlcmlmIj4yMDI3PC90ZXh0PgogIDx0ZXh0IHg9IjIwMCIgeT0iMTAyIiBmb250LXNpemU9IjgiIGZpbGw9IiM2NDc0OGIiIGZvbnQtZmFtaWx5PSItYXBwbGUtc3lzdGVtLEJsaW5rTWFjU3lzdGVtRm9udCxzYW5zLXNlcmlmIj4yMDI4PC90ZXh0PgogIDx0ZXh0IHg9IjI4NSIgeT0iMTAyIiBmb250LXNpemU9IjgiIGZpbGw9IiM2NDc0OGIiIGZvbnQtZmFtaWx5PSItYXBwbGUtc3lzdGVtLEJsaW5rTWFjU3lzdGVtRm9udCxzYW5zLXNlcmlmIj4yMDI5PC90ZXh0PgogIDx0ZXh0IHg9IjM3MCIgeT0iMTAyIiBmb250LXNpemU9IjgiIGZpbGw9IiM2NDc0OGIiIGZvbnQtZmFtaWx5PSItYXBwbGUtc3lzdGVtLEJsaW5rTWFjU3lzdGVtRm9udCxzYW5zLXNlcmlmIj4yMDMwPC90ZXh0PgogIDx0ZXh0IHg9IjQ1NSIgeT0iMTAyIiBmb250LXNpemU9IjgiIGZpbGw9IiM2NDc0OGIiIGZvbnQtZmFtaWx5PSItYXBwbGUtc3lzdGVtLEJsaW5rTWFjU3lzdGVtRm9udCxzYW5zLXNlcmlmIj4yMDMxPC90ZXh0Pgo8L3N2Zz4K" alt="Forecast" style="width:100%;display:block;border-radius:6px;margin:6px 0;"/>
+      <div style="font-size:.78em;color:#f59e0b;margin-top:8px;padding:8px 10px;display:flex;align-items:center;gap:6px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.15);border-radius:8px;">⚠ Liquiditäts-Warnung: Ab 2028 sinkt die Liquidität auf 0 oder darunter.</div>
     </div>
 
-    <div class="sl-preview-caption">Illustrativ · Dein Forecast basiert auf deinen eigenen Zahlen</div>
+    <div style="text-align:center;font-size:.72em;color:#64748b;padding:8px 20px 14px;">Illustrativ · Dein Forecast basiert auf deinen eigenen Zahlen</div>
   </div>
 
   <!-- SZENARIO: Konkret denken lassen -->
   <div class="sl-scenario">
     <p>
-      <strong>Stell dir vor:</strong> Du gibst einmal dein Vermögen, deine Hypothek,
-      deinen Lohn und deine monatlichen Ausgaben ein.
+      <strong>Stell dir vor:</strong> Du gibst einmal dein Vermögen, deine Hypothek, deinen Lohn und deine Ausgaben ein.
     </p>
+    <p>Silverline zeigt dir sofort:</p>
+    <ul style="list-style:none;padding:0;margin:0 0 .6em;">
+      <li style="color:#cbd5e1;padding:.3em 0;">→ Wann reicht die Liquidität nicht mehr?</li>
+      <li style="color:#cbd5e1;padding:.3em 0;">→ Wann ist die Hypothek abbezahlt?</li>
+      <li style="color:#cbd5e1;padding:.3em 0;">→ Wie lange hält dein Vermögen in der Pension?</li>
+    </ul>
     <p>
-      Silverline zeigt dir sofort: <strong>Wann reicht die Liquidität nicht mehr?
-      Wann ist die Hypothek abbezahlt? Wie lange hält dein Vermögen in der Pension?</strong>
-    </p>
-    <p>
-      Keine Excel-Tabellen. Keine Beratungskosten. Keine Registrierung.
+      Keine Excel-Tabellen. Keine Beratungskosten. Auch ohne Registrierung. Du selbst entscheidest, wie du deine Zahlen eingibst.
     </p>
   </div>
 
-  <!-- DREI KERNVERSPRECHEN -->
-  <div class="sl-promises">
-    <div class="sl-promise">
-      <div class="sl-p-icon">🔒</div>
-      <h3>Deine Daten gehören dir</h3>
-      <p>Alles bleibt lokal auf deinem Gerät. Kein Server, keine Cloud, keine fremden Augen.</p>
+  <!-- DREI KERNVERSPRECHEN: kompakt, klickbar -->
+  <div id="sl-promises-wrap" style="margin:2.5em 0;">
+    <div style="display:flex;gap:8px;">
+      <div onclick="document.getElementById('sl-pd').innerHTML='Deine Daten bleiben auf deinem Gerät. Mit einem Account kannst du sie zusätzlich sichern und synchronisieren.';document.getElementById('sl-pd').style.display=document.getElementById('sl-pd').style.display==='block'?'none':'block';" style="flex:1;min-width:0;padding:12px;background:#0f172a;border:1px solid #1e293b;border-radius:10px;cursor:pointer;text-align:center;">
+        <div style="font-size:1.4em;">🔒</div>
+        <div style="color:#e2e8f0;font-size:.82em;font-weight:600;margin-top:4px;">Lokal &amp; sicher</div>
+      </div>
+      <div onclick="document.getElementById('sl-pd').innerHTML='Im Flugzeug, im Zug, ohne WLAN – Silverline ist jederzeit verfügbar.';document.getElementById('sl-pd').style.display=document.getElementById('sl-pd').style.display==='block'?'none':'block';" style="flex:1;min-width:0;padding:12px;background:#0f172a;border:1px solid #1e293b;border-radius:10px;cursor:pointer;text-align:center;">
+        <div style="font-size:1.4em;">✈️</div>
+        <div style="color:#e2e8f0;font-size:.82em;font-weight:600;margin-top:4px;">Offline ready</div>
+      </div>
+      <div onclick="document.getElementById('sl-pd').innerHTML='Öffnen, Vorlage wählen, Zahlen eingeben – fertig. Kein App Store nötig.';document.getElementById('sl-pd').style.display=document.getElementById('sl-pd').style.display==='block'?'none':'block';" style="flex:1;min-width:0;padding:12px;background:#0f172a;border:1px solid #1e293b;border-radius:10px;cursor:pointer;text-align:center;">
+        <div style="font-size:1.4em;">⚡</div>
+        <div style="color:#e2e8f0;font-size:.82em;font-weight:600;margin-top:4px;">5 Min. startklar</div>
+      </div>
     </div>
-    <div class="sl-promise">
-      <div class="sl-p-icon">✈️</div>
-      <h3>Funktioniert offline</h3>
-      <p>Im Flugzeug, im Zug, ohne WLAN – Silverline ist immer verfügbar.</p>
-    </div>
-    <div class="sl-promise">
-      <div class="sl-p-icon">⚡</div>
-      <h3>In 5 Minuten startklar</h3>
-      <p>Einfach öffnen, Vorlage wählen, Zahlen eingeben – fertig. Kein App Store, kein Account.</p>
-    </div>
-  </div>
-
-  <!-- ZWEITER CTA -->
-  <div class="sl-lp-cta2">
-    <a href="/app-static/finance">Zur Finanz-Applikation →</a>
-    <span class="sl-no-account">Rechne deinen Fall direkt in der App.</span>
-  </div>
-
-  <!-- LINKS ZU DETAILS -->
-  <div class="sl-lp-nav">
-    <a href="/anwendungsfaelle/">Anwendungsbeispiele</a>
-    <a href="/erklaerungen/">Wie funktioniert es?</a>
-    <a href="/wissen/">Finanzwissen</a>
+    <div id="sl-pd" style="display:none;color:#94a3b8;font-size:.88em;line-height:1.6;margin-top:8px;padding:12px 16px;background:#0f172a;border:1px solid #1e293b;border-radius:10px;"></div>
   </div>
 
 </div>

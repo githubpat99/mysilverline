@@ -2,7 +2,7 @@
 import { z } from "zod";
 
 export const EventRecurrenceSchema = z.enum(["none", "yearly", "monthly"]);
-export const EventLineTypeSchema = z.enum(["income", "spending"]);
+export const EventLineTypeSchema = z.enum(["income", "spending", "transfer"]);
 export const EventIndexationSchema = z.enum(["inflation", "fixed_real", "fixed_nominal"]);
 
 export const DestinationSchema = z.enum(["liquidity", "short", "long", "debt"]);
@@ -59,6 +59,11 @@ export const EventFundingSchema = z
     }
   });
 
+const AccountKeySchema = z
+  .string()
+  .nullish()
+  .transform((v) => (v === "" || v === null || v === undefined ? undefined : v));
+
 export const EventLineSchema = z.object({
   id: z.number().int().positive().optional(),
   line_type: EventLineTypeSchema,
@@ -69,10 +74,10 @@ export const EventLineSchema = z.object({
 
   destination: DestinationSchema.nullable().optional(),
   funding: EventFundingSchema.nullable().optional(),
-  destinationAccountKey: z
-    .string()
-    .nullish()
-    .transform((v) => (v === "" || v === null || v === undefined ? undefined : v)),
+  destinationAccountKey: AccountKeySchema,
+
+  transferFromKey: AccountKeySchema,
+  transferToKey: AccountKeySchema,
 }).superRefine((line, ctx) => {
   if (line.line_type === "income") {
     if (!line.destination) {
@@ -89,6 +94,21 @@ export const EventLineSchema = z.object({
     }
     if (line.destination != null) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["destination"], message: "spending must not have destination" });
+    }
+  }
+
+  if (line.line_type === "transfer") {
+    if (!line.transferFromKey) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["transferFromKey"], message: "transfer requires transferFromKey" });
+    }
+    if (!line.transferToKey) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["transferToKey"], message: "transfer requires transferToKey" });
+    }
+    if (line.funding != null) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["funding"], message: "transfer must not have funding" });
+    }
+    if (line.destination != null) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["destination"], message: "transfer must not have destination" });
     }
   }
 });

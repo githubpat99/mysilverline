@@ -184,6 +184,8 @@ function sumAssetCashflows(positions: Array<AssetDTO | DebtDTO>) {
 function mapDebtsForForecast(positions: Array<AssetDTO | DebtDTO>): any[] {
     const debts = positions.filter((p: any) => p.kind === "debt" || String(p?.kind ?? "").startsWith("debt")) as any[];
 
+    console.log(`[mapDebtsForForecast] ${debts.length} debts:`, debts.map((d: any) => `${d.id} "${d.label}" valueCHF=${d.valueCHF} balanceCHF=${(d as any).balanceCHF} bucket=${d.bucket}`).join(" | "));
+
     const defaultLiqId = positions.some((p: any) => String(p?.id ?? p?.instrument_id) === "sys_liq_main")
         ? "sys_liq_main"
         : "liquidity";

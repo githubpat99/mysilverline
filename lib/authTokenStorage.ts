@@ -1,10 +1,16 @@
 /**
  * Auth-Token-Speicher: localStorage + IndexedDB (Fallback für Android PWA).
  * IndexedDB überlebt oft besser wenn localStorage bei Cold Start leer ist.
+ *
+ * Token ist immer an einen wp_user_id gebunden. Bei User-Wechsel wird
+ * der alte Token verworfen, damit nie der falsche User authentifiziert wird.
  */
 const AUTH_TOKEN_KEY = "sl_auth_token";
+const AUTH_UID_KEY = "sl_auth_uid";
 const DB_NAME = "sl_auth";
 const DB_STORE = "kv";
+
+let _clearPending: Promise<void> | null = null;
 
 function isBrowser() {
   return typeof window !== "undefined";
@@ -57,38 +63,71 @@ export function getAuthToken(): string {
   return localStorage.getItem(AUTH_TOKEN_KEY) || "";
 }
 
-/** Speichert Token in localStorage + IndexedDB. */
-export function setAuthToken(token: string): void {
-  if (!isBrowser() || !token) return;
-  localStorage.setItem(AUTH_TOKEN_KEY, token);
-  openDB()
-    .then((db) => idbSet(db, AUTH_TOKEN_KEY, token).finally(() => db.close()))
-    .catch(() => {});
+/** Liest gespeicherte WP User ID. */
+export function getStoredUserId(): number {
+  if (!isBrowser()) return 0;
+  const v = localStorage.getItem(AUTH_UID_KEY);
+  return v ? parseInt(v, 10) || 0 : 0;
 }
 
-/** Löscht Token aus beiden Speichern. */
-export function clearAuthToken(): void {
-  if (!isBrowser()) return;
-  localStorage.removeItem(AUTH_TOKEN_KEY);
+/** Speichert Token + User ID in localStorage + IndexedDB. */
+export function setAuthToken(token: string, wpUserId?: number): void {
+  if (!isBrowser() || !token) return;
+  localStorage.setItem(AUTH_TOKEN_KEY, token);
+  if (wpUserId) localStorage.setItem(AUTH_UID_KEY, String(wpUserId));
   openDB()
-    .then((db) => idbDel(db, AUTH_TOKEN_KEY).finally(() => db.close()))
+    .then((db) =>
+      idbSet(db, AUTH_TOKEN_KEY, token)
+        .then(() => wpUserId ? idbSet(db, AUTH_UID_KEY, String(wpUserId)) : undefined)
+        .finally(() => db.close())
+    )
     .catch(() => {});
 }
 
 /**
- * Stellt Token aus IndexedDB in localStorage wieder her (falls localStorage leer).
- * Vor whoAmI aufrufen – hilft bei Android PWA Cold Start.
+ * Löscht Token aus beiden Speichern.
+ * WICHTIG: Gibt ein Promise zurück, damit restoreTokenFromIndexedDB()
+ * nicht den alten Token wiederherstellt bevor er gelöscht ist.
+ */
+export function clearAuthToken(): Promise<void> {
+  if (!isBrowser()) return Promise.resolve();
+  localStorage.removeItem(AUTH_TOKEN_KEY);
+  localStorage.removeItem(AUTH_UID_KEY);
+  const p = openDB()
+    .then((db) =>
+      Promise.all([idbDel(db, AUTH_TOKEN_KEY), idbDel(db, AUTH_UID_KEY)])
+        .finally(() => db.close())
+    )
+    .then(() => {})
+    .catch(() => {});
+  _clearPending = p;
+  return p;
+}
+
+/**
+ * Stellt Token + User ID aus IndexedDB in localStorage wieder her (falls localStorage leer).
+ * Wartet auf laufende clear-Operationen, damit kein gelöschter Token zurückkommt.
  */
 export async function restoreTokenFromIndexedDB(): Promise<void> {
   if (!isBrowser() || typeof indexedDB === "undefined") return;
+
+  if (_clearPending) {
+    await _clearPending;
+    _clearPending = null;
+  }
+
   if (localStorage.getItem(AUTH_TOKEN_KEY)) return;
 
   try {
-    const db = await openDB();
-    const token = await idbGet(db, AUTH_TOKEN_KEY);
-    db.close();
+    const idb = await openDB();
+    const token = await idbGet(idb, AUTH_TOKEN_KEY);
+    const uid = await idbGet(idb, AUTH_UID_KEY);
+    idb.close();
     if (typeof token === "string" && token) {
       localStorage.setItem(AUTH_TOKEN_KEY, token);
+    }
+    if (typeof uid === "string" && uid) {
+      localStorage.setItem(AUTH_UID_KEY, uid);
     }
   } catch {
     // ignore

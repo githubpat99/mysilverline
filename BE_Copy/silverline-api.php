@@ -1702,7 +1702,9 @@ function sl_profile_events_load($uid) {
     $destination = $lineMeta['destination'] ?? ($lineType === 'income' ? 'liquidity' : null);
     $funding = $lineMeta['funding'] ?? ($lineType === 'spending' ? ['fundingStrategy' => 'waterfall', 'fundingSources' => [['source' => 'liquidity']]] : null);
     $destAcc = $lineMeta['destinationAccountKey'] ?? null;
-    $byEvent[$eid]['line'] = [
+    $transferFrom = $lineMeta['transferFromKey'] ?? ($lineType === 'transfer' ? 'liquidity' : null);
+    $transferTo = $lineMeta['transferToKey'] ?? ($lineType === 'transfer' ? 'liquidity' : null);
+    $line = [
       'line_type' => $lineType,
       'amount_chf' => $amount,
       'indexation' => $indexation,
@@ -1712,6 +1714,11 @@ function sl_profile_events_load($uid) {
       'funding' => $funding,
       'destinationAccountKey' => $destAcc,
     ];
+    if ($lineType === 'transfer') {
+      $line['transferFromKey'] = $transferFrom;
+      $line['transferToKey'] = $transferTo;
+    }
+    $byEvent[$eid]['line'] = $line;
   }
 
   $result = [];
@@ -1754,16 +1761,29 @@ function sl_profile_event_normalize_for_save($ev) {
     if (!empty($ln['destination'])) $lineMeta['destination'] = $ln['destination'];
     if (!empty($ln['funding'])) $lineMeta['funding'] = $ln['funding'];
     if (!empty($ln['destinationAccountKey'])) $lineMeta['destinationAccountKey'] = $ln['destinationAccountKey'];
+    if (!empty($ln['transferFromKey'])) $lineMeta['transferFromKey'] = $ln['transferFromKey'];
+    if (!empty($ln['transferToKey'])) $lineMeta['transferToKey'] = $ln['transferToKey'];
 
     $toId = null;
     $fromId = null;
-    if (!empty($ln['destinationAccountKey'])) {
-      $k = trim((string)$ln['destinationAccountKey']);
-      if (preg_match('/^(asset|debt):(.+)$/', $k, $m)) $toId = $m[2];
-    }
-    if (!empty($ln['funding']['fundingSources'][0]['sourceAccountKey'])) {
-      $k = trim((string)$ln['funding']['fundingSources'][0]['sourceAccountKey']);
-      if (preg_match('/^(asset|debt):(.+)$/', $k, $m)) $fromId = $m[2];
+    if (($ln['line_type'] ?? '') === 'transfer') {
+      if (!empty($ln['transferFromKey'])) {
+        $k = trim((string)$ln['transferFromKey']);
+        if (preg_match('/^(asset|debt):(.+)$/', $k, $m)) $fromId = $m[2];
+      }
+      if (!empty($ln['transferToKey'])) {
+        $k = trim((string)$ln['transferToKey']);
+        if (preg_match('/^(asset|debt):(.+)$/', $k, $m)) $toId = $m[2];
+      }
+    } else {
+      if (!empty($ln['destinationAccountKey'])) {
+        $k = trim((string)$ln['destinationAccountKey']);
+        if (preg_match('/^(asset|debt):(.+)$/', $k, $m)) $toId = $m[2];
+      }
+      if (!empty($ln['funding']['fundingSources'][0]['sourceAccountKey'])) {
+        $k = trim((string)$ln['funding']['fundingSources'][0]['sourceAccountKey']);
+        if (preg_match('/^(asset|debt):(.+)$/', $k, $m)) $fromId = $m[2];
+      }
     }
 
     $lineRow = ['id' => $line_id, 'amountCHF' => $amount, 'note' => json_encode($lineMeta)];
@@ -1990,3 +2010,8 @@ function sl_sanitize_horizon_years($v) {
   if ($n > 120) $n = 120;
   return $n;
 }
+
+// ------------------------------
+// Beta-Feedback
+// ------------------------------
+require_once __DIR__ . '/silverline-api-feedback.php';

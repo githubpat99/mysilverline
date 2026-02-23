@@ -5,6 +5,7 @@ export const STORAGE_KEYS = {
   LOCAL_USER_ID: "sl_local_user_id",
   LINKED: "sl_linked",
   LAST_SYNC_AT: "sl_last_sync_at",
+  LAST_SYNC_WP_UID: "sl_last_sync_wp_uid",
 } as const;
 
 export function uuidv4(): string {

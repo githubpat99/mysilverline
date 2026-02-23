@@ -11,6 +11,7 @@ import { SL_API_BASE } from "@/lib/config";
 import { getLocalUserId, getAuthState, isLinked, setLinked } from "./authService";
 import { STORAGE_KEYS } from "./storageKeys";
 import { getApiHeaders } from "@/lib/profileApi";
+import { getStoredUserId } from "@/lib/authTokenStorage";
 
 const NS = SL_API_BASE?.replace(/\/+$/, "") || "/wp-json/silverline/v1";
 
@@ -164,6 +165,31 @@ async function tryLinkUser(localUserId: string): Promise<void> {
   }
 }
 
+function getLastSyncWpUid(): number {
+  if (typeof window === "undefined") return 0;
+  const s = localStorage.getItem(STORAGE_KEYS.LAST_SYNC_WP_UID);
+  return s ? parseInt(s, 10) || 0 : 0;
+}
+
+function setLastSyncWpUid(uid: number): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(STORAGE_KEYS.LAST_SYNC_WP_UID, String(uid));
+}
+
+async function clearLocalData(localUserId: string): Promise<void> {
+  console.warn("[Sync] WP user changed – clearing local data before pull");
+  try {
+    await db.profile.delete(localUserId);
+    const existing = await db.positions.where("local_user_id").equals(localUserId).toArray();
+    for (const e of existing) {
+      if (e.id != null) await db.positions.delete(e.id);
+    }
+  } catch (e) {
+    console.error("[Sync] clearLocalData failed:", e);
+  }
+  setLinked(false);
+}
+
 export async function runSync(): Promise<SyncResult> {
   const localUserId = getLocalUserId();
 
@@ -171,19 +197,30 @@ export async function runSync(): Promise<SyncResult> {
   if (!online) return { ok: false, error: "Offline" };
   if (!hasSession) return { ok: false, error: "Bitte anmelden." };
 
+  const currentWpUid = getStoredUserId();
+  const lastSyncWpUid = getLastSyncWpUid();
+  const userChanged = lastSyncWpUid > 0 && currentWpUid > 0 && lastSyncWpUid !== currentWpUid;
+
+  if (userChanged) {
+    await clearLocalData(localUserId);
+  }
+
   const result: SyncResult = { ok: true, pushed: { profile: false, positions: false }, pulled: false };
 
   // 1. Link user (non-fatal)
   await tryLinkUser(localUserId);
 
-  // 2. Push local changes (non-fatal)
-  result.pushed = await doPush(localUserId);
+  // 2. Push local changes ONLY if same user (skip on user change to avoid data corruption)
+  if (!userChanged) {
+    result.pushed = await doPush(localUserId);
+  }
 
   // 3. Pull from server (always runs)
   result.pulled = await doPull(localUserId);
 
   if (result.pulled) {
     setLastSyncAt(Date.now());
+    if (currentWpUid > 0) setLastSyncWpUid(currentWpUid);
   } else {
     result.ok = false;
     result.error = "Pull vom Server fehlgeschlagen.";

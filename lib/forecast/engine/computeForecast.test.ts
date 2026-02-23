@@ -1453,6 +1453,183 @@ describe("Anwendungsfall: Erbschaft → Schuld tilgen + Rest investieren", () =>
   });
 });
 
+// =====================================================================
+// Per-Debt Amortisation (kein Pooling)
+// =====================================================================
+
+describe("Amortisation – nur die eigene Schuld wird getilgt (kein Pooling)", () => {
+  const POSITIONS = [
+    { id: "sys_liq_main", kind: "asset", bucket: "instant" },
+    { id: "pos_short", kind: "asset", bucket: "3m_3y" },
+    { id: "saeule_3a", kind: "asset", bucket: "locked" },
+    { id: "hypo_efh", kind: "debt", availability: "gt_3y" },
+    { id: "darlehen_hw", kind: "debt", availability: "gt_3y" },
+  ] as const;
+
+  it("Schuld ohne Amortisation behält ihren Saldo über die Jahre", () => {
+    const input = makeInput({
+      planToAge: 45, // 5 Jahre
+      assetsToday: { liq: 50_000, shortA: 0, longA: 0, realA: 0 },
+      debtsToday: { shortD: 0, longD: 560_000 },
+      positions: POSITIONS,
+      debts: [
+        {
+          id: "hypo_efh",
+          principalToday: 500_000,
+          annualInterestRate: 0.01,
+          annualPayment: 5_000 + 10_000, // 5k Zinsen + 10k Tilgung
+          availability: "gt_3y",
+          interestSourceInstrumentId: "sys_liq_main",
+          amortizationSourceInstrumentId: "sys_liq_main",
+        },
+        {
+          id: "darlehen_hw",
+          principalToday: 60_000,
+          annualInterestRate: 0,
+          annualPayment: 0, // KEINE Amortisation
+          availability: "gt_3y",
+          interestSourceInstrumentId: "sys_liq_main",
+          amortizationSourceInstrumentId: "sys_liq_main",
+        },
+      ],
+    });
+    const r = computeForecastWithBreakdown(input);
+    assertInvariants(r.rows ?? []);
+
+    // Darlehen hat keine Amortisation → longD sinkt nur um Hypo-Tilgung (10k/Jahr)
+    const row0 = r.rows?.[0] as any;
+    expect(row0.longD).toBe(550_000); // 560k - 10k (nur Hypo)
+    expect(row0.debtAmort).toBe(10_000);
+
+    const row4 = r.rows?.[4] as any;
+    expect(row4.longD).toBe(510_000); // 560k - 5*10k = 510k (Darlehen bleibt bei 60k)
+  });
+
+  it("Transfer auf Schuld ohne Amortisation reduziert korrekt (Darlehen-II-Bug)", () => {
+    const input = makeInput({
+      planToAge: 45, // 5 Jahre: 2026–2030
+      assetsToday: { liq: 50_000, shortA: 0, longA: 0, realA: 60_000 },
+      debtsToday: { shortD: 0, longD: 560_000 },
+      positions: POSITIONS,
+      debts: [
+        {
+          id: "hypo_efh",
+          principalToday: 500_000,
+          annualInterestRate: 0.01,
+          annualPayment: 5_000 + 10_000, // 5k Zinsen + 10k Tilgung
+          availability: "gt_3y",
+          interestSourceInstrumentId: "sys_liq_main",
+          amortizationSourceInstrumentId: "sys_liq_main",
+        },
+        {
+          id: "darlehen_hw",
+          principalToday: 60_000,
+          annualInterestRate: 0,
+          annualPayment: 0, // KEINE Amortisation
+          availability: "gt_3y",
+          interestSourceInstrumentId: "sys_liq_main",
+          amortizationSourceInstrumentId: "sys_liq_main",
+        },
+      ],
+      events: [
+        makeTransferEvent({
+          client_id: "tf_3a_darlehen",
+          title: "Säule 3a → Darlehen tilgen",
+          start_date: "2030-01-01",
+          recurrence: "none",
+          line: {
+            line_type: "transfer",
+            amount_chf: 60_000,
+            indexation: null,
+            category: null,
+            meta_json: null,
+            transferFromKey: "asset:saeule_3a",
+            transferToKey: "debt:darlehen_hw",
+          },
+        }),
+      ],
+    });
+    const r = computeForecastWithBreakdown(input);
+    assertInvariants(r.rows ?? []);
+
+    // 2026–2029: Darlehen bleibt bei 60k, nur Hypo wird getilgt
+    for (let i = 0; i < 4; i++) {
+      const row = r.rows?.[i] as any;
+      const hypoExpected = 500_000 - (i + 1) * 10_000;
+      expect(row.longD).toBe(hypoExpected + 60_000);
+    }
+
+    // 2030: Transfer greift → Darlehen wird auf 0 reduziert
+    const row2030 = r.rows?.[4] as any;
+    expect(row2030.year).toBe(2030);
+    expect(row2030.eventTransfers).toHaveLength(1);
+    // Hypo: 500k - 5*10k = 450k, Darlehen: 60k - 60k = 0
+    expect(row2030.longD).toBe(450_000);
+    // Sachwerte: 60k - 60k (Transfer) = 0
+    expect(row2030.realA).toBe(0);
+  });
+
+  it("Mehrere Schulden mit unterschiedlicher Amortisation – jede nur ihre eigene", () => {
+    const POSITIONS_3DEBTS = [
+      { id: "sys_liq_main", kind: "asset", bucket: "instant" },
+      { id: "debt_a", kind: "debt", availability: "gt_3y" },
+      { id: "debt_b", kind: "debt", availability: "gt_3y" },
+      { id: "debt_c", kind: "debt", availability: "gt_3y" },
+    ] as const;
+
+    const input = makeInput({
+      planToAge: 42, // 2 Jahre
+      assetsToday: { liq: 200_000, shortA: 0, longA: 0, realA: 0 },
+      debtsToday: { shortD: 0, longD: 300_000 },
+      positions: POSITIONS_3DEBTS,
+      debts: [
+        {
+          id: "debt_a",
+          principalToday: 100_000,
+          annualInterestRate: 0.02,
+          annualPayment: 2_000 + 20_000, // 2k Zinsen + 20k Tilgung
+          availability: "gt_3y",
+          interestSourceInstrumentId: "sys_liq_main",
+          amortizationSourceInstrumentId: "sys_liq_main",
+        },
+        {
+          id: "debt_b",
+          principalToday: 150_000,
+          annualInterestRate: 0.01,
+          annualPayment: 1_500 + 5_000, // 1.5k Zinsen + 5k Tilgung
+          availability: "gt_3y",
+          interestSourceInstrumentId: "sys_liq_main",
+          amortizationSourceInstrumentId: "sys_liq_main",
+        },
+        {
+          id: "debt_c",
+          principalToday: 50_000,
+          annualInterestRate: 0.03,
+          annualPayment: 1_500, // NUR Zinsen, 0 Tilgung
+          availability: "gt_3y",
+          interestSourceInstrumentId: "sys_liq_main",
+          amortizationSourceInstrumentId: "sys_liq_main",
+        },
+      ],
+    });
+    const r = computeForecastWithBreakdown(input);
+    assertInvariants(r.rows ?? []);
+
+    // Jahr 1: debt_a -20k, debt_b -5k, debt_c bleibt → 300k - 25k = 275k
+    const row0 = r.rows?.[0] as any;
+    expect(row0.longD).toBe(275_000);
+    expect(row0.debtAmort).toBe(25_000);
+    // Zinsen: 2k + 1.5k + 1.5k = 5k
+    expect(row0.debtInterest).toBe(5_000);
+
+    // Jahr 2: debt_a -20k (→60k), debt_b -5k (→140k), debt_c bleibt (→50k) → 250k
+    const row1 = r.rows?.[1] as any;
+    expect(row1.longD).toBe(250_000);
+    // Zinsen auf reduzierte Principals: 80k*2% + 145k*1% + 50k*3% = 1600 + 1450 + 1500 = 4550
+    expect(row1.debtInterest).toBe(4_550);
+  });
+});
+
 describe("Anwendungsfall: Renovation finanzieren mit Hypothek-Aufstockung", () => {
   const POSITIONS = [
     { id: "sys_liq_main", kind: "asset", bucket: "instant" },

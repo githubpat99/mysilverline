@@ -355,6 +355,7 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
     term: DebtTerm;
     principal: number;
     ratePct: number;
+    plannedAmortAnnual: number;
     interestSourceInstrumentId?: string;
     amortizationSourceInstrumentId?: string;
   };
@@ -398,14 +399,23 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
   };
 
   const defaultLiqId = "sys_liq_main";
-  const debtState: DebtState[] = (Array.isArray(debts) ? debts : []).map((d: any, idx: number) => ({
-    id: String(d?.id ?? d?.ui_id ?? `debt_${idx}`),
-    term: inferDebtTerm(d),
-    principal: extractPrincipal(d),
-    ratePct: extractRateDecimal(d),
-    interestSourceInstrumentId: d?.interestSourceInstrumentId ?? d?.interest_source_instrument_id ?? defaultLiqId,
-    amortizationSourceInstrumentId: d?.amortizationSourceInstrumentId ?? (d?.amortization as any)?.sourceInstrumentId ?? defaultLiqId,
-  }));
+  const debtState: DebtState[] = (Array.isArray(debts) ? debts : []).map((d: any, idx: number) => {
+    const principal = extractPrincipal(d);
+    const rate = extractRateDecimal(d);
+    const interest = Math.trunc(principal * rate);
+    const annualPayment = typeof d?.annualPayment === "number" ? Math.trunc(d.annualPayment) : 0;
+    const plannedAmortAnnual = Math.max(0, annualPayment - interest);
+
+    return {
+      id: String(d?.id ?? d?.ui_id ?? `debt_${idx}`),
+      term: inferDebtTerm(d),
+      principal,
+      ratePct: rate,
+      plannedAmortAnnual,
+      interestSourceInstrumentId: d?.interestSourceInstrumentId ?? d?.interest_source_instrument_id ?? defaultLiqId,
+      amortizationSourceInstrumentId: d?.amortizationSourceInstrumentId ?? (d?.amortization as any)?.sourceInstrumentId ?? defaultLiqId,
+    };
+  });
 
   const positions = (input as any).positions ?? [];
   const instrumentToBucket = buildInstrumentToBucket(positions);
@@ -434,22 +444,17 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
     return Math.trunc(sum);
   };
 
-  /** Returns total paid and per-debt breakdown for source-based payment */
-  const applyAmortToStateWithBreakdown = (term: DebtTerm, amountCHF: number): { total: number; perDebt: { debtId: string; amount: number }[] } => {
-    let remaining = Math.max(0, Math.trunc(amountCHF));
+  /** Apply each debt's own planned amortization (not pooled). Capped by remaining principal. */
+  const applyAmortToStateWithBreakdown = (term: DebtTerm, _amountCHF: number): { total: number; perDebt: { debtId: string; amount: number }[] } => {
     const perDebt: { debtId: string; amount: number }[] = [];
 
-    const list = debtState
-      .filter((d) => d.term === term && n(d.principal) > 0)
-      .sort((a, b) => n(b.ratePct) - n(a.ratePct));
-
-    for (const d of list) {
-      if (remaining <= 0) break;
+    for (const d of debtState) {
+      if (d.term !== term || d.plannedAmortAnnual <= 0) continue;
       const avail = Math.max(0, Math.trunc(n(d.principal)));
-      const pay = Math.min(avail, remaining);
+      if (avail <= 0) continue;
+      const pay = Math.min(avail, d.plannedAmortAnnual);
       if (pay > 0) {
         d.principal = avail - pay;
-        remaining -= pay;
         perDebt.push({ debtId: d.id, amount: pay });
       }
     }
@@ -585,12 +590,18 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
       const amt = Math.max(0, tf.amount);
       if (amt <= 0) continue;
 
+      console.log(`[Forecast] Transfer: "${tf.label}" ${tf.fromKey} → ${tf.toKey}, CHF ${amt}, from=${JSON.stringify(from)}, to=${JSON.stringify(to)}, debtIds=[${debtState.map(d => `${d.id}(${d.principal})`).join(", ")}]`);
+
       // Debit source
       if (from.kind === "asset") {
         assets[from.bucket] = n(assets[from.bucket]) - amt;
       } else {
         const ds = debtState.find((d) => d.id === from.debtId);
-        if (ds) ds.principal = n(ds.principal) + amt;
+        if (ds) {
+          ds.principal = n(ds.principal) + amt;
+        } else {
+          console.warn(`[Forecast] Transfer source debt not found: "${from.debtId}" (key: "${tf.fromKey}"). Available: [${debtState.map(d => d.id).join(", ")}]`);
+        }
       }
 
       // Credit target
@@ -598,7 +609,11 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
         assets[to.bucket] = n(assets[to.bucket]) + amt;
       } else {
         const ds = debtState.find((d) => d.id === to.debtId);
-        if (ds) ds.principal = Math.max(0, n(ds.principal) - amt);
+        if (ds) {
+          ds.principal = Math.max(0, n(ds.principal) - amt);
+        } else {
+          console.warn(`[Forecast] Transfer target debt not found: "${to.debtId}" (key: "${tf.toKey}"). Available: [${debtState.map(d => d.id).join(", ")}]`);
+        }
       }
     }
 

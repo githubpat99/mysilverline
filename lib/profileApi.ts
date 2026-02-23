@@ -12,6 +12,7 @@ import {
   setAuthToken,
   clearAuthToken as clearAuthTokenStorage,
   restoreTokenFromIndexedDB,
+  getStoredUserId,
 } from "./authTokenStorage";
 
 /* =========================
@@ -209,9 +210,17 @@ export async function whoAmI(): Promise<WhoAmI> {
     if (u && typeof u.logged_in === "boolean") {
       if (u.logged_in === false) {
         clearNonce();
-        clearAuthToken();
+        await clearAuthToken();
       } else {
-        fetchAndStoreAuthToken();
+        const currentUid = Number(u.user_id ?? 0);
+        const storedUid = getStoredUserId();
+
+        if (storedUid && storedUid !== currentUid) {
+          console.warn(`[Auth] User changed: ${storedUid} → ${currentUid}, clearing stale token`);
+          await clearAuthToken();
+        }
+
+        fetchAndStoreAuthToken(currentUid);
       }
 
       return {
@@ -232,7 +241,7 @@ export async function whoAmI(): Promise<WhoAmI> {
   }
 }
 
-async function fetchAndStoreAuthToken() {
+async function fetchAndStoreAuthToken(wpUserId?: number) {
   if (!isBrowser()) return;
   const tryFetch = async (): Promise<boolean> => {
     try {
@@ -246,7 +255,7 @@ async function fetchAndStoreAuthToken() {
       const json = await res.json().catch(() => null);
       const token = json?.token;
       if (typeof token === "string" && token) {
-        setAuthToken(token);
+        setAuthToken(token, wpUserId);
         return true;
       }
       return false;
@@ -255,7 +264,6 @@ async function fetchAndStoreAuthToken() {
     }
   };
   if (await tryFetch()) return;
-  // Retry (Android PWA: Cookie kann verzögert ankommen)
   await new Promise((r) => setTimeout(r, 600));
   if (await tryFetch()) return;
   await new Promise((r) => setTimeout(r, 800));

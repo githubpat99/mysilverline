@@ -7,6 +7,8 @@ $project   = "C:\Users\patri\next-app"
 $localOut  = Join-Path $project "out"
 
 $remoteDir = "/home/clients/cd018176a9efb9d6ecf8a0ae8be5e651/sites/mysilverline.it-pin.ch/app-static"
+$remoteBE  = "/home/clients/cd018176a9efb9d6ecf8a0ae8be5e651/sites/mysilverline.it-pin.ch/wp-content/plugins/silverline-api"
+$localBE   = Join-Path $project "BE_Copy"
 
 $winscp     = "C:\Program Files (x86)\WinSCP\WinSCP.com"
 $session    = "mysilverline-deploy"
@@ -138,6 +140,32 @@ exit
 
 & $winscp "/log=$logFile" "/script=$scriptFile"
 if ($LASTEXITCODE -ne 0) { throw "Deploy failed - siehe Log: $logFile" }
+
+# ---------- DEPLOY BACKEND (PHP) ----------
+Write-Host "== Deploy Backend (PHP) =="
+if (Test-Path -LiteralPath $localBE) {
+  $beScriptFile = Join-Path $env:TEMP "winscp-deploy-be.txt"
+  $beLogFile    = Join-Path $env:TEMP "winscp-deploy-be.log"
+  if (Test-Path -LiteralPath $beLogFile) { Remove-Item $beLogFile -Force }
+
+  @"
+option batch abort
+option confirm off
+open "$session"
+lcd "$localBE"
+cd "$remoteBE"
+put "silverline-api.php"
+put "silverline-api-feedback.php"
+put "silverline-api-sync.php"
+exit
+"@ | Set-Content -LiteralPath $beScriptFile -Encoding ASCII
+
+  & $winscp "/log=$beLogFile" "/script=$beScriptFile"
+  if ($LASTEXITCODE -ne 0) { Write-Warning "BE deploy failed - siehe Log: $beLogFile" }
+  else { Write-Host "BE deploy OK" }
+} else {
+  Write-Warning "BE_Copy folder not found, skipping backend deploy."
+}
 
 Write-Host "Build+Deploy OK - $deployTsLocal"
 Write-Host "Check: https://mysilverline.it-pin.ch/app-static/__deploy.txt"

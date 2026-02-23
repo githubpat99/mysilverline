@@ -43,16 +43,24 @@ function applyIndexationCHF(params: {
     return Math.trunc(baseCHF * factor);
 }
 
+export type TransferLine = {
+    label: string;
+    amount: number;
+    fromKey: string;
+    toKey: string;
+};
+
 export function sumEventsForYearDetailed(params: {
     events: ProfileEvent[];
-    baseYear: number; // Startjahr Forecast (z.B. new Date().getFullYear())
-    yearIndex: number; // t
+    baseYear: number;
+    yearIndex: number;
     inflation: number;
 }): {
     incomeCHF: number;
     expenseCHF: number;
     incomeLines: BreakdownLine[];
     expenseLines: BreakdownLine[];
+    transferLines: TransferLine[];
 } {
     const { events, baseYear, yearIndex: t, inflation } = params;
     const year = baseYear + t;
@@ -62,6 +70,7 @@ export function sumEventsForYearDetailed(params: {
 
     const incomeLines: BreakdownLine[] = [];
     const expenseLines: BreakdownLine[] = [];
+    const transferLines: TransferLine[] = [];
 
     for (const e of events ?? []) {
         if (!isActiveInYear(e, year)) continue;
@@ -80,21 +89,23 @@ export function sumEventsForYearDetailed(params: {
         if (idxAnnual === 0) continue;
 
         const label = (e.title || "Ereignis").trim();
+        const amount = Math.trunc(idxAnnual);
 
-        const line: BreakdownLine = {
-            label,
-            amount: Math.trunc(idxAnnual), // <-- wichtig: amount, nicht amountCHF
-        };
-
-        if (e.line?.line_type === "income") {
-            incomeCHF += line.amount;
-            incomeLines.push(line);
+        if (e.line?.line_type === "transfer") {
+            transferLines.push({
+                label,
+                amount,
+                fromKey: e.line.transferFromKey ?? "liquidity",
+                toKey: e.line.transferToKey ?? "liquidity",
+            });
+        } else if (e.line?.line_type === "income") {
+            incomeCHF += amount;
+            incomeLines.push({ label, amount });
         } else {
-            expenseCHF += line.amount;
-            expenseLines.push(line);
+            expenseCHF += amount;
+            expenseLines.push({ label, amount });
         }
-
     }
 
-    return { incomeCHF, expenseCHF, incomeLines, expenseLines };
+    return { incomeCHF, expenseCHF, incomeLines, expenseLines, transferLines };
 }

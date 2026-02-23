@@ -11,6 +11,7 @@ import { buildExpensesLines } from "../expenses/applyExpensesBreakdown";
 import { buildIncomeLines } from "../income/applyIncomeBreakdown";
 import { buildDebtLines } from "../debts/applyDebtsBreakdown";
 import { sumEventsForYearDetailed } from "../events/sumEventsForYearDetailed";
+import type { TransferLine } from "../events/sumEventsForYearDetailed";
 
 // ---- helpers ----
 function n(v: unknown, fallback = 0): number {
@@ -70,6 +71,9 @@ type ForecastRow = {
   /** Phase 5: pro Instrument (id → CHF) für UI-Labels */
   transferInterestFromByInstrument?: Record<string, number>;
   transferAmortFromByInstrument?: Record<string, number>;
+
+  /** Event-Transfers (Von → Nach) */
+  eventTransfers?: TransferLine[];
 };
 
 // Assets/Debts buckets used by the UI
@@ -180,6 +184,26 @@ function buildInstrumentToBucket(positions: any[]): Map<string, BucketKey> {
   if (!m.has("sys_liq_main")) m.set("sys_liq_main", "liq");
   if (!m.has("liquidity")) m.set("liquidity", "liq");
   return m;
+}
+
+type AccountTarget =
+  | { kind: "asset"; bucket: BucketKey }
+  | { kind: "debt"; debtId: string };
+
+function resolveAccountKey(
+  key: string,
+  instrumentToBucket: Map<string, BucketKey>,
+): AccountTarget {
+  if (key === "liquidity") return { kind: "asset", bucket: "liq" };
+  if (key.startsWith("asset:")) {
+    const id = key.slice(6);
+    const bucket = instrumentToBucket.get(id) ?? "liq";
+    return { kind: "asset", bucket };
+  }
+  if (key.startsWith("debt:")) {
+    return { kind: "debt", debtId: key.slice(5) };
+  }
+  return { kind: "asset", bucket: "liq" };
 }
 
 type PayResult = { draw: AssetDraw; overdraftAdded: number };
@@ -554,6 +578,39 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
     coverDraw.longA += d2.longA;
     coverDraw.realA += d2.realA;
 
+    // 2b) Event-Transfers (Von-Konto → Nach-Konto)
+    for (const tf of eventResult.transferLines) {
+      const from = resolveAccountKey(tf.fromKey, instrumentToBucket);
+      const to = resolveAccountKey(tf.toKey, instrumentToBucket);
+      const amt = Math.max(0, tf.amount);
+      if (amt <= 0) continue;
+
+      // Debit source
+      if (from.kind === "asset") {
+        assets[from.bucket] = n(assets[from.bucket]) - amt;
+      } else {
+        const ds = debtState.find((d) => d.id === from.debtId);
+        if (ds) ds.principal = n(ds.principal) + amt;
+      }
+
+      // Credit target
+      if (to.kind === "asset") {
+        assets[to.bucket] = n(assets[to.bucket]) + amt;
+      } else {
+        const ds = debtState.find((d) => d.id === to.debtId);
+        if (ds) ds.principal = Math.max(0, n(ds.principal) - amt);
+      }
+    }
+
+    if (eventResult.transferLines.length > 0 && debtState.length > 0) {
+      recomputeDebtBucketsFromState();
+    }
+
+    const dTf = coverLiquidityDeficitTracked(assets);
+    coverDraw.shortA += dTf.shortA;
+    coverDraw.longA += dTf.longA;
+    coverDraw.realA += dTf.realA;
+
     // 3a) Asset-Cashflow zu Liquidität (aus Aktiven)
     assets.liq = n(assets.liq) + assetCashflowToLiq;
     const d3 = coverLiquidityDeficitTracked(assets);
@@ -697,6 +754,7 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
       events: {
         incomeLines: eventResult.incomeLines,
         expenseLines: eventResult.expenseLines,
+        transferLines: eventResult.transferLines,
       },
 
       // EXTENSIONS (not in type yet)
@@ -765,6 +823,7 @@ export function computeForecastWithBreakdown(input: ForecastInput): ForecastResu
       overdraftAdded,
       transferInterestFromByInstrument: Object.keys(interestByInstrument).length > 0 ? interestByInstrument : undefined,
       transferAmortFromByInstrument: Object.keys(amortByInstrument).length > 0 ? amortByInstrument : undefined,
+      eventTransfers: eventResult.transferLines.length > 0 ? eventResult.transferLines : undefined,
     });
   }
 

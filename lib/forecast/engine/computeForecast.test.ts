@@ -766,3 +766,756 @@ describe("Ausgangslage 2 – Resultatvergleich", () => {
     expect(assetsEnd - debtsEnd).toBe(1_279_319);
   });
 });
+
+// =====================================================================
+// Transfer Events
+// =====================================================================
+
+function makeTransferEvent(overrides: Record<string, unknown> = {}): any {
+  return {
+    client_id: "tf_1",
+    title: "Transfer Test",
+    start_date: "2026-01-01",
+    end_date: null,
+    recurrence: "none",
+    active: 1,
+    meta_json: null,
+    line: {
+      line_type: "transfer",
+      amount_chf: 0,
+      indexation: null,
+      category: null,
+      meta_json: null,
+      transferFromKey: "liquidity",
+      transferToKey: "liquidity",
+      ...(overrides.line as object ?? {}),
+    },
+    ...overrides,
+    // re-apply line after spread so overrides.line merges correctly
+  };
+}
+
+describe("Transfer Events – Grundlagen", () => {
+  it("Transfer Liquidität → Kurzfristig verschiebt Betrag korrekt", () => {
+    const input = makeInput({
+      planToAge: 41,
+      assetsToday: { liq: 10_000, shortA: 5_000, longA: 0, realA: 0 },
+      debtsToday: { shortD: 0, longD: 0 },
+      positions: DEFAULT_POSITIONS,
+      events: [
+        makeTransferEvent({
+          title: "Investieren",
+          line: { line_type: "transfer", amount_chf: 3_000, indexation: null, category: null, meta_json: null, transferFromKey: "liquidity", transferToKey: "asset:pos_short" },
+        }),
+      ],
+    });
+    const r = computeForecastWithBreakdown(input);
+    const row = r.rows?.[0] as any;
+    expect(row.liq).toBe(7_000);
+    expect(row.shortA).toBe(8_000);
+  });
+
+  it("Transfer Kurzfristig → Langfristig verschiebt zwischen Buckets", () => {
+    const input = makeInput({
+      planToAge: 41,
+      assetsToday: { liq: 1_000, shortA: 20_000, longA: 10_000, realA: 0 },
+      debtsToday: { shortD: 0, longD: 0 },
+      positions: DEFAULT_POSITIONS,
+      events: [
+        makeTransferEvent({
+          title: "Umschichten",
+          line: { line_type: "transfer", amount_chf: 5_000, indexation: null, category: null, meta_json: null, transferFromKey: "asset:pos_short", transferToKey: "asset:pos_long" },
+        }),
+      ],
+    });
+    const r = computeForecastWithBreakdown(input);
+    const row = r.rows?.[0] as any;
+    expect(row.shortA).toBe(15_000);
+    expect(row.longA).toBe(15_000);
+    expect(row.liq).toBe(1_000);
+  });
+
+  it("Transfer verändert weder Einnahmen noch Ausgaben", () => {
+    const input = makeInput({
+      planToAge: 41,
+      assetsToday: { liq: 10_000, shortA: 0, longA: 0, realA: 0 },
+      debtsToday: { shortD: 0, longD: 0 },
+      positions: DEFAULT_POSITIONS,
+      events: [
+        makeTransferEvent({
+          title: "Interne Umbuchung",
+          line: { line_type: "transfer", amount_chf: 2_000, indexation: null, category: null, meta_json: null, transferFromKey: "liquidity", transferToKey: "asset:pos_short" },
+        }),
+      ],
+    });
+    const r = computeForecastWithBreakdown(input);
+    const row = r.rows?.[0] as any;
+    expect(row.eventsIncome ?? 0).toBe(0);
+    expect(row.eventsExpense ?? 0).toBe(0);
+  });
+
+  it("Transfer wird in eventTransfers mit fromKey/toKey gemeldet", () => {
+    const input = makeInput({
+      planToAge: 41,
+      assetsToday: { liq: 10_000, shortA: 0, longA: 0, realA: 0 },
+      debtsToday: { shortD: 0, longD: 0 },
+      positions: DEFAULT_POSITIONS,
+      events: [
+        makeTransferEvent({
+          title: "Reinvest",
+          line: { line_type: "transfer", amount_chf: 4_000, indexation: null, category: null, meta_json: null, transferFromKey: "liquidity", transferToKey: "asset:pos_long" },
+        }),
+      ],
+    });
+    const r = computeForecastWithBreakdown(input);
+    const row = r.rows?.[0] as any;
+    expect(row.eventTransfers).toHaveLength(1);
+    expect(row.eventTransfers[0].label).toBe("Reinvest");
+    expect(row.eventTransfers[0].amount).toBe(4_000);
+    expect(row.eventTransfers[0].fromKey).toBe("liquidity");
+    expect(row.eventTransfers[0].toKey).toBe("asset:pos_long");
+  });
+
+  it("Eigenkapital bleibt bei Asset→Asset Transfer unverändert", () => {
+    const input = makeInput({
+      planToAge: 41,
+      assetsToday: { liq: 10_000, shortA: 5_000, longA: 0, realA: 0 },
+      debtsToday: { shortD: 0, longD: 0 },
+      positions: DEFAULT_POSITIONS,
+      events: [
+        makeTransferEvent({
+          title: "Umschichten",
+          line: { line_type: "transfer", amount_chf: 3_000, indexation: null, category: null, meta_json: null, transferFromKey: "liquidity", transferToKey: "asset:pos_short" },
+        }),
+      ],
+    });
+    const r = computeForecastWithBreakdown(input);
+    const row = r.rows?.[0] as any;
+    const equityStart = 10_000 + 5_000;
+    const equityEnd = row.liq + row.shortA + row.longA + row.realA;
+    expect(equityEnd).toBe(equityStart);
+  });
+});
+
+describe("Transfer Events – Schulden-Rückzahlung (Asset → Debt)", () => {
+  it("Transfer Liquidität → Schuld reduziert den Schuld-Principal", () => {
+    const input = makeInput({
+      planToAge: 41,
+      assetsToday: { liq: 100_000, shortA: 0, longA: 0, realA: 0 },
+      debtsToday: { shortD: 0, longD: 60_000 },
+      positions: [
+        ...DEFAULT_POSITIONS,
+        { id: "darlehen_hw", kind: "debt", availability: "gt_3y" },
+      ],
+      debts: [
+        {
+          id: "darlehen_hw",
+          principalToday: 60_000,
+          annualInterestRate: 0,
+          annualPayment: 0,
+          availability: "gt_3y",
+          interestSourceInstrumentId: "sys_liq_main",
+          amortizationSourceInstrumentId: "sys_liq_main",
+        },
+      ],
+      events: [
+        makeTransferEvent({
+          title: "Darlehen H&W tilgen",
+          line: { line_type: "transfer", amount_chf: 60_000, indexation: null, category: null, meta_json: null, transferFromKey: "liquidity", transferToKey: "debt:darlehen_hw" },
+        }),
+      ],
+    });
+    const r = computeForecastWithBreakdown(input);
+    const row = r.rows?.[0] as any;
+    expect(row.liq).toBe(40_000);
+    expect(row.longD).toBe(0);
+    const equity = row.liq + row.shortA + row.longA + row.realA - (row.shortD ?? 0) - (row.longD ?? 0);
+    expect(equity).toBe(40_000);
+  });
+
+  it("Teilrückzahlung einer Schuld", () => {
+    const input = makeInput({
+      planToAge: 41,
+      assetsToday: { liq: 50_000, shortA: 0, longA: 0, realA: 0 },
+      debtsToday: { shortD: 0, longD: 100_000 },
+      positions: [
+        ...DEFAULT_POSITIONS,
+        { id: "hypo1", kind: "debt", availability: "gt_3y" },
+      ],
+      debts: [
+        {
+          id: "hypo1",
+          principalToday: 100_000,
+          annualInterestRate: 0,
+          annualPayment: 0,
+          availability: "gt_3y",
+          interestSourceInstrumentId: "sys_liq_main",
+          amortizationSourceInstrumentId: "sys_liq_main",
+        },
+      ],
+      events: [
+        makeTransferEvent({
+          title: "Sondertilgung",
+          line: { line_type: "transfer", amount_chf: 30_000, indexation: null, category: null, meta_json: null, transferFromKey: "liquidity", transferToKey: "debt:hypo1" },
+        }),
+      ],
+    });
+    const r = computeForecastWithBreakdown(input);
+    const row = r.rows?.[0] as any;
+    expect(row.liq).toBe(20_000);
+    expect(row.longD).toBe(70_000);
+  });
+});
+
+describe("Transfer Events – Kreditaufnahme (Debt → Asset)", () => {
+  it("Transfer Schuld → Liquidität erhöht Schuld und LIQ", () => {
+    const input = makeInput({
+      planToAge: 41,
+      assetsToday: { liq: 5_000, shortA: 0, longA: 0, realA: 0 },
+      debtsToday: { shortD: 0, longD: 0 },
+      positions: [
+        ...DEFAULT_POSITIONS,
+        { id: "kredit_neu", kind: "debt", availability: "3m_3y" },
+      ],
+      debts: [
+        {
+          id: "kredit_neu",
+          principalToday: 0,
+          annualInterestRate: 0,
+          annualPayment: 0,
+          availability: "3m_3y",
+          interestSourceInstrumentId: "sys_liq_main",
+          amortizationSourceInstrumentId: "sys_liq_main",
+        },
+      ],
+      events: [
+        makeTransferEvent({
+          title: "Kredit aufnehmen",
+          line: { line_type: "transfer", amount_chf: 20_000, indexation: null, category: null, meta_json: null, transferFromKey: "debt:kredit_neu", transferToKey: "liquidity" },
+        }),
+      ],
+    });
+    const r = computeForecastWithBreakdown(input);
+    const row = r.rows?.[0] as any;
+    expect(row.liq).toBe(25_000);
+    expect(row.shortD).toBe(20_000);
+  });
+});
+
+describe("Transfer Events – Zeitverhalten", () => {
+  it("Einmaliger Transfer nur im Startjahr aktiv", () => {
+    const input = makeInput({
+      planToAge: 43,
+      assetsToday: { liq: 50_000, shortA: 10_000, longA: 0, realA: 0 },
+      debtsToday: { shortD: 0, longD: 0 },
+      positions: DEFAULT_POSITIONS,
+      events: [
+        makeTransferEvent({
+          title: "Einmal-Invest",
+          start_date: "2027-06-01",
+          recurrence: "none",
+          line: { line_type: "transfer", amount_chf: 10_000, indexation: null, category: null, meta_json: null, transferFromKey: "liquidity", transferToKey: "asset:pos_short" },
+        }),
+      ],
+    });
+    const r = computeForecastWithBreakdown(input);
+    const row0 = r.rows?.[0] as any; // 2026
+    const row1 = r.rows?.[1] as any; // 2027
+    const row2 = r.rows?.[2] as any; // 2028
+    expect(row0.eventTransfers ?? []).toHaveLength(0);
+    expect(row1.eventTransfers).toHaveLength(1);
+    expect(row1.liq).toBe(40_000);
+    expect(row1.shortA).toBe(20_000);
+    expect(row2.eventTransfers ?? []).toHaveLength(0);
+    expect(row2.liq).toBe(40_000);
+  });
+
+  it("Jährlicher Transfer wiederholt sich über Laufzeit", () => {
+    const input = makeInput({
+      planToAge: 43,
+      assetsToday: { liq: 100_000, shortA: 0, longA: 0, realA: 0 },
+      debtsToday: { shortD: 0, longD: 0 },
+      positions: DEFAULT_POSITIONS,
+      events: [
+        makeTransferEvent({
+          title: "Jahres-Sparplan",
+          start_date: "2026-01-01",
+          end_date: "2028-12-31",
+          recurrence: "yearly",
+          line: { line_type: "transfer", amount_chf: 12_000, indexation: null, category: null, meta_json: null, transferFromKey: "liquidity", transferToKey: "asset:pos_short" },
+        }),
+      ],
+    });
+    const r = computeForecastWithBreakdown(input);
+    expect(r.rows?.[0]?.eventTransfers).toHaveLength(1);
+    expect(r.rows?.[1]?.eventTransfers).toHaveLength(1);
+    expect(r.rows?.[2]?.eventTransfers).toHaveLength(1);
+    const row2 = r.rows?.[2] as any;
+    expect(row2.liq).toBe(64_000);
+    expect(row2.shortA).toBe(36_000);
+  });
+});
+
+describe("Transfer Events – Mehrere Transfers im selben Jahr", () => {
+  it("Zwei Transfers im selben Jahr werden korrekt verarbeitet", () => {
+    const input = makeInput({
+      planToAge: 41,
+      assetsToday: { liq: 50_000, shortA: 10_000, longA: 0, realA: 0 },
+      debtsToday: { shortD: 0, longD: 0 },
+      positions: DEFAULT_POSITIONS,
+      events: [
+        makeTransferEvent({
+          client_id: "tf_a",
+          title: "Invest A",
+          line: { line_type: "transfer", amount_chf: 5_000, indexation: null, category: null, meta_json: null, transferFromKey: "liquidity", transferToKey: "asset:pos_short" },
+        }),
+        makeTransferEvent({
+          client_id: "tf_b",
+          title: "Invest B",
+          line: { line_type: "transfer", amount_chf: 10_000, indexation: null, category: null, meta_json: null, transferFromKey: "liquidity", transferToKey: "asset:pos_long" },
+        }),
+      ],
+    });
+    const r = computeForecastWithBreakdown(input);
+    const row = r.rows?.[0] as any;
+    expect(row.eventTransfers).toHaveLength(2);
+    expect(row.liq).toBe(35_000);
+    expect(row.shortA).toBe(15_000);
+    expect(row.longA).toBe(10_000);
+  });
+});
+
+describe("Transfer Events – Kombination mit Annuals und regulären Events", () => {
+  it("Transfer + Einnahme + Ausgabe ergibt korrektes Ergebnis", () => {
+    const input = makeInput({
+      planToAge: 41,
+      assetsToday: { liq: 20_000, shortA: 0, longA: 0, realA: 0 },
+      debtsToday: { shortD: 0, longD: 0 },
+      positions: DEFAULT_POSITIONS,
+      events: [
+        {
+          client_id: "ev_income",
+          title: "Bonus",
+          start_date: "2026-01-01",
+          end_date: null,
+          recurrence: "none",
+          active: 1,
+          meta_json: null,
+          line: { line_type: "income", amount_chf: 10_000, indexation: null, category: null, meta_json: null, destination: "liquidity" },
+        },
+        {
+          client_id: "ev_expense",
+          title: "Auto",
+          start_date: "2026-01-01",
+          end_date: null,
+          recurrence: "none",
+          active: 1,
+          meta_json: null,
+          line: { line_type: "spending", amount_chf: 5_000, indexation: null, category: null, meta_json: null },
+        },
+        makeTransferEvent({
+          client_id: "ev_transfer",
+          title: "Sparen",
+          line: { line_type: "transfer", amount_chf: 8_000, indexation: null, category: null, meta_json: null, transferFromKey: "liquidity", transferToKey: "asset:pos_short" },
+        }),
+      ],
+    });
+    const r = computeForecastWithBreakdown(input);
+    const row = r.rows?.[0] as any;
+    expect(row.eventsIncome).toBe(10_000);
+    expect(row.eventsExpense).toBe(5_000);
+    expect(row.eventTransfers).toHaveLength(1);
+    // LIQ: 20k + 10k (income) - 5k (expense) - 8k (transfer) = 17k
+    expect(row.liq).toBe(17_000);
+    expect(row.shortA).toBe(8_000);
+  });
+});
+
+describe("Transfer Events – Invarianten", () => {
+  it("Bilanz und Kontinuität halten bei Transfers über 5 Jahre", () => {
+    const input = makeInput({
+      planToAge: 45,
+      assetsToday: { liq: 100_000, shortA: 50_000, longA: 0, realA: 0 },
+      debtsToday: { shortD: 0, longD: 80_000 },
+      positions: [
+        ...DEFAULT_POSITIONS,
+        { id: "hypo", kind: "debt", availability: "gt_3y" },
+      ],
+      debts: [
+        {
+          id: "hypo",
+          principalToday: 80_000,
+          annualInterestRate: 0.02,
+          annualPayment: 1_600,
+          availability: "gt_3y",
+          interestSourceInstrumentId: "sys_liq_main",
+          amortizationSourceInstrumentId: "sys_liq_main",
+        },
+      ],
+      events: [
+        makeTransferEvent({
+          client_id: "tf_invest",
+          title: "Jährliches Sparen",
+          start_date: "2026-01-01",
+          end_date: "2030-12-31",
+          recurrence: "yearly",
+          line: { line_type: "transfer", amount_chf: 5_000, indexation: null, category: null, meta_json: null, transferFromKey: "liquidity", transferToKey: "asset:pos_short" },
+        }),
+        makeTransferEvent({
+          client_id: "tf_tilgung",
+          title: "Extra-Tilgung",
+          start_date: "2028-01-01",
+          recurrence: "none",
+          line: { line_type: "transfer", amount_chf: 10_000, indexation: null, category: null, meta_json: null, transferFromKey: "liquidity", transferToKey: "debt:hypo" },
+        }),
+      ],
+    });
+    const r = computeForecastWithBreakdown(input);
+    assertInvariants(r.rows ?? []);
+    expect(r.rows).toHaveLength(5);
+  });
+});
+
+// =====================================================================
+// Anwendungsfälle – Realistische Szenarien
+// =====================================================================
+
+describe("Anwendungsfall: Vorsorge-Entnahme → ETF (leere Position ab 2030)", () => {
+  const POSITIONS = [
+    { id: "sys_liq_main", kind: "asset", bucket: "instant" },
+    { id: "etf_sparplan", kind: "asset", bucket: "3m_3y" },
+    { id: "saeule_3a", kind: "asset", bucket: "locked" },
+  ] as const;
+
+  it("ETF startet mit 0 und wird ab 2030 durch 3a-Entnahme aufgefüllt", () => {
+    const input = makeInput({
+      planToAge: 46, // 6 Jahre: 2026–2031
+      assetsToday: { liq: 30_000, shortA: 0, longA: 0, realA: 80_000 },
+      debtsToday: { shortD: 0, longD: 0 },
+      positions: POSITIONS,
+      events: [
+        makeTransferEvent({
+          client_id: "tf_3a_etf",
+          title: "Entnahme 3a → ETF",
+          start_date: "2030-01-01",
+          recurrence: "none",
+          line: { line_type: "transfer", amount_chf: 50_000, indexation: null, category: null, meta_json: null, transferFromKey: "asset:saeule_3a", transferToKey: "asset:etf_sparplan" },
+        }),
+      ],
+    });
+    const r = computeForecastWithBreakdown(input);
+    assertInvariants(r.rows ?? []);
+
+    // 2026–2029: keine Transfers, alles unverändert
+    for (let i = 0; i < 4; i++) {
+      const row = r.rows?.[i] as any;
+      expect(row.shortA).toBe(0);
+      expect(row.realA).toBe(80_000);
+      expect(row.eventTransfers ?? []).toHaveLength(0);
+    }
+
+    // 2030: Transfer greift
+    const row2030 = r.rows?.[4] as any;
+    expect(row2030.year).toBe(2030);
+    expect(row2030.shortA).toBe(50_000);
+    expect(row2030.realA).toBe(30_000);
+    expect(row2030.eventTransfers).toHaveLength(1);
+
+    // Gesamtvermögen bleibt gleich (reine Umschichtung)
+    const totalAssets = row2030.liq + row2030.shortA + row2030.longA + row2030.realA;
+    expect(totalAssets).toBe(30_000 + 80_000);
+  });
+
+  it("Jährliche 3a-Entnahmen ab 2028 über 3 Jahre in ETF", () => {
+    const input = makeInput({
+      planToAge: 46,
+      assetsToday: { liq: 20_000, shortA: 0, longA: 0, realA: 120_000 },
+      debtsToday: { shortD: 0, longD: 0 },
+      positions: POSITIONS,
+      events: [
+        makeTransferEvent({
+          client_id: "tf_3a_etf_yearly",
+          title: "3a-Bezug → ETF",
+          start_date: "2028-01-01",
+          end_date: "2030-12-31",
+          recurrence: "yearly",
+          line: { line_type: "transfer", amount_chf: 20_000, indexation: null, category: null, meta_json: null, transferFromKey: "asset:saeule_3a", transferToKey: "asset:etf_sparplan" },
+        }),
+      ],
+    });
+    const r = computeForecastWithBreakdown(input);
+    assertInvariants(r.rows ?? []);
+
+    // 2026–2027: kein Transfer
+    expect((r.rows?.[0] as any).shortA).toBe(0);
+    expect((r.rows?.[0] as any).realA).toBe(120_000);
+    expect((r.rows?.[1] as any).shortA).toBe(0);
+
+    // 2028: erster Transfer → 20k
+    const row2028 = r.rows?.[2] as any;
+    expect(row2028.shortA).toBe(20_000);
+    expect(row2028.realA).toBe(100_000);
+
+    // 2029: zweiter → 40k
+    const row2029 = r.rows?.[3] as any;
+    expect(row2029.shortA).toBe(40_000);
+    expect(row2029.realA).toBe(80_000);
+
+    // 2030: dritter → 60k
+    const row2030 = r.rows?.[4] as any;
+    expect(row2030.shortA).toBe(60_000);
+    expect(row2030.realA).toBe(60_000);
+
+    // Total bleibt immer 140k
+    const total = row2030.liq + row2030.shortA + row2030.longA + row2030.realA;
+    expect(total).toBe(140_000);
+  });
+});
+
+describe("Anwendungsfall: ETF-Sparplan aus Liquidität + späterer Teilverkauf", () => {
+  const POSITIONS = [
+    { id: "sys_liq_main", kind: "asset", bucket: "instant" },
+    { id: "etf_global", kind: "asset", bucket: "3m_3y" },
+  ] as const;
+
+  it("Jährliches Sparen → ETF, dann Teilverkauf für Hauskauf", () => {
+    const input = makeInput({
+      planToAge: 46, // 6 Jahre
+      assetsToday: { liq: 80_000, shortA: 0, longA: 0, realA: 0 },
+      debtsToday: { shortD: 0, longD: 0 },
+      positions: POSITIONS,
+      events: [
+        makeTransferEvent({
+          client_id: "tf_sparplan",
+          title: "ETF-Sparplan",
+          start_date: "2026-01-01",
+          end_date: "2031-12-31",
+          recurrence: "yearly",
+          line: { line_type: "transfer", amount_chf: 10_000, indexation: null, category: null, meta_json: null, transferFromKey: "liquidity", transferToKey: "asset:etf_global" },
+        }),
+        makeTransferEvent({
+          client_id: "tf_verkauf",
+          title: "ETF-Verkauf Hauskauf-EK",
+          start_date: "2029-01-01",
+          recurrence: "none",
+          line: { line_type: "transfer", amount_chf: 25_000, indexation: null, category: null, meta_json: null, transferFromKey: "asset:etf_global", transferToKey: "liquidity" },
+        }),
+      ],
+    });
+    const r = computeForecastWithBreakdown(input);
+    assertInvariants(r.rows ?? []);
+
+    // 2026: LIQ 80k - 10k = 70k, ETF = 10k
+    expect((r.rows?.[0] as any).liq).toBe(70_000);
+    expect((r.rows?.[0] as any).shortA).toBe(10_000);
+
+    // 2027: LIQ 60k, ETF 20k
+    expect((r.rows?.[1] as any).liq).toBe(60_000);
+    expect((r.rows?.[1] as any).shortA).toBe(20_000);
+
+    // 2028: LIQ 50k, ETF 30k
+    expect((r.rows?.[2] as any).liq).toBe(50_000);
+    expect((r.rows?.[2] as any).shortA).toBe(30_000);
+
+    // 2029: Sparplan +10k → ETF 40k, dann Verkauf -25k → ETF 15k
+    //        LIQ: 50k -10k +25k = 65k (Reihenfolge: Sparplan zuerst, Verkauf danach)
+    const row2029 = r.rows?.[3] as any;
+    expect(row2029.eventTransfers).toHaveLength(2);
+    expect(row2029.shortA).toBe(15_000);
+    expect(row2029.liq).toBe(65_000);
+
+    // Total immer 80k
+    const total = row2029.liq + row2029.shortA + row2029.longA + row2029.realA;
+    expect(total).toBe(80_000);
+  });
+});
+
+describe("Anwendungsfall: Hypothek-Sondertilgung aus Kurzfristig-Vermögen", () => {
+  const POSITIONS = [
+    { id: "sys_liq_main", kind: "asset", bucket: "instant" },
+    { id: "wertschriften", kind: "asset", bucket: "3m_3y" },
+    { id: "hypo_haus", kind: "debt", availability: "gt_3y" },
+  ] as const;
+
+  it("Sondertilgung reduziert Schuld und senkt folgende Zinslast", () => {
+    const input = makeInput({
+      planToAge: 43, // 3 Jahre
+      assetsToday: { liq: 20_000, shortA: 100_000, longA: 0, realA: 0 },
+      debtsToday: { shortD: 0, longD: 500_000 },
+      positions: POSITIONS,
+      debts: [
+        {
+          id: "hypo_haus",
+          principalToday: 500_000,
+          annualInterestRate: 0.015, // 1.5%
+          annualPayment: 7_500 + 5_000, // 7500 Zinsen + 5000 Tilgung
+          availability: "gt_3y",
+          interestSourceInstrumentId: "sys_liq_main",
+          amortizationSourceInstrumentId: "sys_liq_main",
+        },
+      ],
+      events: [
+        makeTransferEvent({
+          client_id: "tf_sondertilgung",
+          title: "Sondertilgung aus Wertschriften",
+          start_date: "2027-01-01",
+          recurrence: "none",
+          line: { line_type: "transfer", amount_chf: 50_000, indexation: null, category: null, meta_json: null, transferFromKey: "asset:wertschriften", transferToKey: "debt:hypo_haus" },
+        }),
+      ],
+    });
+    const r = computeForecastWithBreakdown(input);
+    assertInvariants(r.rows ?? []);
+
+    // 2026: reguläre Tilgung 5k, Zinsen 7500 → Schuld 495k
+    const row0 = r.rows?.[0] as any;
+    expect(row0.longD).toBe(495_000);
+    expect(row0.debtInterest).toBe(7_500);
+
+    // 2027: Sondertilgung 50k + reguläre Tilgung (5k, teils aus shortA wegen LIQ-Deficit)
+    const row1 = r.rows?.[1] as any;
+    expect(row1.eventTransfers).toHaveLength(1);
+    // shortA: 100k - 50k (Transfer) - 4,925 (Tilgungs-Deficit aus shortA) = 45,075
+    expect(row1.shortA).toBe(45_075);
+    expect(row1.longD).toBe(440_000); // 495k - 50k Sondertilgung - 5k reguläre Tilgung
+
+    // 2028: Zinsen auf reduziertem Principal (440k * 1.5% = 6,600)
+    const row2 = r.rows?.[2] as any;
+    expect(row2.debtInterest).toBe(6_600);
+  });
+});
+
+describe("Anwendungsfall: Erbschaft → Schuld tilgen + Rest investieren", () => {
+  const POSITIONS = [
+    { id: "sys_liq_main", kind: "asset", bucket: "instant" },
+    { id: "etf_nachhaltig", kind: "asset", bucket: "3m_3y" },
+    { id: "konsumkredit", kind: "debt", availability: "3m_3y" },
+  ] as const;
+
+  it("Erbschaft als Einnahme, dann Transfer zur Tilgung und Investment", () => {
+    const input = makeInput({
+      planToAge: 42, // 2 Jahre
+      assetsToday: { liq: 10_000, shortA: 0, longA: 0, realA: 0 },
+      debtsToday: { shortD: 30_000, longD: 0 },
+      positions: POSITIONS,
+      debts: [
+        {
+          id: "konsumkredit",
+          principalToday: 30_000,
+          annualInterestRate: 0.05,
+          annualPayment: 1_500, // nur Zinsen
+          availability: "3m_3y",
+          interestSourceInstrumentId: "sys_liq_main",
+          amortizationSourceInstrumentId: "sys_liq_main",
+        },
+      ],
+      events: [
+        // Erbschaft als Einnahme → LIQ
+        {
+          client_id: "ev_erbschaft",
+          title: "Erbschaft",
+          start_date: "2026-01-01",
+          end_date: null,
+          recurrence: "none",
+          active: 1,
+          meta_json: null,
+          line: { line_type: "income", amount_chf: 80_000, indexation: null, category: null, meta_json: null, destination: "liquidity" },
+        },
+        // Transfer: Kredit komplett tilgen
+        makeTransferEvent({
+          client_id: "tf_tilgung",
+          title: "Konsumkredit tilgen",
+          line: { line_type: "transfer", amount_chf: 30_000, indexation: null, category: null, meta_json: null, transferFromKey: "liquidity", transferToKey: "debt:konsumkredit" },
+        }),
+        // Transfer: Rest in ETF
+        makeTransferEvent({
+          client_id: "tf_invest",
+          title: "Erbschaft investieren",
+          line: { line_type: "transfer", amount_chf: 40_000, indexation: null, category: null, meta_json: null, transferFromKey: "liquidity", transferToKey: "asset:etf_nachhaltig" },
+        }),
+      ],
+    });
+    const r = computeForecastWithBreakdown(input);
+    assertInvariants(r.rows ?? []);
+
+    const row0 = r.rows?.[0] as any;
+    // LIQ: 10k + 80k (Erbschaft) - 1.5k (Zinsen auf 30k) - 30k (Tilgung Transfer) - 40k (ETF Transfer) = 18.5k
+    // Aber reguläre Tilgung/Zinsen laufen in anderer Phase – Reihenfolge beachten
+    expect(row0.eventsIncome).toBe(80_000);
+    expect(row0.eventTransfers).toHaveLength(2);
+    expect(row0.shortD).toBe(0); // Kredit komplett getilgt
+    expect(row0.shortA).toBe(40_000); // ETF aufgebaut
+
+    // 2027: keine Zinsen mehr auf Kredit
+    const row1 = r.rows?.[1] as any;
+    expect(row1.debtInterest).toBe(0);
+    expect(row1.shortD).toBe(0);
+  });
+});
+
+describe("Anwendungsfall: Renovation finanzieren mit Hypothek-Aufstockung", () => {
+  const POSITIONS = [
+    { id: "sys_liq_main", kind: "asset", bucket: "instant" },
+    { id: "pos_short", kind: "asset", bucket: "3m_3y" },
+    { id: "immobilie", kind: "asset", bucket: "locked" },
+    { id: "hypo", kind: "debt", availability: "gt_3y" },
+  ] as const;
+
+  it("Hypo-Aufstockung (Debt→LIQ) + Renovation (Ausgabe) + Wertsteigerung (Transfer LIQ→Immobilie)", () => {
+    const input = makeInput({
+      planToAge: 42, // 2 Jahre
+      assetsToday: { liq: 15_000, shortA: 0, longA: 0, realA: 400_000 },
+      debtsToday: { shortD: 0, longD: 300_000 },
+      positions: POSITIONS,
+      debts: [
+        {
+          id: "hypo",
+          principalToday: 300_000,
+          annualInterestRate: 0.015,
+          annualPayment: 4_500, // Zinsen only
+          availability: "gt_3y",
+          interestSourceInstrumentId: "sys_liq_main",
+          amortizationSourceInstrumentId: "sys_liq_main",
+        },
+      ],
+      events: [
+        // Hypo aufstocken: 50k neue Schuld → LIQ
+        makeTransferEvent({
+          client_id: "tf_hypo_aufstockung",
+          title: "Hypothek aufstocken",
+          line: { line_type: "transfer", amount_chf: 50_000, indexation: null, category: null, meta_json: null, transferFromKey: "debt:hypo", transferToKey: "liquidity" },
+        }),
+        // Renovation als Ausgabe
+        {
+          client_id: "ev_renovation",
+          title: "Renovation Küche/Bad",
+          start_date: "2026-01-01",
+          end_date: null,
+          recurrence: "none",
+          active: 1,
+          meta_json: null,
+          line: { line_type: "spending", amount_chf: 45_000, indexation: null, category: null, meta_json: null },
+        },
+        // Wertsteigerung der Immobilie
+        makeTransferEvent({
+          client_id: "tf_wertsteigerung",
+          title: "Wertsteigerung Immobilie",
+          line: { line_type: "transfer", amount_chf: 30_000, indexation: null, category: null, meta_json: null, transferFromKey: "liquidity", transferToKey: "asset:immobilie" },
+        }),
+      ],
+    });
+    const r = computeForecastWithBreakdown(input);
+    assertInvariants(r.rows ?? []);
+
+    const row0 = r.rows?.[0] as any;
+    // Schuld: 300k + 50k Aufstockung = 350k (minus evtl. reguläre Tilgung 0 da annualPayment=4500=Zinsen)
+    expect(row0.longD).toBe(350_000);
+    // Renovation zieht 30k aus realA (Deficit-Coverage), Wertsteigerung +30k → netto 0
+    expect(row0.realA).toBe(400_000);
+    expect(row0.eventTransfers).toHaveLength(2);
+
+    // 2027: Zinsen auf 350k (1.5% = 5250, aufgerundet wegen Engine-Rundung)
+    const row1 = r.rows?.[1] as any;
+    expect(row1.debtInterest).toBe(5_250);
+  });
+});

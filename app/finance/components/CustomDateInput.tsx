@@ -67,7 +67,9 @@ export default function CustomDateInput({
   useEffect(() => {
     if (!open) return;
     const onOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      const target = e.target as HTMLElement;
+      if (target?.closest?.("[data-custom-select-portal]")) return;
+      if (containerRef.current && !containerRef.current.contains(target)) {
         setOpen(false);
       }
     };

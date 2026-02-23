@@ -1,7 +1,7 @@
 // lib/types/v2/events.ts
 
 export type EventRecurrence = "none" | "yearly" | "monthly";
-export type EventLineType = "income" | "spending";
+export type EventLineType = "income" | "spending" | "transfer";
 export type EventIndexation = "inflation" | "fixed_real" | "fixed_nominal";
 
 export type Destination = "liquidity" | "short" | "long" | "debt";
@@ -35,6 +35,10 @@ export type EventLine = {
   funding?: EventFunding;   // required for spending
   /** Echtes Konto: asset:id | debt:id – übersteuert destination für Anzeige */
   destinationAccountKey?: string;
+
+  // Transfer: direct account-to-account movement
+  transferFromKey?: string; // AccountKey: "asset:<id>" | "debt:<id>" | "liquidity"
+  transferToKey?: string;   // AccountKey: "asset:<id>" | "debt:<id>" | "liquidity"
 };
 
 export type ProfileEvent = {

@@ -14,7 +14,7 @@ import {
   ReferenceLine,
   ReferenceDot,
 } from "recharts";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, X, Clock, CalendarClock, TrendingDown, Wallet, ArrowDownCircle, PiggyBank, ShieldCheck, BarChart3, RefreshCw } from "lucide-react";
 
 export type Buckets = {
   liq: number;
@@ -135,6 +135,147 @@ const PERIOD_OPTIONS = [
   { key: "Gesamt", label: "Gesamt", n: 0 },
 ] as const;
 
+type Urgency = "acute" | "medium" | "long";
+
+function getUrgency(yearsUntil: number): Urgency {
+  if (yearsUntil <= 1) return "acute";
+  if (yearsUntil <= 3) return "medium";
+  return "long";
+}
+
+const URGENCY_META: Record<Urgency, {
+  label: string; barLabel: string; color: string; border: string; bg: string;
+  barBorder: string; barBg: string; barText: string; barIcon: string; barHoverBorder: string; barHoverBg: string; barDetail: string;
+  icon: typeof Clock;
+}> = {
+  acute: {
+    label: "Sofort handeln", barLabel: "Liquiditäts-Warnung", color: "text-rose-400", border: "border-rose-500/40", bg: "bg-rose-950/40",
+    barBorder: "border-rose-500/40", barBg: "bg-rose-950/30", barText: "text-rose-200", barIcon: "text-rose-400",
+    barHoverBorder: "hover:border-rose-500/60", barHoverBg: "hover:bg-rose-950/50", barDetail: "text-rose-500/70",
+    icon: Clock,
+  },
+  medium: {
+    label: "Jetzt planen", barLabel: "Liquiditäts-Warnung", color: "text-amber-400", border: "border-amber-500/40", bg: "bg-amber-950/30",
+    barBorder: "border-amber-500/30", barBg: "bg-amber-950/30", barText: "text-amber-200", barIcon: "text-amber-400",
+    barHoverBorder: "hover:border-amber-500/50", barHoverBg: "hover:bg-amber-950/50", barDetail: "text-amber-500/70",
+    icon: CalendarClock,
+  },
+  long: {
+    label: "Strategie entwickeln", barLabel: "Liquiditäts-Hinweis", color: "text-slate-300", border: "border-slate-600/30", bg: "bg-slate-800/20",
+    barBorder: "border-slate-600/20", barBg: "bg-slate-800/15", barText: "text-slate-300", barIcon: "text-slate-400",
+    barHoverBorder: "hover:border-slate-500/30", barHoverBg: "hover:bg-slate-800/30", barDetail: "text-slate-500",
+    icon: BarChart3,
+  },
+};
+
+type Tip = { icon: typeof Wallet; title: string; text: string };
+
+const TIPS: Record<Urgency, Tip[]> = {
+  acute: [
+    { icon: ArrowDownCircle, title: "Ausgaben sofort reduzieren", text: "Unnötige Abos kündigen, variable Kosten kürzen. Fokus auf das Nötigste." },
+    { icon: Wallet, title: "Liquiditätsreserve sichern", text: "3–6 Monatsausgaben als Puffer verfügbar halten. Gebundenes Vermögen prüfen." },
+    { icon: TrendingDown, title: "Konsumschulden prioritär tilgen", text: "Kreditkarten und Konsumkredite kosten am meisten Zinsen – zuerst abbauen." },
+    { icon: PiggyBank, title: "Zusätzliche Einnahmen prüfen", text: "Nebenerwerbsmöglichkeiten, Verkauf nicht genutzter Sachwerte oder Umschichtungen." },
+  ],
+  medium: [
+    { icon: BarChart3, title: "Einnahmen/Ausgaben-Verhältnis optimieren", text: "Systematisch analysieren, wo die grössten Hebel liegen – Fixkosten, Versicherungen, Wohnkosten." },
+    { icon: CalendarClock, title: "Verpflichtungen neu planen", text: "Amortisationen, Leasingraten und fixe Verträge zeitlich entzerren oder reduzieren." },
+    { icon: Wallet, title: "Anlagestrategie überprüfen", text: "Ist zu viel Vermögen gebunden? Umschichtung von langfristig zu kurzfristig verfügbar prüfen." },
+    { icon: ShieldCheck, title: "Vermögensverzehr-Strategie definieren", text: "Festlegen, aus welchen Töpfen wann entnommen wird – geplant statt gezwungen." },
+  ],
+  long: [
+    { icon: BarChart3, title: "Ausgaben- und Einnahmenstruktur prüfen", text: "Gibt es einen strukturellen Überhang? Fixkosten, Abos und wiederkehrende Ausgaben langfristig hinterfragen." },
+    { icon: PiggyBank, title: "Sparquote und Rücklagen stärken", text: "Regelmässig Reserven aufbauen – auch kleine Beträge wirken über Jahre. Ziel: 3–6 Monatsausgaben als Puffer." },
+    { icon: CalendarClock, title: "Grosse Ausgaben vorausplanen", text: "Auto, Renovation, Ausbildung – Events frühzeitig einplanen und Finanzierung klären." },
+    { icon: RefreshCw, title: "Regelmässig überprüfen", text: "Den Plan jährlich anpassen: Lebensumstände, Gehaltsentwicklung und Inflation verändern die Prognose." },
+  ],
+};
+
+function LiquidityWarningModal({
+  warningYear,
+  affectedYears,
+  onClose,
+}: {
+  warningYear: number;
+  affectedYears: number;
+  onClose: () => void;
+}) {
+  const currentYear = new Date().getFullYear();
+  const yearsUntil = warningYear - currentYear;
+  const urgency = getUrgency(yearsUntil);
+  const meta = URGENCY_META[urgency];
+  const tips = TIPS[urgency];
+  const Icon = meta.icon;
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <div
+        className="relative z-10 w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-800 bg-slate-900/95 backdrop-blur px-5 py-3">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-amber-400" />
+            <h2 className="text-base font-semibold text-slate-100">Liquiditäts-Warnung</h2>
+          </div>
+          <button type="button" onClick={onClose} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition touch-manipulation">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="px-5 py-4 space-y-5">
+          {/* Situation */}
+          <div className={`rounded-xl border ${meta.border} ${meta.bg} px-4 py-3`}>
+            <div className="flex items-center gap-2 mb-1.5">
+              <Icon className={`h-4 w-4 ${meta.color}`} />
+              <span className={`text-sm font-semibold ${meta.color}`}>{meta.label}</span>
+              <span className="ml-auto text-xs text-slate-500">
+                {yearsUntil <= 0 ? "bereits eingetreten" : `in ${yearsUntil} ${yearsUntil === 1 ? "Jahr" : "Jahren"}`}
+              </span>
+            </div>
+            <p className="text-sm text-slate-300 leading-relaxed">
+              Ab <strong className="text-slate-100">{warningYear}</strong> reicht deine Liquidität
+              nicht mehr aus, um alle Ausgaben und Verpflichtungen zu decken.
+              {affectedYears > 1 && (
+                <> Insgesamt sind <strong className="text-slate-100">{affectedYears} Jahre</strong> betroffen.</>
+              )}
+            </p>
+          </div>
+
+          {/* Empfehlungen */}
+          <div>
+            <h3 className="text-sm font-semibold text-slate-300 mb-3">Empfohlene Massnahmen</h3>
+            <div className="space-y-3">
+              {tips.map((tip, i) => {
+                const TipIcon = tip.icon;
+                return (
+                  <div key={i} className="flex gap-3 rounded-lg border border-slate-800 bg-slate-950/40 px-3.5 py-3">
+                    <TipIcon className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium text-slate-200">{tip.title}</div>
+                      <p className="mt-0.5 text-xs text-slate-400 leading-relaxed">{tip.text}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Kontext-Hinweis */}
+          <div className="rounded-lg border border-slate-800 bg-slate-950/30 px-4 py-3">
+            <p className="text-xs text-slate-500 leading-relaxed">
+              <strong className="text-slate-400">Tipp:</strong> Passe deine Daten in Silverline an und beobachte,
+              wie sich die Prognose verändert. Kleine Anpassungen bei Ausgaben oder Einnahmen
+              können langfristig grosse Wirkung zeigen.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ForecastChartSummary({
   rows = [],
   retirementYear,
@@ -143,6 +284,7 @@ export default function ForecastChartSummary({
   retirementYear?: number;
 }) {
   const [period, setPeriod] = useState<(typeof PERIOD_OPTIONS)[number]["key"]>("Gesamt");
+  const [showLiqModal, setShowLiqModal] = useState(false);
 
   const lineData = useMemo(() => {
     const safe = rows ?? [];
@@ -196,6 +338,12 @@ export default function ForecastChartSummary({
   );
   const firstLiqCriticalYear = liqWarnings.length > 0 ? liqWarnings[0].year : null;
 
+  const barMeta = useMemo(() => {
+    if (firstLiqCriticalYear == null) return null;
+    const yearsUntil = firstLiqCriticalYear - new Date().getFullYear();
+    return URGENCY_META[getUrgency(yearsUntil)];
+  }, [firstLiqCriticalYear]);
+
   if (!lineData.length) return null;
 
   return (
@@ -220,15 +368,25 @@ export default function ForecastChartSummary({
         </div>
       </div>
 
-      {firstLiqCriticalYear != null && (
-        <div className="mb-3 flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-950/30 px-3 py-2 text-sm text-amber-200">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
-          <span>
-            <strong>Liquiditäts-Warnung:</strong> Ab {firstLiqCriticalYear} sinkt die
-            Liquidität auf 0 oder darunter.
-            {liqWarnings.length > 1 && ` (${liqWarnings.length} Jahre betroffen)`}
-          </span>
-        </div>
+      {firstLiqCriticalYear != null && barMeta != null && (
+        <>
+          <button
+            type="button"
+            onClick={() => setShowLiqModal(true)}
+            className={`mb-3 flex w-full items-start gap-2 rounded-lg border ${barMeta.barBorder} ${barMeta.barBg} px-3 py-2 text-left text-sm ${barMeta.barText} transition ${barMeta.barHoverBorder} ${barMeta.barHoverBg} cursor-pointer touch-manipulation`}
+          >
+            <AlertTriangle className={`mt-0.5 h-4 w-4 shrink-0 ${barMeta.barIcon}`} />
+            <span className="flex-1 font-semibold">Liquidität {firstLiqCriticalYear}</span>
+            <span className={`mt-0.5 shrink-0 text-xs ${barMeta.barDetail}`}>{barMeta.label} ›</span>
+          </button>
+          {showLiqModal && (
+            <LiquidityWarningModal
+              warningYear={firstLiqCriticalYear}
+              affectedYears={liqWarnings.length}
+              onClose={() => setShowLiqModal(false)}
+            />
+          )}
+        </>
       )}
 
       <div className="h-56 min-h-[180px] w-full rounded-xl bg-slate-950/25 ring-1 ring-white/5">

@@ -68,6 +68,9 @@ export type YearRow = {
   /** Phase 5: Quelle pro Instrument (id → CHF) */
   transferInterestFromByInstrument?: Record<string, number>;
   transferAmortFromByInstrument?: Record<string, number>;
+
+  /** Event-Transfers (Von → Nach) */
+  eventTransfers?: Array<{ label: string; amount: number; fromKey: string; toKey: string }>;
 };
 
 // ---------------- helpers ----------------
@@ -169,6 +172,23 @@ export default function ForecastTableNice({
   retirementYear?: number;
 }) {
   const safeRows = rows ?? [];
+
+  const resolveAccountKey = useMemo(() => {
+    const map = new Map<string, string>();
+    map.set("liquidity", "Liquidität");
+    for (const p of positions) {
+      const id = p.id ?? p.instrument_id ?? "";
+      if (id) {
+        const lbl = (p.label || "").trim() || id;
+        map.set(`asset:${id}`, lbl);
+        map.set(`debt:${id}`, lbl);
+      }
+    }
+    return (key: string | undefined) => {
+      if (!key || key === "liquidity") return "Liquidität";
+      return map.get(key) ?? key;
+    };
+  }, [positions]);
 
   useEffect(() => {
     // eslint-disable-next-line no-console
@@ -558,6 +578,9 @@ export default function ForecastTableNice({
                                         {n(r.eventsExpense ?? 0) !== 0 && (
                                           <MovementLine label="Ereignisse (Ausgaben) ← Liquidität" value={n(r.eventsExpense)} kind="neg" />
                                         )}
+                                        {r.eventTransfers?.map((tf: { label: string; amount: number; fromKey: string; toKey: string }, i: number) => (
+                                          <MovementLine key={`tf-${i}`} label={`Transfer: ${tf.label} (${resolveAccountKey(tf.fromKey)} → ${resolveAccountKey(tf.toKey)})`} value={tf.amount} kind="neutral" />
+                                        ))}
                                         {n(r.assetCashflowToLiq) !== 0 && (
                                           <MovementLine label="Ertrag → Liquidität" value={n(r.assetCashflowToLiq)} kind="pos" />
                                         )}
@@ -596,12 +619,14 @@ export default function ForecastTableNice({
                                           const evIncome = n(r.eventsIncome ?? 0);
                                           const evExpense = n(r.eventsExpense ?? 0);
                                           const ertragLiq = n(r.assetCashflowToLiq ?? 0);
+                                          const hasTransfers = (r.eventTransfers?.length ?? 0) > 0;
                                           const hasLiqFlow =
                                             annIncome !== 0 ||
                                             annExpense !== 0 ||
                                             evIncome !== 0 ||
                                             evExpense !== 0 ||
                                             ertragLiq !== 0 ||
+                                            hasTransfers ||
                                             (intFrom && n(intFrom.liq) !== 0) ||
                                             (amortFrom && n(amortFrom.liq) !== 0);
                                           const hasShortFlow =
@@ -855,6 +880,12 @@ export default function ForecastTableNice({
                                           <div className="text-rose-300 tabular-nums">-{formatCHF(n(r.eventsExpense))}</div>
                                         </div>
                                       )}
+                                      {r.eventTransfers?.map((tf: { label: string; amount: number; fromKey: string; toKey: string }, i: number) => (
+                                        <div key={`tf-${i}`} className="flex items-center justify-between py-1">
+                                          <div className="text-slate-200">Transfer: {tf.label} <span className="text-slate-400">({resolveAccountKey(tf.fromKey)} → {resolveAccountKey(tf.toKey)})</span></div>
+                                          <div className="text-sky-300 tabular-nums">{formatCHF(tf.amount)}</div>
+                                        </div>
+                                      ))}
                                       {n(r.assetCashflowToLiq) !== 0 && (
                                         <div className="flex items-center justify-between py-1">
                                           <div className="text-slate-200">Ertrag → Liquidität</div>
@@ -903,12 +934,14 @@ export default function ForecastTableNice({
                                         const evIncome = n(r.eventsIncome ?? 0);
                                         const evExpense = n(r.eventsExpense ?? 0);
                                         const ertragLiq = n(r.assetCashflowToLiq ?? 0);
+                                        const hasTransfersMobile = (r.eventTransfers?.length ?? 0) > 0;
                                         const hasAny =
                                           annIncome !== 0 ||
                                           annExpense !== 0 ||
                                           evIncome !== 0 ||
                                           evExpense !== 0 ||
                                           ertragLiq !== 0 ||
+                                          hasTransfersMobile ||
                                           (intFrom && (n(intFrom.liq) !== 0 || n(intFrom.shortA) !== 0)) ||
                                           (amortFrom && (n(amortFrom.liq) !== 0 || n(amortFrom.shortA) !== 0)) ||
                                           (breakdown && n(breakdown.shortA) !== 0) ||

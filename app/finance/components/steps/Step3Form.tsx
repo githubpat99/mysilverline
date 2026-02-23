@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef } from "react";
-import { ArrowDownCircle, ArrowUpCircle, Copy, Plus, Trash2, X } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, ArrowLeftRight, Copy, Plus, Trash2, X } from "lucide-react";
 import CustomSelect from "../CustomSelect";
 import CustomDateInput from "../CustomDateInput";
 import type { Step3Data, AssetPosition, DebtPosition } from "@/lib/types";
@@ -115,6 +115,7 @@ const EVENT_RECURRENCE_OPTIONS: Array<{ value: EventRecurrence; label: string }>
 const EVENT_TYPE_OPTIONS: Array<{ value: EventLineType; label: string }> = [
   { value: "income", label: "Einnahme" },
   { value: "spending", label: "Ausgabe" },
+  { value: "transfer", label: "Transfer" },
 ];
 
 const EVENT_INDEXATION_OPTIONS: Array<{ value: EventIndexation | "none"; label: string }> = [
@@ -199,6 +200,19 @@ function ensureIncomeDestination(e: ProfileEvent): ProfileEvent {
     line: {
       ...e.line,
       destination: dest,
+      funding: undefined,
+    },
+  };
+}
+
+function ensureTransferFields(e: ProfileEvent): ProfileEvent {
+  return {
+    ...e,
+    line: {
+      ...e.line,
+      transferFromKey: e.line.transferFromKey ?? "liquidity",
+      transferToKey: e.line.transferToKey ?? "liquidity",
+      destination: undefined,
       funding: undefined,
     },
   };
@@ -330,6 +344,7 @@ export default function Step3Form({
       (events ?? []).map((e) => {
         if (e.client_id !== client_id) return e;
         const updated: ProfileEvent = { ...e, line: { ...e.line, line_type: nextType } };
+        if (nextType === "transfer") return ensureTransferFields(updated);
         return nextType === "spending" ? ensureSpendingFunding(updated) : ensureIncomeDestination(updated);
       }),
     );
@@ -469,6 +484,62 @@ export default function Step3Form({
             />
             Kredit als letzte Quelle erlauben
           </label>
+        </div>
+      </div>
+    );
+  }
+
+  const allAccountOptions = useMemo(() => {
+    const opts: AccountOption[] = [
+      { key: "liquidity", label: "Liquidität", bucket: "liquidity" },
+    ];
+    for (const p of assets) {
+      const key = makeKey("asset", p.id);
+      if (key === "liquidity") continue;
+      opts.push({
+        key,
+        label: (p.label || "").trim() || `Aktiv (${p.id})`,
+        bucket: accountKeyToBucket(key, assets, debts),
+      });
+    }
+    for (const p of debts) {
+      opts.push({
+        key: makeKey("debt", p.id),
+        label: (p.label || "").trim() || `Schuld (${p.id})`,
+        bucket: "debt",
+      });
+    }
+    return opts;
+  }, [assets, debts]);
+
+  function resolveAccountLabel(key: string | undefined): string {
+    if (!key) return "Liquidität";
+    const opt = allAccountOptions.find((o) => o.key === key);
+    return opt?.label ?? "Liquidität";
+  }
+
+  function renderTransferEditor(e: ProfileEvent) {
+    const fromKey = e.line.transferFromKey ?? "liquidity";
+    const toKey = e.line.transferToKey ?? "liquidity";
+
+    return (
+      <div className="mt-3 rounded-xl border border-slate-800 bg-slate-950/30 p-3">
+        <div className="text-xs font-semibold text-slate-200">Transfer – Von / Nach</div>
+        <div className="mt-3 grid gap-4 sm:grid-cols-2">
+          <CustomSelect
+            label="Von (Quelle)"
+            options={allAccountOptions.map((o) => ({ value: o.key, label: o.label }))}
+            value={fromKey}
+            onChange={(v) => updateEventLine(e.client_id, { transferFromKey: v })}
+            placeholder="Konto wählen…"
+          />
+          <CustomSelect
+            label="Nach (Ziel)"
+            options={allAccountOptions.map((o) => ({ value: o.key, label: o.label }))}
+            value={toKey}
+            onChange={(v) => updateEventLine(e.client_id, { transferToKey: v })}
+            placeholder="Konto wählen…"
+          />
         </div>
       </div>
     );
@@ -675,7 +746,9 @@ export default function Step3Form({
             </div>
           ) : (
             events.map((e) => {
-              const isIncome = (e.line?.line_type ?? "income") === "income";
+              const lineType = e.line?.line_type ?? "income";
+              const isIncome = lineType === "income";
+              const isTransfer = lineType === "transfer";
               const amount = Math.trunc(e.line?.amount_chf ?? 0);
               const destKey = e.line?.destinationAccountKey ?? (e.line?.destination ?? "liquidity");
               const destLabel = resolveDestLabel(destKey);
@@ -683,7 +756,9 @@ export default function Step3Form({
               const quellenLabel = srcs
                 .map((s) => resolveSrcLabel(s.sourceAccountKey ?? s.source))
                 .join(", ");
-              const routing = isIncome ? `Ziel: ${destLabel}` : `Quellen: ${quellenLabel}`;
+              const routing = isTransfer
+                ? `${resolveAccountLabel(e.line?.transferFromKey)} → ${resolveAccountLabel(e.line?.transferToKey)}`
+                : isIncome ? `Ziel: ${destLabel}` : `Quellen: ${quellenLabel}`;
 
               return (
                 <div key={e.client_id} className="rounded-2xl border border-slate-800 bg-slate-900/40 p-3">
@@ -695,7 +770,7 @@ export default function Step3Form({
                     >
                       <div className="flex items-center gap-2">
                         <span className="text-xs rounded-full border border-slate-700 px-2 py-0.5 text-slate-200">
-                          {isIncome ? "Einnahme" : "Ausgabe"}
+                          {isTransfer ? "Transfer" : isIncome ? "Einnahme" : "Ausgabe"}
                         </span>
                         <div className="truncate text-sm font-medium text-slate-100">{e.title || "—"}</div>
                       </div>
@@ -940,7 +1015,9 @@ export default function Step3Form({
             <div className="flex flex-1 min-h-0 flex-col overflow-hidden rounded-b-2xl border-x border-b border-slate-800 bg-slate-950 shadow-2xl">
               <div className="flex shrink-0 items-start justify-between gap-4 border-b border-slate-800 p-5">
                 <div className="min-w-0 flex items-center gap-2">
-                  {openEvent.line?.line_type === "income" ? (
+                  {openEvent.line?.line_type === "transfer" ? (
+                    <ArrowLeftRight size={24} className="shrink-0 text-sky-400" />
+                  ) : openEvent.line?.line_type === "income" ? (
                     <ArrowDownCircle size={24} className="shrink-0 text-emerald-400" />
                   ) : (
                     <ArrowUpCircle size={24} className="shrink-0 text-rose-400" />
@@ -1082,7 +1159,11 @@ export default function Step3Form({
                   </div>
 
                   <div className="sm:col-span-2">
-                    {openEvent.line?.line_type === "income" ? renderDestinationEditor(openEvent) : renderFundingEditor(openEvent)}
+                    {openEvent.line?.line_type === "transfer"
+                      ? renderTransferEditor(openEvent)
+                      : openEvent.line?.line_type === "income"
+                        ? renderDestinationEditor(openEvent)
+                        : renderFundingEditor(openEvent)}
                   </div>
 
                   <div className="sm:col-span-2">
@@ -1101,7 +1182,7 @@ export default function Step3Form({
                   </div>
 
                     <div className="sm:col-span-2 pt-2">
-                    <div className="text-xs text-slate-500">Pflichtfelder: Einnahme → Ziel. Ausgabe → Quellen. Standard: Liquidität.</div>
+                    <div className="text-xs text-slate-500">Pflichtfelder: Einnahme → Ziel. Ausgabe → Quellen. Transfer → Von/Nach. Standard: Liquidität.</div>
                   </div>
                 </div>
               </div>

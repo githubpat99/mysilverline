@@ -166,11 +166,23 @@ export function mapFormStateToProfileV2(form: FormState, prev: ProfileV2): Profi
         };
       }
 
+      // Transfer-specific fields
+      if (rawLine.transferFromKey) line.transferFromKey = rawLine.transferFromKey;
+      if (rawLine.transferToKey) line.transferToKey = rawLine.transferToKey;
+
       // Clean: prevent mixed models
       if (line.line_type === "income") {
         line.funding = undefined;
+        line.transferFromKey = undefined;
+        line.transferToKey = undefined;
       } else if (line.line_type === "spending") {
         line.destination = undefined;
+        line.transferFromKey = undefined;
+        line.transferToKey = undefined;
+      } else if (line.line_type === "transfer") {
+        line.funding = undefined;
+        line.destination = undefined;
+        line.destinationAccountKey = undefined;
       }
 
       return {

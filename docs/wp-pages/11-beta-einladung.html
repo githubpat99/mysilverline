@@ -1,0 +1,151 @@
+<style>
+/* Astra-Theme Overrides */
+#primary, .content-area, .site-content,
+.ast-single-post, .ast-page-builder-template,
+.entry-content, article.page, article.post {
+  background:transparent !important;
+  border:none !important;
+  box-shadow:none !important;
+}
+#primary, .content-area.primary { margin-top:0 !important; padding-top:0 !important; }
+.site-content > .ast-container { padding-top:0 !important; }
+.site-main { margin-top:0 !important; padding-top:0 !important; }
+.entry-content { padding-top:0 !important; }
+
+.sl-inv { max-width:700px; margin:0 auto; font-family:inherit; color:#c8d0dc; line-height:1.8; font-size:16px; }
+.sl-inv p { color:#c8d0dc; line-height:1.8; margin:0 0 1.2em; }
+.sl-inv h2 { color:#e2e8f0; font-size:1.15em; margin:2em 0 0.6em; }
+.sl-inv strong, .sl-inv b { color:#e2e8f0; }
+.sl-inv a { color:#60a5fa; text-decoration:none; }
+.sl-inv a:hover { text-decoration:underline; }
+
+.sl-inv-hero {
+  padding:1.6em 1.8em; border-radius:14px; margin:0 0 2em;
+  background:linear-gradient(135deg,#0f172a,#1a1f3a); border:1px solid #1e293b;
+}
+.sl-inv-hero h1 { margin:0 0 0.4em; font-size:1.35em; color:#f1f5f9; }
+.sl-inv-hero p { margin:0; font-size:0.95em; color:#94a3b8; }
+
+.sl-inv-steps {
+  counter-reset:step;
+  list-style:none !important; padding:0 !important; margin:0 0 1.5em !important;
+}
+.sl-inv-steps li::marker { content:'' !important; display:none !important; }
+.sl-inv-steps li {
+  list-style:none !important;
+  counter-increment:step;
+  position:relative;
+  padding:14px 16px 14px 56px;
+  margin-bottom:10px;
+  border:1px solid #334155;
+  border-radius:10px;
+  background:#0f172a;
+  font-size:0.95em;
+}
+.sl-inv-steps li::before {
+  content:counter(step);
+  position:absolute; left:16px; top:14px;
+  width:28px; height:28px; line-height:28px;
+  text-align:center; border-radius:50%;
+  background:linear-gradient(135deg,#2563eb,#1e40af);
+  color:#fff; font-weight:700; font-size:0.85em;
+}
+
+.sl-inv-tip {
+  padding:14px 18px; border-radius:10px;
+  background:#1a1a2e; border-left:3px solid #3b82f6;
+  margin:1.5em 0; font-size:0.92em;
+}
+
+.sl-inv-cta {
+  text-align:center; margin:2em 0;
+}
+.sl-inv-cta a {
+  display:inline-block; background:linear-gradient(135deg,#2563eb,#1e40af);
+  color:#fff !important; font-weight:600; font-size:1.05em; padding:14px 32px;
+  border-radius:12px; text-decoration:none !important;
+}
+.sl-inv-cta a:hover { opacity:0.9; }
+
+.sl-inv-footer {
+  margin-top:2.5em; padding-top:1.5em;
+  border-top:1px solid #1e293b;
+  font-size:0.9em; color:#94a3b8;
+}
+</style>
+
+<div class="sl-inv">
+
+<!-- Hero -->
+<div class="sl-inv-hero">
+<h1>Einladung zum Beta-Test</h1>
+<p>Du bist einer der Ersten, die Silverline testen dürfen – dein Feedback formt die Zukunft der App.</p>
+</div>
+
+<p>
+Ich arbeite seit einiger Zeit an <strong>Silverline</strong> – einer App für die persönliche Finanzplanung. Kein Haushaltsbuch, sondern ein Werkzeug, das dir zeigt, wie sich deine Finanzen über die nächsten Jahre entwickeln: Bilanz, Liquidität und ein mehrjähriger Forecast.
+</p>
+
+<p>
+Die App ist jetzt so weit, dass ich <strong>ehrliches Feedback von echten Nutzern</strong> brauche. Und da kommst du ins Spiel.
+</p>
+
+<!-- Steps -->
+<h2>So gehst du am besten vor</h2>
+
+<ul class="sl-inv-steps">
+<li>
+<strong>Nimm dir 30–45 Minuten Zeit</strong> – am besten an einem ruhigen Moment, idealerweise mit deinen Finanzdaten griffbereit (Kontoauszüge, Hypothek, Versicherungen etc.).
+</li>
+<li>
+<strong>Lies die Erklärungen durch</strong> → <a href="/erklaerungen/">mysilverline.it-pin.ch/erklaerungen</a><br>
+Dort findest du eine Übersicht aller App-Funktionen, Anwendungsfälle und ein Benutzerhandbuch. Bitte nimm dir die Zeit, das durchzulesen – es hilft enorm beim Verständnis.
+</li>
+<li>
+<strong>Installiere die App</strong> und <strong>teste mit realitätsnahen Daten</strong><br>
+Je realistischer deine Eingaben, desto aussagekräftiger der Forecast. Du kannst auch mit dem Musterfall starten und dich dann mit eigenen Daten vertraut machen.
+</li>
+<li>
+<strong>Gib dein Feedback</strong> → <a href="/erklaerungen/beta-feedback/">Beta-Feedback (10 kurze Fragen, ca. 5 Min.)</a><br>
+Deine Meinung ist wichtig: Was gefällt dir? Was fehlt? Würdest du Silverline weiterempfehlen?
+</li>
+</ul>
+
+<!-- Device Tip -->
+<div class="sl-inv-tip">
+<strong>💻 Geräte-Empfehlung:</strong> Starte am besten auf einem <strong>Laptop oder Tablet</strong> – Finanzplanung braucht Übersicht, und die Eingabe geht auf einem grösseren Bildschirm deutlich schneller. Die App funktioniert danach auch auf dem <strong>Smartphone</strong> für den schnellen Blick auf Bilanz und Forecast unterwegs.
+</div>
+
+<!-- Good to know -->
+<h2>Gut zu wissen</h2>
+
+<p>
+<strong>📲 Progressive Web App:</strong> Silverline wird direkt über den Browser installiert – kein App Store nötig. Die Anleitung findest du unter <a href="/erklaerungen/app-installieren/">App installieren</a>.
+</p>
+
+<p>
+<strong>🔒 Deine Daten bleiben bei dir:</strong> Alles wird lokal auf deinem Gerät gespeichert. Nichts wird ohne dein Zutun übertragen. Wenn du möchtest, kannst du dich registrieren, um Daten zwischen Geräten zu synchronisieren.
+</p>
+
+<p>
+<strong>🚧 Es ist eine Beta:</strong> Es kann noch Ecken und Kanten geben – genau deshalb brauche ich dein Feedback. Wenn du auf einen Fehler stösst, melde ihn gerne direkt.
+</p>
+
+<!-- CTA -->
+<div class="sl-inv-cta">
+<a href="/erklaerungen/">Erklärungen lesen &amp; loslegen →</a>
+</div>
+
+<!-- Footer -->
+<div class="sl-inv-footer">
+<p>
+Ich würde mich freuen, wenn du bis <strong>Mitte März 2026</strong> testen und Feedback geben könntest.
+</p>
+<p>
+Bei Fragen oder Problemen erreichst du mich jederzeit:<br>
+<strong>Patrick Inauen</strong> · <a href="mailto:patrick.inauen@gmail.com">patrick.inauen@gmail.com</a>
+</p>
+<p>Vielen Dank, dass du dir die Zeit nimmst – dein Feedback ist wirklich wertvoll!</p>
+</div>
+
+</div>

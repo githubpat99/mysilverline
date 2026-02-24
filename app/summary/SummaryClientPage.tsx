@@ -15,6 +15,7 @@ type Item = {
   value: number; // CHF
   kind: "asset" | "debt";
   term: Term;
+  typeKey: string;
 };
 
 // Minimal-DTO (robust; wir nehmen nur Felder, die wir wirklich brauchen)
@@ -115,6 +116,14 @@ function debtTerm(debtType: unknown, bucket: unknown): Term {
   return "short";
 }
 
+function sortByTypeThenLabel(arr: Item[]): Item[] {
+  return [...arr].sort((a, b) => {
+    const typeCmp = a.typeKey.localeCompare(b.typeKey, "de-CH");
+    if (typeCmp !== 0) return typeCmp;
+    return a.label.localeCompare(b.label, "de-CH");
+  });
+}
+
 export default function SummaryPage() {
   const [items, setItems] = useState<Item[] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -146,6 +155,7 @@ export default function SummaryPage() {
               label,
               value: toNumberCHF(p.valueCHF),
               term: assetTerm(p.assetType, p.bucket),
+              typeKey: norm(p.assetType) || "other",
             };
           }
 
@@ -158,6 +168,7 @@ export default function SummaryPage() {
             label,
             value: toNumberCHF(debtValue),
             term: debtTerm(p.debtType, p.bucket),
+            typeKey: norm(p.debtType) || "other",
           };
         });
 
@@ -171,19 +182,19 @@ export default function SummaryPage() {
   }, []);
 
   const aktivenKurz = useMemo(
-    () => (items ?? []).filter((x) => x.kind === "asset" && x.term === "short"),
+    () => sortByTypeThenLabel((items ?? []).filter((x) => x.kind === "asset" && x.term === "short")),
     [items]
   );
   const aktivenLang = useMemo(
-    () => (items ?? []).filter((x) => x.kind === "asset" && x.term === "long"),
+    () => sortByTypeThenLabel((items ?? []).filter((x) => x.kind === "asset" && x.term === "long")),
     [items]
   );
   const passivKurz = useMemo(
-    () => (items ?? []).filter((x) => x.kind === "debt" && x.term === "short"),
+    () => sortByTypeThenLabel((items ?? []).filter((x) => x.kind === "debt" && x.term === "short")),
     [items]
   );
   const passivLang = useMemo(
-    () => (items ?? []).filter((x) => x.kind === "debt" && x.term === "long"),
+    () => sortByTypeThenLabel((items ?? []).filter((x) => x.kind === "debt" && x.term === "long")),
     [items]
   );
 

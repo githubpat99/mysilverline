@@ -11,8 +11,6 @@
 .site-content > .ast-container { padding-top:0 !important; }
 .site-main { margin-top:0 !important; padding-top:0 !important; }
 .entry-content { padding-top:0 !important; }
-.entry-content table, .entry-content td, .entry-content th,
-table, td, th { border:none !important; }
 
 .sl-lp { max-width:780px; margin:0 auto; font-family:inherit; color:#c8d0dc; line-height:1.7; font-size:16px; overflow-x:hidden; }
 .sl-lp h2 { color:#e2e8f0; font-size:1.3em; margin:2.5em 0 1em; }
@@ -27,16 +25,17 @@ table, td, th { border:none !important; }
 }
 .sl-cta-center a:hover { opacity:.92; }
 
-.sl-grid-table { width:100%; border-collapse:separate; border-spacing:6px 8px; table-layout:fixed; }
-.sl-grid-table td.sl-card {
-  padding:10px 12px; border:1px solid #334155 !important; border-radius:10px;
-  background:#0f172a; vertical-align:top;
+.sl-ek-grid { display:flex; flex-wrap:wrap; gap:10px; }
+.sl-ek-card {
+  flex:1 1 calc(50% - 10px); min-width:200px; box-sizing:border-box;
+  padding:12px 14px; border:1px solid #334155; border-radius:10px;
+  background:#0f172a; cursor:pointer;
 }
-.sl-grid-table td.sl-card a { text-decoration:none; color:inherit; display:block; }
-.sl-grid-table td.sl-card .sl-card-icon { font-size:1.2em; }
-.sl-grid-table td.sl-card .sl-card-title { color:#e2e8f0; font-size:0.95em; }
-.sl-grid-table td.sl-card .sl-card-desc { font-size:0.82em; color:#94a3b8; line-height:1.4; }
-.sl-grid-table td.sl-spacer { border:none !important; background:transparent !important; }
+.sl-ek-card:hover { border-color:#475569; }
+.sl-ek-card a { text-decoration:none !important; color:inherit !important; display:block !important; background:none !important; padding:0 !important; border:none !important; }
+.sl-ek-card .sl-ek-icon { font-size:1.2em; }
+.sl-ek-card .sl-ek-title { color:#e2e8f0; font-size:0.95em; }
+.sl-ek-card .sl-ek-desc { font-size:0.82em; color:#94a3b8; line-height:1.4; }
 </style>
 
 <div class="sl-lp">
@@ -55,63 +54,58 @@ Die App funktioniert <strong>offline</strong> und deine Daten sind <strong>lokal
 
 <h2>So funktioniert Silverline</h2>
 
-<table class="sl-grid-table" cellpadding="0" cellspacing="0">
-<tr>
-<td class="sl-card">
-<a href="/erklaerungen/app-installieren/">
-<span class="sl-card-icon">📲</span> <strong class="sl-card-title">App installieren</strong><br>
-<span class="sl-card-desc">Schritt-für-Schritt für Android, iPhone und Desktop.</span>
-</a>
-</td>
-<td class="sl-card">
-<a href="/erklaerungen/erste-schritte/">
-<span class="sl-card-icon">🚀</span> <strong class="sl-card-title">Erste Schritte</strong><br>
-<span class="sl-card-desc">Vorlage wählen und die App-Bereiche kennenlernen.</span>
-</a>
-</td>
-</tr>
-<tr>
-<td class="sl-card">
-<a href="/erklaerungen/finanzen-erfassen/">
-<span class="sl-card-icon">💰</span> <strong class="sl-card-title">Finanzen erfassen</strong><br>
-<span class="sl-card-desc">Vermögen, Schulden und Einnahmen/Ausgaben in drei Schritten.</span>
-</a>
-</td>
-<td class="sl-card">
-<a href="/erklaerungen/bilanz-forecast/">
-<span class="sl-card-icon">📊</span> <strong class="sl-card-title">Bilanz &amp; Forecast</strong><br>
-<span class="sl-card-desc">Deine finanzielle Übersicht und mehrjährige Prognose.</span>
-</a>
-</td>
-</tr>
-<tr>
-<td class="sl-card">
-<a href="/erklaerungen/konto-sync/">
-<span class="sl-card-icon">🔄</span> <strong class="sl-card-title">Konto &amp; Sync</strong><br>
-<span class="sl-card-desc">Optional anmelden und Daten zwischen Geräten synchronisieren.</span>
-</a>
-</td>
-<td class="sl-card">
-<a href="/erklaerungen/faq/">
-<span class="sl-card-icon">❓</span> <strong class="sl-card-title">Häufige Fragen</strong><br>
-<span class="sl-card-desc">Datenspeicherung, mehrere Geräte, Daten löschen und mehr.</span>
-</a>
-</td>
-</tr>
-<tr>
-<td class="sl-card">
-<a href="/erklaerungen/ertraege-kosten/">
-<span class="sl-card-icon">💹</span> <strong class="sl-card-title">Erträge &amp; Kosten</strong><br>
-<span class="sl-card-desc">Zinsen, Amortisation und wie alles im Forecast zusammenläuft.</span>
-</a>
-</td>
-<td class="sl-card">
-<a href="/erklaerungen/anwendungsfaelle/">
-<span class="sl-card-icon">🎯</span> <strong class="sl-card-title">Anwendungsfälle</strong><br>
-<span class="sl-card-desc">Sechs Alltags-Szenarien und wie Silverline dir hilft.</span>
-</a>
-</td>
-</tr>
-</table>
+<div class="sl-ek-grid">
+
+<div class="sl-ek-card"><a href="/erklaerungen/app-installieren/">
+<span class="sl-ek-icon">📲</span> <strong class="sl-ek-title">App installieren</strong><br>
+<span class="sl-ek-desc">Schritt-für-Schritt für Android, iPhone und Desktop.</span>
+</a></div>
+
+<div class="sl-ek-card"><a href="/erklaerungen/erste-schritte/">
+<span class="sl-ek-icon">🚀</span> <strong class="sl-ek-title">Erste Schritte</strong><br>
+<span class="sl-ek-desc">Vorlage wählen und die App-Bereiche kennenlernen.</span>
+</a></div>
+
+<div class="sl-ek-card"><a href="/erklaerungen/finanzen-erfassen/">
+<span class="sl-ek-icon">💰</span> <strong class="sl-ek-title">Finanzen erfassen</strong><br>
+<span class="sl-ek-desc">Vermögen, Schulden und Einnahmen/Ausgaben in drei Schritten.</span>
+</a></div>
+
+<div class="sl-ek-card"><a href="/erklaerungen/bilanz-forecast/">
+<span class="sl-ek-icon">📊</span> <strong class="sl-ek-title">Bilanz &amp; Forecast</strong><br>
+<span class="sl-ek-desc">Deine finanzielle Übersicht und mehrjährige Prognose.</span>
+</a></div>
+
+<div class="sl-ek-card"><a href="/erklaerungen/konto-sync/">
+<span class="sl-ek-icon">🔄</span> <strong class="sl-ek-title">Konto &amp; Sync</strong><br>
+<span class="sl-ek-desc">Optional anmelden und Daten zwischen Geräten synchronisieren.</span>
+</a></div>
+
+<div class="sl-ek-card"><a href="/erklaerungen/faq/">
+<span class="sl-ek-icon">❓</span> <strong class="sl-ek-title">Häufige Fragen</strong><br>
+<span class="sl-ek-desc">Datenspeicherung, mehrere Geräte, Daten löschen und mehr.</span>
+</a></div>
+
+<div class="sl-ek-card"><a href="/erklaerungen/ertraege-kosten/">
+<span class="sl-ek-icon">💹</span> <strong class="sl-ek-title">Erträge &amp; Kosten</strong><br>
+<span class="sl-ek-desc">Zinsen, Amortisation und wie alles im Forecast zusammenläuft.</span>
+</a></div>
+
+<div class="sl-ek-card"><a href="/erklaerungen/anwendungsfaelle/">
+<span class="sl-ek-icon">🎯</span> <strong class="sl-ek-title">Anwendungsfälle</strong><br>
+<span class="sl-ek-desc">Sechs Alltags-Szenarien und wie Silverline dir hilft.</span>
+</a></div>
+
+<div class="sl-ek-card"><a href="/erklaerungen/benutzerhandbuch/">
+<span class="sl-ek-icon">📖</span> <strong class="sl-ek-title">Benutzerhandbuch</strong><br>
+<span class="sl-ek-desc">Komplette Referenz zu allen Funktionen, Eingaben und Modellierungsmöglichkeiten.</span>
+</a></div>
+
+<div class="sl-ek-card"><a href="/erklaerungen/beta-feedback/">
+<span class="sl-ek-icon">💬</span> <strong class="sl-ek-title">Beta-Feedback</strong><br>
+<span class="sl-ek-desc">Sag uns, was du denkst – 10 kurze Fragen zur Zukunft von Silverline.</span>
+</a></div>
+
+</div>
 
 </div>

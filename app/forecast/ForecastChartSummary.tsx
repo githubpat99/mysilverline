@@ -6,8 +6,9 @@
 import { useMemo, useState } from "react";
 import {
   ResponsiveContainer,
-  AreaChart,
+  ComposedChart,
   Area,
+  Line,
   XAxis,
   YAxis,
   Tooltip,
@@ -391,7 +392,7 @@ export default function ForecastChartSummary({
 
       <div className="h-56 min-h-[180px] w-full rounded-xl bg-slate-950/25 ring-1 ring-white/5">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={visibleLineData} margin={{ top: 28, right: 12, bottom: 4, left: 4 }}>
+          <ComposedChart data={visibleLineData} margin={{ top: 28, right: 12, bottom: 4, left: 4 }}>
             <defs>
               <linearGradient id="areaFillGrad" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#38bdf8" stopOpacity={0.25} />
@@ -418,11 +419,14 @@ export default function ForecastChartSummary({
               axisLine={false}
               tickLine={false}
             />
-            <YAxis hide domain={["auto", "auto"]} />
+            <YAxis yAxisId="net" hide domain={["auto", "auto"]} />
+            <YAxis yAxisId="liq" hide domain={["auto", "auto"]} />
             <Tooltip content={<ChartTooltipContent />} />
-            <ReferenceLine y={0} stroke="rgba(148,163,184,0.35)" strokeDasharray="4 4" strokeWidth={1} />
+            <ReferenceLine yAxisId="net" y={0} stroke="rgba(148,163,184,0.35)" strokeDasharray="4 4" strokeWidth={1} />
+            <ReferenceLine yAxisId="liq" y={0} stroke="rgba(245,158,11,0.55)" strokeDasharray="4 4" strokeWidth={1} />
             {visibleLineData.length > 0 && (
               <ReferenceLine
+                yAxisId="net"
                 y={visibleLineData[0].net}
                 stroke="rgba(148,163,184,0.25)"
                 strokeDasharray="4 4"
@@ -446,6 +450,7 @@ export default function ForecastChartSummary({
                 />
               )}
             <Area
+              yAxisId="net"
               type="monotone"
               dataKey="net"
               stroke={strokeStops.length > 0 ? "url(#strokeDirectionGrad)" : "#38bdf8"}
@@ -453,18 +458,28 @@ export default function ForecastChartSummary({
               fill={strokeStops.length > 0 ? "url(#fillDirectionGrad)" : "url(#areaFillGrad)"}
               isAnimationActive={true}
             />
+            <Line
+              yAxisId="liq"
+              type="monotone"
+              dataKey="liq"
+              stroke="#f59e0b"
+              strokeWidth={2}
+              dot={false}
+              isAnimationActive={true}
+            />
             {liqWarnings.map((d) => (
               <ReferenceDot
                 key={`liq-${d.year}`}
                 x={d.year}
-                y={d.net}
+                yAxisId="liq"
+                y={d.liq}
                 r={5}
                 fill="#f59e0b"
                 stroke="#fbbf24"
                 strokeWidth={2}
               />
             ))}
-          </AreaChart>
+          </ComposedChart>
         </ResponsiveContainer>
       </div>
 

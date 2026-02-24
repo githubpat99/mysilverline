@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { setAuthToken } from "@/lib/authTokenStorage";
 import { SL_API_BASE } from "@/lib/config";
+import { runSync } from "@/lib/services/syncService";
 
 const API = SL_API_BASE || "/wp-json/silverline/v1";
 const LOGIN_URL = `${API}/auth/login`;
@@ -62,7 +63,13 @@ export default function LoginDialog({ open, onClose }: LoginDialogProps) {
         return;
       }
 
-      setAuthToken(json.token);
+      const wpUserId = Number(json?.user?.user_id ?? 0) || undefined;
+      setAuthToken(json.token, wpUserId);
+      try {
+        await runSync();
+      } catch {
+        // Non-fatal: user can still continue and sync manually if needed.
+      }
       onClose();
       window.location.reload();
     } catch {

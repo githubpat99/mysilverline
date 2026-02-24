@@ -1,0 +1,261 @@
+<style>
+/* Astra-Theme Overrides */
+#primary, .content-area, .site-content,
+.ast-single-post, .ast-page-builder-template,
+.entry-content, article.page, article.post {
+  background:transparent !important;
+  border:none !important;
+  box-shadow:none !important;
+}
+#primary, .content-area.primary { margin-top:0 !important; padding-top:0 !important; }
+.site-content > .ast-container { padding-top:0 !important; }
+.site-main { margin-top:0 !important; padding-top:0 !important; }
+.entry-content { padding-top:0 !important; }
+.entry-content table, .entry-content td, .entry-content th,
+table, td, th { border:none !important; }
+
+.sl-fb { max-width:780px; margin:0 auto; font-family:inherit; color:#c8d0dc; line-height:1.7; font-size:16px; overflow-x:hidden; }
+.sl-fb p { color:#c8d0dc; line-height:1.7; }
+.sl-fb h2 { font-size:1.15em; color:#e2e8f0; margin:2em 0 0.5em; }
+.sl-fb strong, .sl-fb b { color:#e2e8f0; }
+
+.sl-fb-card {
+  padding:16px 18px; border:1px solid #334155; border-radius:10px;
+  background:#0f172a; margin-bottom:12px;
+}
+.sl-fb-q { font-size:0.95em; color:#e2e8f0; margin:0 0 10px; font-weight:600; }
+.sl-fb-hint { font-size:0.8em; color:#64748b; margin:-6px 0 8px; }
+
+.sl-fb textarea {
+  width:100%; min-height:70px; padding:10px 12px; border:1px solid #334155;
+  border-radius:8px; background:#1e293b; color:#e2e8f0; font-size:0.9em;
+  font-family:inherit; resize:vertical; outline:none; box-sizing:border-box;
+}
+.sl-fb textarea:focus { border-color:#3b82f6; }
+
+.sl-fb input[type="text"], .sl-fb input[type="email"] {
+  width:100%; padding:10px 12px; border:1px solid #334155; border-radius:8px;
+  background:#1e293b; color:#e2e8f0; font-size:0.9em; font-family:inherit;
+  outline:none; box-sizing:border-box;
+}
+.sl-fb input[type="text"]:focus, .sl-fb input[type="email"]:focus { border-color:#3b82f6; }
+
+/* Radio group as pill buttons */
+.sl-radio-group { display:flex !important; flex-direction:row !important; flex-wrap:wrap !important; gap:6px !important; }
+.sl-radio-group label {
+  display:inline-block !important; padding:6px 14px !important; border:1px solid #334155 !important;
+  border-radius:20px !important; font-size:0.85em !important; color:#94a3b8 !important; cursor:pointer !important;
+  transition:all 0.15s; user-select:none; width:auto !important; max-width:none !important;
+}
+.sl-radio-group input[type="radio"] { display:none !important; }
+.sl-radio-group input[type="radio"]:checked + span { color:#e2e8f0 !important; }
+.sl-radio-group label:has(input:checked) {
+  border-color:#3b82f6 !important; background:#1e3a5f !important; color:#e2e8f0 !important;
+}
+.sl-radio-group label:hover { border-color:#475569 !important; }
+
+/* Star pills - gold when selected */
+.sl-star-group label:has(input:checked) {
+  border-color:#f59e0b !important; background:#78350f !important; color:#fbbf24 !important;
+}
+.sl-star-group label:hover { border-color:#f59e0b !important; }
+
+/* Range slider for NPS */
+.sl-range-wrap { padding:4px 0; }
+.sl-range-wrap input[type="range"] {
+  -webkit-appearance:none; appearance:none;
+  width:100%; height:8px; border-radius:4px;
+  background:linear-gradient(90deg,#ef4444,#f59e0b,#22c55e);
+  outline:none; cursor:pointer; border:none !important;
+}
+.sl-range-wrap input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance:none; appearance:none;
+  width:24px; height:24px; border-radius:50%;
+  background:#e2e8f0; border:2px solid #3b82f6;
+  cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,0.3);
+}
+.sl-range-wrap input[type="range"]::-moz-range-thumb {
+  width:24px; height:24px; border-radius:50%;
+  background:#e2e8f0; border:2px solid #3b82f6;
+  cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,0.3);
+}
+.sl-range-val {
+  display:inline-block; font-size:1.4em; font-weight:700; color:#e2e8f0;
+  min-width:36px; text-align:center;
+}
+/* stat bars and response cards use inline styles from JS shortcode */
+
+/* Response cards */
+.sl-resp-card {
+  padding:14px 16px; border:1px solid #1e293b; border-radius:10px;
+  background:#0c1929; margin-bottom:10px;
+}
+.sl-resp-meta { font-size:0.78em; color:#64748b; margin-bottom:8px; }
+.sl-resp-q { font-size:0.78em; color:#64748b; margin:6px 0 2px; }
+.sl-resp-a { font-size:0.88em; color:#c8d0dc; }
+
+/* Stats bar */
+.sl-stat-bar { display:flex; align-items:center; gap:8px; margin:4px 0; font-size:0.85em; }
+.sl-stat-label { min-width:140px; color:#94a3b8; }
+.sl-stat-track { flex:1; height:8px; background:#1e293b; border-radius:4px; overflow:hidden; }
+.sl-stat-fill { height:100%; border-radius:4px; background:linear-gradient(90deg,#2563eb,#3b82f6); }
+.sl-stat-pct { min-width:40px; text-align:right; color:#94a3b8; font-size:0.85em; }
+
+/* Toast */
+.sl-toast {
+  position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+  padding:12px 24px; border-radius:10px; background:#166534; color:#dcfce7;
+  font-size:0.9em; font-weight:500; z-index:9999; box-shadow:0 4px 20px rgba(0,0,0,0.4);
+  opacity:0; transition:opacity 0.3s;
+}
+.sl-toast.visible { opacity:1; }
+.sl-toast.error { background:#991b1b; color:#fecaca; }
+</style>
+
+<div class="sl-fb">
+
+<!-- Hero -->
+<div style="margin:0 0 2em;padding:1.4em 1.6em;border-radius:14px;background:linear-gradient(135deg,#0f172a,#1a1f3a);border:1px solid #1e293b;">
+<h2 style="margin:0 0 0.4em;font-size:1.25em;color:#f1f5f9;">Beta-Feedback</h2>
+<p style="margin:0;font-size:0.95em;color:#94a3b8;">Hilf uns, Silverline besser zu machen. Dein Feedback ist anonym sichtbar – nur wir sehen deinen Namen, um bei Rückfragen auf dich zukommen zu können.</p>
+</div>
+
+<!-- FORM -->
+<div id="sl-form-wrap">
+
+<h2>Dein Feedback</h2>
+
+<!-- Name + Email -->
+<div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+<div style="flex:1;min-width:200px;">
+<label style="font-size:0.85em;color:#94a3b8;display:block;margin-bottom:4px;">Dein Name *</label>
+<input type="text" id="sl-name" placeholder="Vorname Nachname">
+</div>
+<div style="flex:1;min-width:200px;">
+<label style="font-size:0.85em;color:#94a3b8;display:block;margin-bottom:4px;">Deine E-Mail *</label>
+<input type="email" id="sl-email" placeholder="name@beispiel.ch">
+</div>
+</div>
+
+<!-- Q1 -->
+<div class="sl-fb-card">
+<div class="sl-fb-q">1. Wie oft nutzt du Silverline?</div>
+<div class="sl-radio-group">
+<label><input type="radio" name="q1" value="Täglich"><span>Täglich</span></label>
+<label><input type="radio" name="q1" value="Wöchentlich"><span>Wöchentlich</span></label>
+<label><input type="radio" name="q1" value="Monatlich"><span>Monatlich</span></label>
+<label><input type="radio" name="q1" value="Selten"><span>Selten</span></label>
+<label><input type="radio" name="q1" value="Gerade erst entdeckt"><span>Gerade erst entdeckt</span></label>
+</div>
+</div>
+
+<!-- Q2 -->
+<div class="sl-fb-card">
+<div class="sl-fb-q">2. Was gefällt dir am besten an Silverline?</div>
+<textarea id="sl-q2" placeholder="z.B. der Forecast, die einfache Eingabe, die Offline-Fähigkeit..."></textarea>
+</div>
+
+<!-- Q3 -->
+<div class="sl-fb-card">
+<div class="sl-fb-q">3. Was fehlt dir am meisten?</div>
+<textarea id="sl-q3" placeholder="z.B. Monats-Ansicht, Multi-Währung, Grafik-Export..."></textarea>
+</div>
+
+<!-- Q4 -->
+<div class="sl-fb-card">
+<div class="sl-fb-q">4. Wärst du bereit, für Silverline zu bezahlen?</div>
+<div class="sl-radio-group">
+<label><input type="radio" name="q4" value="Ja"><span>Ja</span></label>
+<label><input type="radio" name="q4" value="Vielleicht"><span>Vielleicht</span></label>
+<label><input type="radio" name="q4" value="Eher nein"><span>Eher nein</span></label>
+<label><input type="radio" name="q4" value="Nein"><span>Nein</span></label>
+</div>
+</div>
+
+<!-- Q5 -->
+<div class="sl-fb-card">
+<div class="sl-fb-q">5. Unter welchen Umständen wärst du bereit zu zahlen?</div>
+<div class="sl-fb-hint">Was müsste Silverline bieten, damit sich ein Abo für dich lohnt?</div>
+<textarea id="sl-q5" placeholder="z.B. mehr Features, Beratung, Steuerintegration, Familienplanung..."></textarea>
+</div>
+
+<!-- Q6 -->
+<div class="sl-fb-card">
+<div class="sl-fb-q">6. Welchen Betrag pro Monat findest du fair?</div>
+<div class="sl-radio-group">
+<label><input type="radio" name="q6" value="0–3 CHF"><span>0–3 CHF</span></label>
+<label><input type="radio" name="q6" value="3–5 CHF"><span>3–5 CHF</span></label>
+<label><input type="radio" name="q6" value="5–10 CHF"><span>5–10 CHF</span></label>
+<label><input type="radio" name="q6" value="10+ CHF"><span>10+ CHF</span></label>
+<label><input type="radio" name="q6" value="Einmalzahlung"><span>Einmalzahlung bevorzugt</span></label>
+</div>
+</div>
+
+<!-- Q7: Intuitivität – horizontal radio pills -->
+<div class="sl-fb-card">
+<div class="sl-fb-q">7. Wie intuitiv findest du die Bedienung?</div>
+<div class="sl-fb-hint">1 = sehr umständlich, 5 = sehr intuitiv</div>
+<div class="sl-radio-group sl-star-group">
+<label><input type="radio" name="q7" value="1"><span>★ 1</span></label>
+<label><input type="radio" name="q7" value="2"><span>★★ 2</span></label>
+<label><input type="radio" name="q7" value="3"><span>★★★ 3</span></label>
+<label><input type="radio" name="q7" value="4"><span>★★★★ 4</span></label>
+<label><input type="radio" name="q7" value="5"><span>★★★★★ 5</span></label>
+</div>
+</div>
+
+<!-- Q8: NPS – Range Slider -->
+<div class="sl-fb-card">
+<div class="sl-fb-q">8. Würdest du Silverline deinem besten Freund / deiner besten Freundin empfehlen?</div>
+<div class="sl-fb-hint">0 = auf keinen Fall, 10 = auf jeden Fall</div>
+<div class="sl-range-wrap">
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:4px;">
+<input type="range" min="0" max="10" value="5" id="sl-q8-range" step="1">
+<span class="sl-range-val" id="sl-q8-val">5</span>
+</div>
+</div>
+</div>
+
+<!-- Q9 -->
+<div class="sl-fb-card">
+<div class="sl-fb-q">9. Welches Feature wünschst du dir als nächstes?</div>
+<textarea id="sl-q9" placeholder="z.B. Szenario-Vergleich, PDF-Export, Steuerplanung..."></textarea>
+</div>
+
+<!-- Q10 -->
+<div class="sl-fb-card">
+<div class="sl-fb-q">10. Sonstige Anmerkungen</div>
+<textarea id="sl-q10" placeholder="Alles, was du uns noch sagen möchtest..."></textarea>
+</div>
+
+<div style="text-align:center;margin-top:16px;">
+<div id="sl-submit" role="button" tabindex="0" style="display:inline-block;background:linear-gradient(135deg,#2563eb,#1e40af);color:#fff;font-weight:600;font-size:1em;padding:12px 28px;border-radius:10px;border:none;cursor:pointer;">Feedback absenden</div>
+</div>
+
+</div>
+
+<!-- Success (hidden) -->
+<div id="sl-thank-you" style="display:none;">
+<div style="text-align:center;padding:2em 1em;border:1px solid #166534;border-radius:14px;background:#052e16;">
+<div style="font-size:1.8em;margin-bottom:8px;">&#10003;</div>
+<div style="font-size:1.1em;color:#dcfce7;font-weight:600;">Vielen Dank für dein Feedback!</div>
+<p style="color:#86efac;font-size:0.9em;margin:8px 0 0;">Deine Antworten wurden gespeichert.</p>
+<div style="margin-top:16px;">
+<span id="sl-edit-btn" role="button" tabindex="0" style="display:inline-block;padding:8px 20px;border:1px solid #166534;border-radius:8px;color:#86efac;font-size:0.85em;cursor:pointer;">Feedback anpassen</span>
+</div>
+</div>
+</div>
+
+<!-- RESPONSES -->
+<h2 id="sl-responses-title" style="display:none;">Bisherige Antworten</h2>
+<div id="sl-stats" style="display:none;"></div>
+<div id="sl-responses"></div>
+<div id="sl-loading" style="text-align:center;padding:2em;color:#64748b;font-size:0.9em;">Antworten werden geladen...</div>
+
+</div>
+
+<!-- Toast -->
+<div class="sl-toast" id="sl-toast"></div>
+
+<!-- JS via Shortcode (bypasses WordPress KSES filtering) -->
+[sl_feedback_js]

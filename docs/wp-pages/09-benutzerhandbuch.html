@@ -1,0 +1,471 @@
+<style>
+/* Astra-Theme Overrides */
+#primary, .content-area, .site-content,
+.ast-single-post, .ast-page-builder-template,
+.entry-content, article.page, article.post {
+  background:transparent !important;
+  border:none !important;
+  box-shadow:none !important;
+}
+#primary, .content-area.primary { margin-top:0 !important; padding-top:0 !important; }
+.site-content > .ast-container { padding-top:0 !important; }
+.site-main { margin-top:0 !important; padding-top:0 !important; }
+.entry-content { padding-top:0 !important; }
+
+.sl-docs { max-width:780px; margin:0 auto; font-family:inherit; color:#c8d0dc; line-height:1.7; font-size:16px; overflow-x:hidden; }
+.sl-docs p { color:#c8d0dc; line-height:1.7; }
+.sl-docs h2 { font-size:1.2em; color:#e2e8f0; margin:2.5em 0 0.6em; }
+.sl-docs h3 { font-size:1.05em; color:#e2e8f0; margin:1.8em 0 0.4em; }
+.sl-docs strong, .sl-docs b { color:#e2e8f0; }
+</style>
+
+<div class="sl-docs">
+
+<!-- Hero -->
+<div style="margin:0 0 2em;padding:1.4em 1.6em;border-radius:14px;background:linear-gradient(135deg,#0f172a,#1a1f3a);border:1px solid #1e293b;">
+<h2 style="margin:0 0 0.4em;font-size:1.25em;color:#f1f5f9;">Benutzerhandbuch</h2>
+<p style="margin:0;font-size:0.95em;color:#94a3b8;">Komplette Referenz zu allen Funktionen, Eingaben und Modellierungsmöglichkeiten – mit Praxisbeispielen für typische Finanzszenarien.</p>
+</div>
+
+<!-- 1. WORKFLOW -->
+<h2>1. Der Silverline-Workflow</h2>
+<p>Silverline arbeitet in fünf Schritten. Jeder Schritt baut auf dem vorherigen auf – der Forecast zeigt das Gesamtbild.</p>
+
+<div style="display:flex;flex-wrap:wrap;gap:8px;">
+<div style="flex:1 1 0;min-width:100px;box-sizing:border-box;padding:12px 14px;border:1px solid #334155;border-radius:10px;background:#0f172a;text-align:center;">
+<div style="font-size:1.3em;margin-bottom:4px;">1</div>
+<strong style="font-size:0.9em;">Basis</strong>
+<div style="font-size:0.8em;color:#94a3b8;margin-top:4px;">Geburtsdatum, Horizont</div>
+</div>
+<div style="flex:1 1 0;min-width:100px;box-sizing:border-box;padding:12px 14px;border:1px solid #334155;border-radius:10px;background:#0f172a;text-align:center;">
+<div style="font-size:1.3em;margin-bottom:4px;">2</div>
+<strong style="font-size:0.9em;">Aktiven</strong>
+<div style="font-size:0.8em;color:#94a3b8;margin-top:4px;">Vermögenswerte</div>
+</div>
+<div style="flex:1 1 0;min-width:100px;box-sizing:border-box;padding:12px 14px;border:1px solid #334155;border-radius:10px;background:#0f172a;text-align:center;">
+<div style="font-size:1.3em;margin-bottom:4px;">3</div>
+<strong style="font-size:0.9em;">Passiven</strong>
+<div style="font-size:0.8em;color:#94a3b8;margin-top:4px;">Schulden</div>
+</div>
+<div style="flex:1 1 0;min-width:100px;box-sizing:border-box;padding:12px 14px;border:1px solid #334155;border-radius:10px;background:#0f172a;text-align:center;">
+<div style="font-size:1.3em;margin-bottom:4px;">4</div>
+<strong style="font-size:0.9em;">Events</strong>
+<div style="font-size:0.8em;color:#94a3b8;margin-top:4px;">Einnahmen, Ausgaben, Transfers</div>
+</div>
+<div style="flex:1 1 0;min-width:100px;box-sizing:border-box;padding:12px 14px;border:1px solid #334155;border-radius:10px;background:#0f172a;text-align:center;">
+<div style="font-size:1.3em;margin-bottom:4px;">5</div>
+<strong style="font-size:0.9em;">Forecast</strong>
+<div style="font-size:0.8em;color:#94a3b8;margin-top:4px;">Bilanz &amp; Prognose</div>
+</div>
+</div>
+
+<!-- 2. BASIS -->
+<h2>2. Basis – Persönliche Angaben</h2>
+
+<div style="padding:14px 16px;border:1px solid #334155;border-radius:10px;background:#0f172a;margin-bottom:1em;">
+<div style="padding:5px 0;font-size:0.85em;display:flex;gap:8px;"><span style="color:#94a3b8;min-width:35%;flex-shrink:0;">Geburtsdatum *</span><span>Bestimmt dein Alter im Forecast. Pflichtfeld.</span></div>
+<div style="padding:5px 0;font-size:0.85em;display:flex;gap:8px;"><span style="color:#94a3b8;min-width:35%;flex-shrink:0;">Rentenalter</span><span>Optional (40–80). Wird als vertikale Linie im Forecast angezeigt.</span></div>
+<div style="padding:5px 0;font-size:0.85em;display:flex;gap:8px;"><span style="color:#94a3b8;min-width:35%;flex-shrink:0;">Forecast-Horizont *</span><span>1–120 Jahre. Bestimmt wie weit in die Zukunft gerechnet wird.</span></div>
+<div style="padding:5px 0;font-size:0.85em;display:flex;gap:8px;"><span style="color:#94a3b8;min-width:35%;flex-shrink:0;">Startjahr</span><span>Automatisch: das aktuelle Kalenderjahr. Nicht änderbar.</span></div>
+<div style="padding:5px 0;font-size:0.85em;display:flex;gap:8px;"><span style="color:#94a3b8;min-width:35%;flex-shrink:0;">Fallbeschreibung</span><span>Optionaler Freitext – z.B. «Szenario mit Hauskauf 2030».</span></div>
+</div>
+
+<!-- 3. AKTIVEN -->
+<h2>3. Vermögen (Aktiven)</h2>
+<p>Dein Vermögen wird nach <strong>Verfügbarkeit</strong> in vier Töpfe eingeteilt. Jeder Topf verhält sich im Forecast unterschiedlich.</p>
+
+<div style="display:flex;flex-wrap:wrap;gap:8px;">
+<div style="flex:1 1 calc(50% - 8px);min-width:240px;box-sizing:border-box;padding:12px 14px;border:1px solid #334155;border-left:3px solid #22d3ee;border-radius:10px;background:#0f172a;">
+<strong style="font-size:0.9em;">Liquidität</strong>
+<div style="font-size:0.8em;color:#94a3b8;">Sofort verfügbar</div>
+<div style="font-size:0.8em;color:#c8d0dc;margin-top:4px;">Bank, Cash, Reserve. <b>Drehscheibe</b> – alle Einnahmen landen hier, alle Ausgaben gehen von hier weg.</div>
+</div>
+<div style="flex:1 1 calc(50% - 8px);min-width:240px;box-sizing:border-box;padding:12px 14px;border:1px solid #334155;border-left:3px solid #818cf8;border-radius:10px;background:#0f172a;">
+<strong style="font-size:0.9em;">Kurzfristig</strong>
+<div style="font-size:0.8em;color:#94a3b8;">3 Monate – 3 Jahre</div>
+<div style="font-size:0.8em;color:#c8d0dc;margin-top:4px;">ETF, Wertschriften. Rendite ist kein Cashflow – Dividenden/Zinsen schon.</div>
+</div>
+<div style="flex:1 1 calc(50% - 8px);min-width:240px;box-sizing:border-box;padding:12px 14px;border:1px solid #334155;border-left:3px solid #a78bfa;border-radius:10px;background:#0f172a;">
+<strong style="font-size:0.9em;">Langfristig</strong>
+<div style="font-size:0.8em;color:#94a3b8;">&gt; 3 Jahre</div>
+<div style="font-size:0.8em;color:#c8d0dc;margin-top:4px;">Immobilien, Vorsorge. Stabil, aber nicht kurzfristig verfügbar.</div>
+</div>
+<div style="flex:1 1 calc(50% - 8px);min-width:240px;box-sizing:border-box;padding:12px 14px;border:1px solid #334155;border-left:3px solid #f59e0b;border-radius:10px;background:#0f172a;">
+<strong style="font-size:0.9em;">Sachwerte</strong>
+<div style="font-size:0.8em;color:#94a3b8;">Gebunden</div>
+<div style="font-size:0.8em;color:#c8d0dc;margin-top:4px;">Säule 3a, Zwecksparen. Entnahme nur via Event/Transfer.</div>
+</div>
+</div>
+
+<h3>Felder pro Position</h3>
+<div style="padding:14px 16px;border:1px solid #334155;border-radius:10px;background:#0f172a;">
+<div style="padding:5px 0;font-size:0.85em;display:flex;gap:8px;"><span style="color:#94a3b8;min-width:35%;flex-shrink:0;">Bezeichnung</span><span>Freitext – z.B. «Sparkonto UBS», «ETF Swissquote»</span></div>
+<div style="padding:5px 0;font-size:0.85em;display:flex;gap:8px;"><span style="color:#94a3b8;min-width:35%;flex-shrink:0;">Typ</span><span>Cash, Bank, Wertschriften, Vorsorge, Immobilie, Gold, Krypto, Sonstiges</span></div>
+<div style="padding:5px 0;font-size:0.85em;display:flex;gap:8px;"><span style="color:#94a3b8;min-width:35%;flex-shrink:0;">Wert (CHF)</span><span>Aktueller Marktwert</span></div>
+<div style="padding:5px 0;font-size:0.85em;display:flex;gap:8px;"><span style="color:#94a3b8;min-width:35%;flex-shrink:0;">Verfügbarkeit</span><span>Sofort / 3M–3J / &gt;3J / Gebunden</span></div>
+<div style="padding:5px 0;font-size:0.85em;display:flex;gap:8px;"><span style="color:#94a3b8;min-width:35%;flex-shrink:0;">Ertrag p.a.</span><span>Jährlicher Cashflow (Dividenden, Zinsen, Miete)</span></div>
+<div style="padding:5px 0;font-size:0.85em;display:flex;gap:8px;"><span style="color:#94a3b8;min-width:35%;flex-shrink:0;">Cashflow-Ziel</span><span><b>Liquidität</b> (Ertrag wird verfügbar) oder <b>Wiederanlage</b> (bleibt investiert)</span></div>
+<div style="padding:5px 0;font-size:0.85em;display:flex;gap:8px;"><span style="color:#94a3b8;min-width:35%;flex-shrink:0;">Gegenkonto</span><span>Wohin der Ertrag fliesst (anderes Konto oder intern)</span></div>
+<div style="padding:5px 0;font-size:0.85em;display:flex;gap:8px;"><span style="color:#94a3b8;min-width:35%;flex-shrink:0;">Notiz</span><span>Optionaler Freitext</span></div>
+</div>
+
+<div style="margin-top:1em;padding:12px 16px;border-left:3px solid #2563eb;border-radius:0 10px 10px 0;background:#0c1929;font-size:0.88em;">
+<strong>Tipp:</strong> Du kannst eine Position mit Wert 0 anlegen (z.B. «ETF Sparplan») und später über einen Transfer-Event befüllen – ideal für geplante Investments.
+</div>
+
+<!-- 4. PASSIVEN -->
+<h2>4. Schulden (Passiven)</h2>
+<p>Schulden werden analog zu den Aktiven nach Verfügbarkeit eingeteilt. Zinsen und Amortisation werden pro Position erfasst.</p>
+
+<h3>Felder pro Position</h3>
+<div style="padding:14px 16px;border:1px solid #334155;border-radius:10px;background:#0f172a;">
+<div style="padding:5px 0;font-size:0.85em;display:flex;gap:8px;"><span style="color:#94a3b8;min-width:35%;flex-shrink:0;">Bezeichnung</span><span>z.B. «Hypothek UBS», «Konsumkredit»</span></div>
+<div style="padding:5px 0;font-size:0.85em;display:flex;gap:8px;"><span style="color:#94a3b8;min-width:35%;flex-shrink:0;">Typ</span><span>Hypothek, Darlehen, Konsumkredit, Kreditkarte, Andere</span></div>
+<div style="padding:5px 0;font-size:0.85em;display:flex;gap:8px;"><span style="color:#94a3b8;min-width:35%;flex-shrink:0;">Betrag (CHF)</span><span>Ausstehender Saldo</span></div>
+<div style="padding:5px 0;font-size:0.85em;display:flex;gap:8px;"><span style="color:#94a3b8;min-width:35%;flex-shrink:0;">Verfügbarkeit</span><span>Sofort / 3M–3J / &gt;3J / Gebunden</span></div>
+<div style="padding:5px 0;font-size:0.85em;display:flex;gap:8px;"><span style="color:#94a3b8;min-width:35%;flex-shrink:0;">Zinssatz (%)</span><span>Jährlicher Zinssatz – Zinsen werden auf den aktuellen Saldo berechnet</span></div>
+<div style="padding:5px 0;font-size:0.85em;display:flex;gap:8px;"><span style="color:#94a3b8;min-width:35%;flex-shrink:0;">Amortisation p.a.</span><span>Jährliche Rückzahlung in CHF (inkl. Zinsen)</span></div>
+<div style="padding:5px 0;font-size:0.85em;display:flex;gap:8px;"><span style="color:#94a3b8;min-width:35%;flex-shrink:0;">Quelle</span><span>Aus welchem Liquiditätskonto Zinsen/Amort bezahlt werden</span></div>
+<div style="padding:5px 0;font-size:0.85em;display:flex;gap:8px;"><span style="color:#94a3b8;min-width:35%;flex-shrink:0;">Notiz</span><span>Optionaler Freitext</span></div>
+</div>
+
+<div style="margin-top:1em;padding:12px 16px;border-left:3px solid #f59e0b;border-radius:0 10px 10px 0;background:#1a1508;font-size:0.88em;">
+<strong>Hinweis:</strong> Reicht die Liquidität nicht für Zinsen und Amortisation, greift Silverline auf kurzfristiges Vermögen zurück. Ist auch das aufgebraucht, entsteht ein <b>Überzug</b> (neuer Kredit).
+</div>
+
+<!-- 5. ANNUALS -->
+<h2>5. Regelmässige Einnahmen und Ausgaben</h2>
+<p>Die jährlichen Grundströme – Lohn, Lebenshaltung, Versicherungen. Sie bilden das Fundament des Forecasts.</p>
+
+<div style="display:flex;flex-wrap:wrap;gap:8px;">
+<div style="flex:1 1 calc(50% - 8px);min-width:240px;box-sizing:border-box;padding:12px 14px;border:1px solid #334155;border-left:3px solid #4ade80;border-radius:10px;background:#0f172a;">
+<strong style="font-size:0.9em;">Jahreseinkommen</strong>
+<div style="font-size:0.85em;color:#c8d0dc;margin-top:6px;">
+<b>Betrag</b> – Gesamtes Jahreseinkommen in CHF<br>
+<b>Zielkonto</b> – Wohin das Einkommen fliesst (Standard: Liquidität)
+</div>
+</div>
+<div style="flex:1 1 calc(50% - 8px);min-width:240px;box-sizing:border-box;padding:12px 14px;border:1px solid #334155;border-left:3px solid #f87171;border-radius:10px;background:#0f172a;">
+<strong style="font-size:0.9em;">Jahresausgaben</strong>
+<div style="font-size:0.85em;color:#c8d0dc;margin-top:6px;">
+<b>Betrag</b> – Gesamte Jahresausgaben in CHF<br>
+<b>Strategie</b> – Waterfall (erst Liq, dann Kurzfr.) oder Fixed Split<br>
+<b>Quellen</b> – 1–2 Konten für die Finanzierung
+</div>
+</div>
+</div>
+
+<!-- 6. EVENTS -->
+<h2>6. Ereignisse – Einnahmen, Ausgaben, Transfers</h2>
+<p>Ereignisse sind der Kern der «Was wäre wenn»-Planung. Drei Typen decken alle Szenarien ab.</p>
+
+<h3 style="color:#4ade80;">Einnahme-Events</h3>
+<div style="padding:14px 16px;border:1px solid #334155;border-left:3px solid #4ade80;border-radius:0 10px 10px 0;background:#0f172a;margin-bottom:1em;">
+<p style="margin:0 0 8px;font-size:0.9em;">Geld fliesst <b>in</b> dein Vermögen. Landet standardmässig in der Liquidität.</p>
+<div style="padding:5px 0;font-size:0.85em;display:flex;gap:8px;"><span style="color:#94a3b8;min-width:30%;flex-shrink:0;">Titel</span><span>Beschreibender Name</span></div>
+<div style="padding:5px 0;font-size:0.85em;display:flex;gap:8px;"><span style="color:#94a3b8;min-width:30%;flex-shrink:0;">Betrag (CHF)</span><span>Jährlicher oder einmaliger Betrag</span></div>
+<div style="padding:5px 0;font-size:0.85em;display:flex;gap:8px;"><span style="color:#94a3b8;min-width:30%;flex-shrink:0;">Startdatum</span><span>Ab wann die Einnahme gilt</span></div>
+<div style="padding:5px 0;font-size:0.85em;display:flex;gap:8px;"><span style="color:#94a3b8;min-width:30%;flex-shrink:0;">Enddatum</span><span>Optional – offen lassen für unbefristet</span></div>
+<div style="padding:5px 0;font-size:0.85em;display:flex;gap:8px;"><span style="color:#94a3b8;min-width:30%;flex-shrink:0;">Wiederholung</span><span>Einmalig / Jährlich / Monatlich</span></div>
+<div style="padding:5px 0;font-size:0.85em;display:flex;gap:8px;"><span style="color:#94a3b8;min-width:30%;flex-shrink:0;">Indexation</span><span>Keine / Mit Inflation / Real konstant / Nominal fix</span></div>
+<div style="padding:5px 0;font-size:0.85em;display:flex;gap:8px;"><span style="color:#94a3b8;min-width:30%;flex-shrink:0;">Zielkonto</span><span>Wohin das Geld fliesst (Liquidität oder ein Aktivkonto)</span></div>
+<div style="margin-top:8px;font-size:0.82em;color:#94a3b8;"><b>Beispiele:</b> Bonus, Erbschaft, Rückzahlung, Mieteinnahmen, Nebenverdienst</div>
+</div>
+
+<h3 style="color:#f87171;">Ausgabe-Events</h3>
+<div style="padding:14px 16px;border:1px solid #334155;border-left:3px solid #f87171;border-radius:0 10px 10px 0;background:#0f172a;margin-bottom:1em;">
+<p style="margin:0 0 8px;font-size:0.9em;">Geld fliesst <b>aus</b> deinem Vermögen. Wird aus Liquidität und definierten Quellen finanziert.</p>
+<div style="padding:5px 0;font-size:0.85em;display:flex;gap:8px;"><span style="color:#94a3b8;min-width:30%;flex-shrink:0;">Alle Einnahme-Felder</span><span>Titel, Betrag, Datum, Wiederholung, Indexation</span></div>
+<div style="padding:5px 0;font-size:0.85em;display:flex;gap:8px;"><span style="color:#94a3b8;min-width:30%;flex-shrink:0;">Strategie</span><span><b>Waterfall</b>: erst Quelle 1, dann 2 · <b>Fixed Split</b>: fixe Anteile</span></div>
+<div style="padding:5px 0;font-size:0.85em;display:flex;gap:8px;"><span style="color:#94a3b8;min-width:30%;flex-shrink:0;">Quellen (1–2)</span><span>Konten, aus denen bezahlt wird (Liquidität, Kurzfristig, etc.)</span></div>
+<div style="padding:5px 0;font-size:0.85em;display:flex;gap:8px;"><span style="color:#94a3b8;min-width:30%;flex-shrink:0;">Kredit erlauben</span><span>Wenn aktiviert: Überzug als letzte Finanzierungsquelle</span></div>
+<div style="margin-top:8px;font-size:0.82em;color:#94a3b8;"><b>Beispiele:</b> Autokauf, Renovation, PV-Anlage, Ausbildung, Sondertilgung</div>
+</div>
+
+<h3 style="color:#38bdf8;">Transfer-Events</h3>
+<div style="padding:14px 16px;border:1px solid #334155;border-left:3px solid #38bdf8;border-radius:0 10px 10px 0;background:#0f172a;margin-bottom:1em;">
+<p style="margin:0 0 8px;font-size:0.9em;">Geld wird <b>zwischen Konten verschoben</b>, ohne die Bilanz zu verändern – nur die Verteilung ändert sich.</p>
+<div style="padding:5px 0;font-size:0.85em;display:flex;gap:8px;"><span style="color:#94a3b8;min-width:30%;flex-shrink:0;">Alle Basis-Felder</span><span>Titel, Betrag, Datum, Wiederholung, Indexation</span></div>
+<div style="padding:5px 0;font-size:0.85em;display:flex;gap:8px;"><span style="color:#94a3b8;min-width:30%;flex-shrink:0;">Von (Quelle)</span><span>Konto, von dem das Geld abgeht</span></div>
+<div style="padding:5px 0;font-size:0.85em;display:flex;gap:8px;"><span style="color:#94a3b8;min-width:30%;flex-shrink:0;">Nach (Ziel)</span><span>Konto, auf das das Geld geht</span></div>
+
+<div style="margin-top:10px;font-size:0.85em;"><strong>Drei Richtungen:</strong></div>
+<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;">
+<div style="flex:1 1 calc(33.3% - 6px);min-width:200px;box-sizing:border-box;padding:8px 10px;border:1px solid #1e3a5f;border-radius:8px;background:#0c1929;font-size:0.82em;">
+<strong style="color:#38bdf8;">Aktiv → Aktiv</strong><br>
+<span style="color:#94a3b8;">Umschichtung</span><br>
+<span style="color:#c8d0dc;">Liquidität → ETF · Säule 3a → ETF · Kurzfr. → Langfr.</span>
+</div>
+<div style="flex:1 1 calc(33.3% - 6px);min-width:200px;box-sizing:border-box;padding:8px 10px;border:1px solid #1e3a5f;border-radius:8px;background:#0c1929;font-size:0.82em;">
+<strong style="color:#4ade80;">Aktiv → Schuld</strong><br>
+<span style="color:#94a3b8;">Schuld tilgen</span><br>
+<span style="color:#c8d0dc;">Liquidität → Hypothek · Wertschr. → Darlehen · Sondertilgung</span>
+</div>
+<div style="flex:1 1 calc(33.3% - 6px);min-width:200px;box-sizing:border-box;padding:8px 10px;border:1px solid #1e3a5f;border-radius:8px;background:#0c1929;font-size:0.82em;">
+<strong style="color:#f59e0b;">Schuld → Aktiv</strong><br>
+<span style="color:#94a3b8;">Kredit aufnehmen</span><br>
+<span style="color:#c8d0dc;">Hypothek → Liquidität · Aufstockung · Neuer Kredit</span>
+</div>
+</div>
+</div>
+
+<!-- 7. WIEDERHOLUNG & INDEXATION -->
+<h2>7. Wiederholung und Indexation</h2>
+
+<div style="display:flex;flex-wrap:wrap;gap:8px;">
+<div style="flex:1 1 calc(50% - 8px);min-width:240px;box-sizing:border-box;padding:12px 14px;border:1px solid #334155;border-radius:10px;background:#0f172a;">
+<strong style="font-size:0.9em;">Wiederholung</strong>
+<ul style="margin:8px 0 0;padding-left:1.2em;font-size:0.85em;color:#c8d0dc;line-height:1.6;">
+<li><b>Einmalig</b> – nur im Startjahr</li>
+<li><b>Jährlich</b> – jedes Jahr im Zeitraum</li>
+<li><b>Monatlich</b> – Betrag × 12 pro Jahr</li>
+</ul>
+</div>
+<div style="flex:1 1 calc(50% - 8px);min-width:240px;box-sizing:border-box;padding:12px 14px;border:1px solid #334155;border-radius:10px;background:#0f172a;">
+<strong style="font-size:0.9em;">Indexation</strong>
+<ul style="margin:8px 0 0;padding-left:1.2em;font-size:0.85em;color:#c8d0dc;line-height:1.6;">
+<li><b>Keine</b> – Betrag bleibt fix</li>
+<li><b>Mit Inflation</b> – steigt jährlich mit Teuerung</li>
+<li><b>Real konstant</b> – kaufkraftbereinigt</li>
+<li><b>Nominal fix</b> – exakt der eingegebene Betrag</li>
+</ul>
+</div>
+</div>
+
+<div style="margin-top:1em;padding:12px 16px;border-left:3px solid #2563eb;border-radius:0 10px 10px 0;background:#0c1929;font-size:0.88em;">
+<strong>Praxis:</strong> Einen jährlichen ETF-Sparplan mit «Mit Inflation» indexieren – so steigt der Sparbetrag real mit. Einen Mietvertrag als «Nominal fix» erfassen, wenn der Betrag vertraglich fixiert ist.
+</div>
+
+<!-- 8. ANWENDUNGSFÄLLE -->
+<h2>8. Anwendungsfälle – Rezepte</h2>
+<p>Schritt-für-Schritt-Anleitungen für typische Finanzszenarien. Jedes Rezept zeigt, welche Events du brauchst.</p>
+
+<div style="padding:14px 16px;border:1px solid #334155;border-radius:10px;background:#0f172a;margin-bottom:8px;">
+<strong style="font-size:0.95em;">Autokauf finanzieren</strong>
+<div style="margin-top:6px;font-size:0.85em;color:#c8d0dc;">
+1× <span style="color:#f87171;">Ausgabe</span> «Auto» – z.B. 35'000 CHF, einmalig 2027<br>
+<span style="color:#94a3b8;">→ Forecast zeigt den Liquiditätseinbruch und wie schnell er sich erholt.</span>
+</div>
+</div>
+
+<div style="padding:14px 16px;border:1px solid #334155;border-radius:10px;background:#0f172a;margin-bottom:8px;">
+<strong style="font-size:0.95em;">PV-Anlage installieren</strong>
+<div style="margin-top:6px;font-size:0.85em;color:#c8d0dc;">
+1× <span style="color:#f87171;">Ausgabe</span> «PV-Anlage» – z.B. 25'000 CHF, einmalig 2029<br>
+1× <span style="color:#4ade80;">Einnahme</span> «Stromersparnis» – z.B. 2'500 CHF/Jahr, jährlich ab 2030, mit Inflation<br>
+<span style="color:#94a3b8;">→ Amortisation nach ~10 Jahren sichtbar. Optional: Einspeisevergütung als dritter Event.</span>
+</div>
+</div>
+
+<div style="padding:14px 16px;border:1px solid #334155;border-radius:10px;background:#0f172a;margin-bottom:8px;">
+<strong style="font-size:0.95em;">ETF-Sparplan starten</strong>
+<div style="margin-top:6px;font-size:0.85em;color:#c8d0dc;">
+Position «ETF Sparplan» in Aktiven anlegen mit Wert <b>0 CHF</b> (Kurzfristig)<br>
+1× <span style="color:#38bdf8;">Transfer</span> «ETF Sparen» – z.B. 6'000 CHF/Jahr, jährlich ab 2026, Von: Liquidität → Nach: ETF Sparplan<br>
+<span style="color:#94a3b8;">→ ETF wächst jedes Jahr, Liquidität sinkt entsprechend. Bilanz bleibt gleich.</span>
+</div>
+</div>
+
+<div style="padding:14px 16px;border:1px solid #334155;border-radius:10px;background:#0f172a;margin-bottom:8px;">
+<strong style="font-size:0.95em;">Vorsorge in ETF umschichten</strong>
+<div style="margin-top:6px;font-size:0.85em;color:#c8d0dc;">
+1× <span style="color:#38bdf8;">Transfer</span> «Entnahme 3a» – z.B. 50'000 CHF, einmalig 2030, Von: Säule 3a → Nach: ETF Sparplan<br>
+<span style="color:#94a3b8;">→ Sachwerte sinken, Kurzfristig steigt. Ideal für geplante Vorsorgebezüge.</span>
+</div>
+</div>
+
+<div style="padding:14px 16px;border:1px solid #334155;border-radius:10px;background:#0f172a;margin-bottom:8px;">
+<strong style="font-size:0.95em;">Hypothek Sondertilgung</strong>
+<div style="margin-top:6px;font-size:0.85em;color:#c8d0dc;">
+1× <span style="color:#38bdf8;">Transfer</span> «Sondertilgung» – z.B. 50'000 CHF, einmalig 2027, Von: Wertschriften → Nach: Hypothek<br>
+<span style="color:#94a3b8;">→ Schuld sinkt sofort, Zinslast ab Folgejahr tiefer. Im Detail sichtbar.</span>
+</div>
+</div>
+
+<div style="padding:14px 16px;border:1px solid #334155;border-radius:10px;background:#0f172a;margin-bottom:8px;">
+<strong style="font-size:0.95em;">Renovation mit Hypothek-Aufstockung</strong>
+<div style="margin-top:6px;font-size:0.85em;color:#c8d0dc;">
+1× <span style="color:#38bdf8;">Transfer</span> «Hypo aufstocken» – z.B. 50'000 CHF, Von: Hypothek → Nach: Liquidität<br>
+1× <span style="color:#f87171;">Ausgabe</span> «Renovation» – z.B. 45'000 CHF, einmalig<br>
+<span style="color:#94a3b8;">→ Schuld steigt, Liquidität bleibt erhalten. Zinslast steigt ab Folgejahr.</span>
+</div>
+</div>
+
+<div style="padding:14px 16px;border:1px solid #334155;border-radius:10px;background:#0f172a;margin-bottom:8px;">
+<strong style="font-size:0.95em;">Erbschaft einsetzen</strong>
+<div style="margin-top:6px;font-size:0.85em;color:#c8d0dc;">
+1× <span style="color:#4ade80;">Einnahme</span> «Erbschaft» – z.B. 80'000 CHF → Liquidität<br>
+1× <span style="color:#38bdf8;">Transfer</span> «Kredit tilgen» – 30'000 CHF, Von: Liquidität → Nach: Konsumkredit<br>
+1× <span style="color:#38bdf8;">Transfer</span> «Investieren» – 40'000 CHF, Von: Liquidität → Nach: ETF<br>
+<span style="color:#94a3b8;">→ Drei Events bilden die gesamte Entscheidung ab: Einnahme, Tilgung, Investment.</span>
+</div>
+</div>
+
+<div style="padding:14px 16px;border:1px solid #334155;border-radius:10px;background:#0f172a;margin-bottom:8px;">
+<strong style="font-size:0.95em;">Pensionierung planen</strong>
+<div style="margin-top:6px;font-size:0.85em;color:#c8d0dc;">
+Jahreseinkommen anpassen: Einkommen ab Rentenalter reduzieren (z.B. AHV + PK statt Lohn)<br>
+1× <span style="color:#38bdf8;">Transfer</span> «Vermögensverzehr» – jährlich ab Rentenjahr, Von: Kurzfristig → Nach: Liquidität<br>
+<span style="color:#94a3b8;">→ Zeigt, wie lange das Vermögen reicht und wann Liquidität kritisch wird.</span>
+</div>
+</div>
+
+<div style="padding:14px 16px;border:1px solid #334155;border-radius:10px;background:#0f172a;margin-bottom:8px;">
+<strong style="font-size:0.95em;">Immobilienkauf mit Hypothek</strong>
+<div style="margin-top:6px;font-size:0.85em;color:#c8d0dc;">
+Position «Eigentumswohnung» in Aktiven anlegen (Sachwerte, Wert = Kaufpreis)<br>
+Position «Hypothek» in Passiven anlegen (Betrag, Zinssatz, Amortisation)<br>
+1× <span style="color:#f87171;">Ausgabe</span> «Eigenkapital» – z.B. 100'000 CHF aus Liquidität<br>
+<span style="color:#94a3b8;">→ Bilanz: Immobilie und Hypothek erscheinen sofort, EK-Abfluss im Kaufjahr.</span>
+</div>
+</div>
+
+<div style="padding:14px 16px;border:1px solid #334155;border-radius:10px;background:#0f172a;margin-bottom:8px;">
+<strong style="font-size:0.95em;">Sparen vs. Investieren</strong>
+<div style="margin-top:6px;font-size:0.85em;color:#c8d0dc;">
+1× <span style="color:#38bdf8;">Transfer</span> «Sparplan» – jährlich, Von: Liquidität → Nach: ETF/Kurzfristig<br>
+<span style="color:#94a3b8;">→ Liquiditäts-Hinweis zeigt, ob der Sparbetrag die Liquidität gefährdet. Bei Warnung: Betrag reduzieren oder Laufzeit anpassen.</span>
+</div>
+</div>
+
+<!-- 9. FORECAST -->
+<h2>9. Forecast verstehen</h2>
+
+<h3>Forecast-Grafik</h3>
+<div style="padding:14px 16px;border:1px solid #334155;border-radius:10px;background:#0f172a;margin-bottom:1em;">
+<ul style="margin:0;padding-left:1.2em;font-size:0.88em;color:#c8d0dc;line-height:1.8;">
+<li>Die Linie zeigt das <b>Eigenkapital</b> (Aktiven minus Passiven) pro Jahr</li>
+<li><span style="color:#4ade80;">Grüne Abschnitte</span> – Eigenkapital steigt gegenüber Vorjahr</li>
+<li><span style="color:#f87171;">Rote Abschnitte</span> – Eigenkapital sinkt</li>
+<li>Horizontale Linie bei <b>0</b> und beim <b>Startwert</b> als Referenz</li>
+<li>Vertikale Linie bei <b>Pensionierung</b> (wenn Rentenalter gesetzt)</li>
+<li>Zeitraum wählbar: 3 / 5 / 10 Jahre oder Gesamt</li>
+</ul>
+</div>
+
+<h3>Liquiditäts-Hinweis</h3>
+<div style="padding:14px 16px;border:1px solid #334155;border-radius:10px;background:#0f172a;margin-bottom:1em;">
+<p style="margin:0 0 8px;font-size:0.9em;">Wenn die Liquidität in einem Forecast-Jahr auf 0 oder darunter fällt, erscheint ein klickbarer Hinweis.</p>
+<div style="display:flex;flex-wrap:wrap;gap:6px;">
+<div style="flex:1 1 calc(33.3% - 6px);min-width:200px;box-sizing:border-box;padding:8px 10px;border:1px solid #7f1d1d;border-radius:8px;background:#1c0a0a;font-size:0.82em;">
+<strong style="color:#fca5a5;">Akut</strong> <span style="color:#94a3b8;">(≤ 1 Jahr)</span><br>
+<span style="color:#c8d0dc;">Sofort handeln – Ausgaben kürzen, Einnahmen prüfen</span>
+</div>
+<div style="flex:1 1 calc(33.3% - 6px);min-width:200px;box-sizing:border-box;padding:8px 10px;border:1px solid #fcd34d;border-radius:8px;background:#1a1005;font-size:0.82em;">
+<strong style="color:#fcd34d;">Mittelfristig</strong> <span style="color:#94a3b8;">(≤ 3 Jahre)</span><br>
+<span style="color:#c8d0dc;">Jetzt planen – Strategie entwickeln, Optionen prüfen</span>
+</div>
+<div style="flex:1 1 calc(33.3% - 6px);min-width:200px;box-sizing:border-box;padding:8px 10px;border:1px solid #334155;border-radius:8px;background:#0f172a;font-size:0.82em;">
+<strong style="color:#e2e8f0;">Langfristig</strong> <span style="color:#94a3b8;">(&gt; 3 Jahre)</span><br>
+<span style="color:#c8d0dc;">Strategie entwickeln – Sparquote stärken, Ausgaben prüfen</span>
+</div>
+</div>
+<p style="margin:8px 0 0;font-size:0.82em;color:#94a3b8;">Klick auf den Hinweis öffnet ein Modal mit konkreten Empfehlungen.</p>
+</div>
+
+<h3>Detail-Tabelle</h3>
+<div style="padding:14px 16px;border:1px solid #334155;border-radius:10px;background:#0f172a;">
+<p style="margin:0 0 8px;font-size:0.9em;">Klick auf ein Jahr öffnet die vollständige Herleitung:</p>
+<ul style="margin:0;padding-left:1.2em;font-size:0.85em;color:#c8d0dc;line-height:1.7;">
+<li><b>Start / Ende</b> pro Bucket (Liquidität, Kurzfristig, Langfristig, Sachwerte)</li>
+<li><b>Passiven</b> Start / Ende (Kurzfristige + Langfristige Schulden)</li>
+<li><b>Eigenkapital</b> und Veränderung</li>
+<li><b>Bewegungen:</b> Annuals (Ein/Aus), Ereignisse, Transfers, Erträge, Zinsen, Amortisation</li>
+<li><b>Herleitung Aktiven</b> – wie sich jeder Topf verändert hat und warum</li>
+</ul>
+</div>
+
+<!-- 10. VORLAGEN -->
+<h2>10. Vorlagen (Templates)</h2>
+<p>Beim ersten Öffnen oder auf der Muster-Seite kannst du aus fünf Lebenssituationen wählen. Die Vorlage füllt Aktiven, Passiven und Einnahmen/Ausgaben vor – du passt dann an deine Situation an.</p>
+
+<div style="display:flex;flex-wrap:wrap;gap:10px;">
+<div style="flex:1 1 calc(50% - 10px);min-width:240px;box-sizing:border-box;padding:14px 16px;border:1px solid #334155;border-radius:10px;background:#0f172a;">
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+<img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2338bdf8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 2a5 5 0 015 5v1H7V7a5 5 0 015-5z'/%3E%3Cpath d='M5 12h14v8a2 2 0 01-2 2H7a2 2 0 01-2-2v-8z'/%3E%3C/svg%3E" alt="" style="width:28px;height:28px;flex-shrink:0;">
+<strong style="font-size:0.95em;">Single jung (25)</strong>
+</div>
+<div style="font-size:0.85em;color:#94a3b8;">Berufseinstieg, wenig Vermögen, langer Planungshorizont</div>
+</div>
+<div style="flex:1 1 calc(50% - 10px);min-width:240px;box-sizing:border-box;padding:14px 16px;border:1px solid #334155;border-radius:10px;background:#0f172a;">
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+<img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2338bdf8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 20l5-8 4 4 9-12'/%3E%3Cpath d='M17 4h4v4'/%3E%3C/svg%3E" alt="" style="width:28px;height:28px;flex-shrink:0;">
+<strong style="font-size:0.95em;">Single 45+</strong>
+</div>
+<div style="font-size:0.85em;color:#94a3b8;">Etabliert, Vorsorge aufgebaut, mittlerer Horizont</div>
+</div>
+<div style="flex:1 1 calc(50% - 10px);min-width:240px;box-sizing:border-box;padding:14px 16px;border:1px solid #334155;border-radius:10px;background:#0f172a;">
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+<img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2338bdf8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2'/%3E%3Ccircle cx='9' cy='7' r='4'/%3E%3Cpath d='M23 21v-2a4 4 0 00-3-3.87'/%3E%3Cpath d='M16 3.13a4 4 0 010 7.75'/%3E%3C/svg%3E" alt="" style="width:28px;height:28px;flex-shrink:0;">
+<strong style="font-size:0.95em;">Familie 30+</strong>
+</div>
+<div style="font-size:0.85em;color:#94a3b8;">Haushaltseinkommen, Eigenheim, Hypothek</div>
+</div>
+<div style="flex:1 1 calc(50% - 10px);min-width:240px;box-sizing:border-box;padding:14px 16px;border:1px solid #334155;border-radius:10px;background:#0f172a;">
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+<img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2338bdf8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z'/%3E%3Cpath d='M9 22V12h6v10'/%3E%3C/svg%3E" alt="" style="width:28px;height:28px;flex-shrink:0;">
+<strong style="font-size:0.95em;">Familie 50+</strong>
+</div>
+<div style="font-size:0.85em;color:#94a3b8;">Eigenheim abbezahlt, Vorsorge-Phase</div>
+</div>
+<div style="flex:1 1 calc(50% - 10px);min-width:240px;box-sizing:border-box;padding:14px 16px;border:1px solid #334155;border-radius:10px;background:#0f172a;">
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+<img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Ccircle cx='12' cy='12' r='9' stroke='%2338bdf8' stroke-width='2'/%3E%3Cpath d='M7 16c1.2-3.5 3.5-6 5-6s3.8 2.5 5 6' stroke='%23f59e0b' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M9 9l-.6-2.5M15 9l.6-2.5M12 7V4' stroke='%23f59e0b' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E" alt="" style="width:28px;height:28px;flex-shrink:0;">
+<strong style="font-size:0.95em;">Pensionär (67)</strong>
+</div>
+<div style="font-size:0.85em;color:#94a3b8;">AHV + Pensionskasse, geplanter Vermögensverzehr</div>
+</div>
+</div>
+
+<!-- 11. SZENARIO-VERGLEICH -->
+<h2>11. Szenarien vergleichen</h2>
+
+<div style="padding:14px 16px;border:1px solid #334155;border-left:3px solid #2563eb;border-radius:0 10px 10px 0;background:#0c1929;">
+<p style="margin:0 0 8px;font-size:0.9em;"><strong>Tipp:</strong> Du kannst heute schon Szenarien vergleichen – mit zwei Benutzerkonten.</p>
+<ol style="margin:0;padding-left:1.4em;font-size:0.85em;color:#c8d0dc;line-height:1.8;">
+<li>Erstelle zwei Konten: z.B. «Szenario A – Hauskauf» und «Szenario B – Miete»</li>
+<li>Erfasse dieselbe Ausgangslage in beiden Konten</li>
+<li>Ändere in Szenario B die Events (z.B. kein Hauskauf, dafür Miet-Ausgabe + Investment)</li>
+<li>Vergleiche die Forecasts – auf zwei Geräten oder abwechselnd eingeloggt</li>
+</ol>
+<p style="margin:8px 0 0;font-size:0.82em;color:#94a3b8;">Ein integrierter Side-by-Side-Vergleich innerhalb der App ist geplant.</p>
+</div>
+
+<!-- 12. ABGRENZUNG -->
+<h2>12. Was Silverline ist – und was nicht</h2>
+
+<div style="display:flex;flex-wrap:wrap;gap:8px;">
+<div style="flex:1 1 calc(50% - 8px);min-width:240px;box-sizing:border-box;padding:14px 16px;border:1px solid #334155;border-left:3px solid #4ade80;border-radius:10px;background:#0f172a;">
+<strong style="font-size:0.95em;">Silverline ist</strong>
+<ul style="margin:8px 0 0;padding-left:1.2em;font-size:0.85em;color:#c8d0dc;line-height:1.7;">
+<li><b>Strategische Jahresplanung</b> – Jahressicht, nicht Monatssicht</li>
+<li><b>Bilanz- und Liquiditätsforecast</b> über einen langen Zeithorizont</li>
+<li><b>«Was wäre wenn»-Tool</b> – Szenarien durchspielen und vergleichen</li>
+<li><b>Lokale, offline-fähige PWA</b> – deine Daten gehören dir</li>
+<li><b>Schweizer Kontext</b> – CHF, Säule 3a, Hypothekarmodell</li>
+</ul>
+</div>
+<div style="flex:1 1 calc(50% - 8px);min-width:240px;box-sizing:border-box;padding:14px 16px;border:1px solid #334155;border-left:3px solid #f87171;border-radius:10px;background:#0f172a;">
+<strong style="font-size:0.95em;">Silverline ist nicht</strong>
+<ul style="margin:8px 0 0;padding-left:1.2em;font-size:0.85em;color:#c8d0dc;line-height:1.7;">
+<li>Kein <b>Budget-Tool</b> – keine monatliche Budgetierung</li>
+<li>Kein <b>Monatsplaner</b> – keine Monats-Cashflow-Sicht</li>
+<li>Kein <b>Kontenaggregator</b> – kein automatischer Bank-Import</li>
+<li>Kein <b>Steuerrechner</b> – keine Steuerprognose</li>
+<li>Kein <b>Anlageberater</b> – keine Renditeprognosen</li>
+<li>Kein <b>Buchhaltungstool</b> – keine Buchungssätze</li>
+<li>Keine <b>Multi-Währung</b> – alles in CHF</li>
+</ul>
+</div>
+</div>
+
+<div style="margin-top:1em;padding:14px 16px;border:1px solid #334155;border-radius:10px;background:#0f172a;">
+<strong style="font-size:0.95em;">Geplant / denkbar</strong>
+<ul style="margin:8px 0 0;padding-left:1.2em;font-size:0.85em;color:#c8d0dc;line-height:1.7;">
+<li>Integrierter Szenario-Vergleich in einer Ansicht</li>
+<li>Detailliertere Monatsauflösung</li>
+<li>Erweiterte Reportings und Auswertungen</li>
+</ul>
+</div>
+
+</div>

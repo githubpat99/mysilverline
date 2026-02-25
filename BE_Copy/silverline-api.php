@@ -148,6 +148,17 @@ add_action('rest_api_init', function () {
     'callback' => 'sl_sync_pull',
     'permission_callback' => 'sl_perm_logged_in_cookie_only',
   ]);
+
+  register_rest_route('silverline/v1', '/admin/users/delete', [
+    'methods'  => 'POST',
+    'callback' => 'sl_admin_users_delete',
+    'permission_callback' => 'sl_perm_admin_and_nonce',
+  ]);
+  register_rest_route('silverline/v1', '/admin/users/list', [
+    'methods'  => 'GET',
+    'callback' => 'sl_admin_users_list',
+    'permission_callback' => 'sl_perm_admin_only',
+  ]);
 });
 
 // CORS: Custom-Headers erlauben + Origin für localhost (Dev) und Produktion
@@ -267,6 +278,16 @@ function sl_perm_logged_in_and_nonce(WP_REST_Request $req) {
   $nonce = $req->get_header('x-wp-nonce');
   if (!$nonce) return false;
   return wp_verify_nonce($nonce, 'wp_rest') === 1;
+}
+
+function sl_perm_admin_and_nonce(WP_REST_Request $req) {
+  if (!sl_perm_logged_in_and_nonce($req)) return false;
+  return current_user_can('manage_options');
+}
+
+function sl_perm_admin_only(WP_REST_Request $req) {
+  if (!sl_perm_logged_in_cookie_only($req)) return false;
+  return current_user_can('manage_options');
 }
 
 /**
@@ -441,6 +462,143 @@ function sl_auth_register(WP_REST_Request $req) {
 function sl_logout(WP_REST_Request $req) {
   wp_logout();
   return new WP_REST_Response(['ok' => true], 200);
+}
+
+function sl_admin_users_delete(WP_REST_Request $req) {
+  global $wpdb;
+
+  $body = json_decode($req->get_body(), true) ?: [];
+  $identifier = trim((string)($body['identifier'] ?? ''));
+  $dry_run = array_key_exists('dry_run', $body) ? (bool)$body['dry_run'] : true;
+  $confirm = strtoupper(trim((string)($body['confirm'] ?? '')));
+
+  if ($identifier === '') {
+    return new WP_REST_Response(['ok' => false, 'error' => 'identifier_required'], 400);
+  }
+
+  $user = null;
+  if (ctype_digit($identifier)) {
+    $user = get_user_by('id', (int)$identifier);
+  }
+  if (!$user && is_email($identifier)) {
+    $user = get_user_by('email', $identifier);
+  }
+  if (!$user) {
+    $user = get_user_by('login', sanitize_user($identifier, true));
+  }
+  if (!$user) {
+    return new WP_REST_Response(['ok' => false, 'error' => 'user_not_found'], 404);
+  }
+
+  $uid = (int)$user->ID;
+  $current_uid = (int)get_current_user_id();
+  if ($uid <= 0) {
+    return new WP_REST_Response(['ok' => false, 'error' => 'invalid_user'], 400);
+  }
+  if ($uid === $current_uid) {
+    return new WP_REST_Response(['ok' => false, 'error' => 'self_delete_not_allowed'], 400);
+  }
+  if (in_array('administrator', (array)$user->roles, true)) {
+    return new WP_REST_Response(['ok' => false, 'error' => 'forbidden_admin_delete'], 403);
+  }
+
+  $targets = [
+    ['name' => $wpdb->prefix . 'sl_profile_event_line', 'where_col' => 'user_id'],
+    ['name' => $wpdb->prefix . 'sl_profile_event', 'where_col' => 'user_id'],
+    ['name' => $wpdb->prefix . 'sl_position_target', 'where_col' => 'user_id'],
+    ['name' => $wpdb->prefix . 'sl_position', 'where_col' => 'user_id'],
+    ['name' => $wpdb->prefix . 'sl_finance_basic', 'where_col' => 'user_id'],
+    ['name' => $wpdb->prefix . 'sl_user_mapping', 'where_col' => 'wp_user_id'],
+    ['name' => $wpdb->usermeta, 'where_col' => 'user_id'],
+  ];
+
+  $report = [];
+  foreach ($targets as $target) {
+    $table = $target['name'];
+    $col = $target['where_col'];
+    if (!sl_table_exists($table)) {
+      $report[] = ['table' => $table, 'exists' => false, 'count' => 0];
+      continue;
+    }
+    $count = (int)$wpdb->get_var($wpdb->prepare(
+      "SELECT COUNT(1) FROM {$table} WHERE {$col}=%d",
+      $uid
+    ));
+    $report[] = ['table' => $table, 'exists' => true, 'count' => $count];
+  }
+
+  if ($dry_run) {
+    return new WP_REST_Response([
+      'ok' => true,
+      'dry_run' => true,
+      'user' => [
+        'id' => $uid,
+        'login' => (string)$user->user_login,
+        'email' => (string)$user->user_email,
+      ],
+      'dependencies' => $report,
+    ], 200);
+  }
+
+  if ($confirm !== 'DELETE') {
+    return new WP_REST_Response(['ok' => false, 'error' => 'confirm_delete_required'], 400);
+  }
+
+  $deleted = [];
+  foreach ($targets as $target) {
+    $table = $target['name'];
+    $col = $target['where_col'];
+    if (!sl_table_exists($table)) {
+      $deleted[] = ['table' => $table, 'deleted' => 0, 'exists' => false];
+      continue;
+    }
+    $res = $wpdb->query($wpdb->prepare(
+      "DELETE FROM {$table} WHERE {$col}=%d",
+      $uid
+    ));
+    if ($res === false) {
+      return new WP_REST_Response(['ok' => false, 'error' => 'delete_failed_' . $table], 500);
+    }
+    $deleted[] = ['table' => $table, 'deleted' => (int)$res, 'exists' => true];
+  }
+
+  if (!function_exists('wp_delete_user')) {
+    require_once ABSPATH . 'wp-admin/includes/user.php';
+  }
+  $ok = wp_delete_user($uid, $current_uid);
+  if (!$ok) {
+    return new WP_REST_Response(['ok' => false, 'error' => 'wp_delete_user_failed'], 500);
+  }
+
+  return new WP_REST_Response([
+    'ok' => true,
+    'dry_run' => false,
+    'deleted_user_id' => $uid,
+    'dependencies_deleted' => $deleted,
+  ], 200);
+}
+
+function sl_admin_users_list(WP_REST_Request $req) {
+  $users = get_users([
+    'number' => 500,
+    'orderby' => 'user_login',
+    'order' => 'ASC',
+  ]);
+
+  $out = [];
+  foreach ($users as $u) {
+    $roles = array_values((array)$u->roles);
+    if (in_array('administrator', $roles, true)) continue;
+    $out[] = [
+      'id' => (int)$u->ID,
+      'login' => (string)$u->user_login,
+      'email' => (string)$u->user_email,
+      'name' => (string)($u->display_name ?: $u->user_login),
+      'roles' => $roles,
+    ];
+  }
+
+  return new WP_REST_Response(['ok' => true, 'users' => $out], 200);
 }
 
 // ------------------------------

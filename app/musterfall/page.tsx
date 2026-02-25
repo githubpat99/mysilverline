@@ -9,6 +9,7 @@ import { mapFormStateToProfileV2 } from "@/lib/mapping/mapFormStateToProfileV2";
 import { mapFormStateToPositions } from "@/lib/mapping/mapFormStateToPositions";
 import { mapV2ToFormState } from "@/lib/mapping/mapV2ToFormState";
 import { makeEmptyProfileV2 } from "@/lib/profile/makeEmptyProfileV2";
+import { whoAmI } from "@/lib/profileApi";
 import TemplatePicker from "@/app/finance/components/TemplatePicker";
 import type { FormState } from "@/lib/types";
 import type { ProfileV2 } from "@/lib/types/v2";
@@ -19,6 +20,7 @@ export default function MusterPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [canEdit, setCanEdit] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [musterfallForm, setMusterfallForm] = useState<FormState | null>(null);
 
   useEffect(() => {
@@ -34,6 +36,13 @@ export default function MusterPage() {
         setMusterfallForm(null);
       })
       .finally(() => setLoading(false));
+
+    whoAmI()
+      .then((me) => {
+        const roles = Array.isArray(me.roles) ? me.roles : [];
+        setIsAdmin(me.logged_in === true && roles.includes("administrator"));
+      })
+      .catch(() => setIsAdmin(false));
   }, []);
 
   async function handleSelect(form: FormState) {
@@ -75,7 +84,7 @@ export default function MusterPage() {
               href="/finance"
               className="mt-6 inline-block rounded-xl border border-sky-600 bg-sky-950/50 px-4 py-2 text-sky-200 hover:bg-sky-900/50"
             >
-              Zum Finanzen →
+              Zu Finanzen →
             </Link>
           </div>
         </div>
@@ -88,6 +97,23 @@ export default function MusterPage() {
       {error && (
         <div className="mx-auto max-w-4xl px-4 pt-6">
           <div className="rounded-lg border border-rose-800 bg-rose-950/40 px-4 py-2 text-sm text-rose-200">{error}</div>
+        </div>
+      )}
+
+      {isAdmin && (
+        <div className="mx-auto max-w-4xl px-4 pt-6">
+          <div className="rounded-lg border border-sky-800/60 bg-sky-950/30 px-4 py-3 text-sm text-sky-200">
+            <div className="font-medium">Admin-Werkzeug</div>
+            <div className="mt-1 text-sky-100/80">
+              User-Management (inkl. Löschhilfe für User + Datenabhängigkeiten):
+            </div>
+            <Link
+              href="/admin/user-management"
+              className="mt-2 inline-block rounded border border-sky-700/70 bg-sky-900/30 px-3 py-1.5 text-xs text-sky-100 hover:bg-sky-900/50"
+            >
+              Admin User-Management öffnen →
+            </Link>
+          </div>
         </div>
       )}
 

@@ -22,10 +22,16 @@ export function computeForecastFromProfileV2(
 
   const out = computeForecastWithBreakdown(input);
 
-  const baseYear = (input as any).baseYear ?? new Date().getFullYear();
-  const retireAtAge = (input as any).retireAtAge ?? 65;
-  const selfAgeToday = (input as any).selfAgeToday ?? 0;
-  const retirementYear = baseYear + Math.max(0, retireAtAge - selfAgeToday);
+  const toFiniteNumber = (v: unknown, fallback: number) => {
+    const num = typeof v === "number" ? v : Number(v);
+    return Number.isFinite(num) ? num : fallback;
+  };
+  const baseYear = toFiniteNumber((input as any).baseYear, new Date().getFullYear());
+  const retireAtAge = toFiniteNumber((input as any).retireAtAge, 65);
+  const selfAgeToday = toFiniteNumber((input as any).selfAgeToday, 0);
+  // Forecast rows are yearly buckets; keep retirement marker on an integer calendar year.
+  const retirementYearRaw = baseYear + Math.max(0, retireAtAge - selfAgeToday);
+  const retirementYear = Number.isFinite(retirementYearRaw) ? Math.round(retirementYearRaw) : undefined;
 
   return {
     ...out,

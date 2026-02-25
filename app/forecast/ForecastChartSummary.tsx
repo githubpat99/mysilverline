@@ -129,6 +129,20 @@ function buildStrokeGradient(data: { year: number; net: number }[]) {
   return stops;
 }
 
+function buildLiqStrokeGradient(data: { year: number; liq: number }[]) {
+  if (data.length < 2) return [];
+  const total = data.length - 1;
+  const stops: { offset: string; color: string }[] = [];
+  for (let i = 0; i < total; i++) {
+    const pctStart = (i / total) * 100;
+    const pctEnd = ((i + 1) / total) * 100;
+    const color = data[i + 1].liq >= data[i].liq ? "#6ee7b7" : "#fda4af";
+    stops.push({ offset: `${pctStart.toFixed(1)}%`, color });
+    stops.push({ offset: `${pctEnd.toFixed(1)}%`, color });
+  }
+  return stops;
+}
+
 const PERIOD_OPTIONS = [
   { key: "3J", label: "3 Jahre", n: 3 },
   { key: "5J", label: "5 Jahre", n: 5 },
@@ -290,6 +304,7 @@ export default function ForecastChartSummary({
   const lineData = useMemo(() => {
     const safe = rows ?? [];
     return safe.map((r, i) => {
+      const year = Math.round(Number((r as any)?.year ?? 0));
       const end = endBucketsOf(r);
       const eNW = netWorth(end);
       const netVal = eNW.assets - eNW.debts;
@@ -300,7 +315,7 @@ export default function ForecastChartSummary({
               return netWorth(pe).net;
             })()
           : netVal;
-      return { year: r.year, net: netVal, liq: n(r.liq), prevNet };
+      return { year, yearKey: String(year), net: netVal, liq: n(r.liq), prevNet };
     });
   }, [rows]);
 
@@ -341,6 +356,7 @@ export default function ForecastChartSummary({
   }, [visibleLineData]);
 
   const strokeStops = useMemo(() => buildStrokeGradient(visibleLineData), [visibleLineData]);
+  const liqStrokeStops = useMemo(() => buildLiqStrokeGradient(visibleLineData), [visibleLineData]);
 
   const liqWarnings = useMemo(
     () => visibleLineData.filter((d) => d.liq <= 0),
@@ -353,6 +369,33 @@ export default function ForecastChartSummary({
     const yearsUntil = firstLiqCriticalYear - new Date().getFullYear();
     return URGENCY_META[getUrgency(yearsUntil)];
   }, [firstLiqCriticalYear]);
+  const retirementYearInt =
+    retirementYear == null || !Number.isFinite(Number(retirementYear))
+      ? undefined
+      : Math.round(Number(retirementYear));
+  const retirementMarker = useMemo(() => {
+    if (retirementYearInt == null || visibleLineData.length === 0) return null;
+    const exact = visibleLineData.find((d) => d.year === retirementYearInt);
+    if (exact) return { x: exact.year, label: "Pensionierung" };
+    return null;
+  }, [retirementYearInt, visibleLineData]);
+  const retirementSegment = useMemo(() => {
+    if (!retirementMarker || visibleLineData.length === 0) return null;
+    const netVals = visibleLineData.map((d) => d.net).filter((v) => Number.isFinite(v));
+    if (!netVals.length) return null;
+    let minNet = Math.min(...netVals);
+    let maxNet = Math.max(...netVals);
+    if (minNet === maxNet) {
+      minNet -= 1;
+      maxNet += 1;
+    }
+    return {
+      x: retirementMarker.x,
+      y1: minNet,
+      y2: maxNet,
+      label: retirementMarker.label,
+    };
+  }, [retirementMarker, visibleLineData]);
 
   if (!lineData.length) return null;
 
@@ -361,13 +404,11 @@ export default function ForecastChartSummary({
       <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
         <div>
           <div className="text-xs text-slate-400">Δ Eigenkapital im Zeitraum</div>
-          <div
-            className={`text-lg font-semibold tabular-nums ${
-              lineKpi.delta >= 0 ? "text-emerald-400" : "text-rose-400"
-            }`}
-          >
-            {lineKpi.delta >= 0 ? "+" : ""}
-            {formatCHF(lineKpi.delta)} CHF
+          <div className="text-lg font-semibold tabular-nums text-slate-300">
+            <span className={lineKpi.delta >= 0 ? "text-emerald-300" : "text-rose-300"}>
+              {lineKpi.delta >= 0 ? "+" : ""}
+              {formatCHF(lineKpi.delta)} CHF
+            </span>
             {lineKpi.pct !== 0 && (
               <span className="ml-2 text-sm font-normal text-slate-400">
                 ({lineKpi.pct >= 0 ? "+" : ""}
@@ -376,17 +417,15 @@ export default function ForecastChartSummary({
             )}
           </div>
         </div>
-        <div className="rounded-lg border border-amber-500/20 bg-amber-950/20 px-2.5 py-1.5">
-          <div className="text-[11px] text-amber-300/90">Δ Liquidität im Zeitraum</div>
-          <div
-            className={`text-sm font-semibold tabular-nums ${
-              liqKpi.delta >= 0 ? "text-amber-300" : "text-amber-500"
-            }`}
-          >
-            {liqKpi.delta >= 0 ? "+" : ""}
-            {formatCHF(liqKpi.delta)} CHF
+        <div>
+          <div className="text-xs text-slate-400">Δ Liquidität im Zeitraum</div>
+          <div className="text-lg font-semibold tabular-nums text-slate-300">
+            <span className={liqKpi.delta >= 0 ? "text-emerald-200" : "text-rose-200"}>
+              {liqKpi.delta >= 0 ? "+" : ""}
+              {formatCHF(liqKpi.delta)} CHF
+            </span>
             {liqKpi.pct !== 0 && (
-              <span className="ml-1 hidden text-xs font-normal text-amber-200/80 sm:inline">
+              <span className="ml-2 text-sm font-normal text-slate-400">
                 ({liqKpi.pct >= 0 ? "+" : ""}
                 {liqKpi.pct.toFixed(1)} %)
               </span>
@@ -438,9 +477,20 @@ export default function ForecastChartSummary({
                   ))}
                 </linearGradient>
               )}
+              {liqStrokeStops.length > 0 && (
+                <linearGradient id="liqStrokeDirectionGrad" x1="0" y1="0" x2="1" y2="0">
+                  {liqStrokeStops.map((s, i) => (
+                    <stop key={i} offset={s.offset} stopColor={s.color} />
+                  ))}
+                </linearGradient>
+              )}
             </defs>
             <XAxis
+              type="number"
               dataKey="year"
+              domain={["dataMin", "dataMax"]}
+              allowDecimals={false}
+              tickFormatter={(v) => String(Math.trunc(Number(v)))}
               tick={{ fill: "rgba(148,163,184,0.85)", fontSize: 11 }}
               axisLine={false}
               tickLine={false}
@@ -459,22 +509,6 @@ export default function ForecastChartSummary({
                 strokeWidth={1}
               />
             )}
-            {retirementYear != null &&
-              visibleLineData.some((d) => d.year === retirementYear) && (
-                <ReferenceLine
-                  x={retirementYear}
-                  stroke="rgba(148,163,184,0.6)"
-                  strokeDasharray="6 4"
-                  strokeWidth={2}
-                  label={{
-                    value: "Pensionierung",
-                    position: "top",
-                    fill: "rgba(148,163,184,0.9)",
-                    fontSize: 11,
-                    offset: 8,
-                  }}
-                />
-              )}
             <Area
               yAxisId="net"
               type="monotone"
@@ -488,11 +522,30 @@ export default function ForecastChartSummary({
               yAxisId="liq"
               type="monotone"
               dataKey="liq"
-              stroke="#f59e0b"
-              strokeWidth={2}
+              stroke={liqStrokeStops.length > 0 ? "url(#liqStrokeDirectionGrad)" : "#6ee7b7"}
+              strokeWidth={2.5}
               dot={false}
               isAnimationActive={true}
             />
+            {retirementSegment && (
+              <ReferenceLine
+                yAxisId="net"
+                segment={[
+                  { x: retirementSegment.x, y: retirementSegment.y1 },
+                  { x: retirementSegment.x, y: retirementSegment.y2 },
+                ]}
+                stroke="#f8fafc"
+                strokeDasharray="8 4"
+                strokeWidth={3}
+                label={{
+                  value: retirementSegment.label,
+                  position: "top",
+                  fill: "rgba(248,250,252,0.98)",
+                  fontSize: 12,
+                  offset: 8,
+                }}
+              />
+            )}
             {liqWarnings.map((d) => (
               <ReferenceDot
                 key={`liq-${d.year}`}
@@ -500,8 +553,8 @@ export default function ForecastChartSummary({
                 yAxisId="liq"
                 y={d.liq}
                 r={5}
-                fill="#f59e0b"
-                stroke="#fbbf24"
+                fill="#fda4af"
+                stroke="#fecdd3"
                 strokeWidth={2}
               />
             ))}

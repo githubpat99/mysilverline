@@ -282,11 +282,11 @@ export default function ForecastTableNice({
         {/* Header (nur Desktop/Tablet) */}
         <div className="px-4 py-3 border-b border-slate-800 hidden sm:block">
           <div className="grid grid-cols-5 gap-2 text-xs uppercase tracking-wide text-slate-400">
-            <div>Jahr</div>
-            <div className="text-right">Vermögen</div>
-            <div className="text-right">Schulden</div>
-            <div className="text-right">Eigenkapital Ende</div>
+            <div>Jahr - 31.12.</div>
+            <div className="text-right">Eigenkapital</div>
             <div className="text-right">Δ Eigenkapital</div>
+            <div className="text-right">Liquidität</div>
+            <div className="text-right">Δ Liquidität</div>
           </div>
         </div>
 
@@ -403,12 +403,16 @@ export default function ForecastTableNice({
                     {/* DESKTOP/TABLET */}
                     <div className="hidden sm:grid grid-cols-5 gap-2 items-center">
                       <div className="text-slate-50 font-medium">{r.year}</div>
-                      <div className="text-right text-slate-50 tabular-nums">{formatCHF(r._endNW.assets)}</div>
-                      <div className="text-right text-slate-50 tabular-nums">{formatCHF(r._endNW.debts)}</div>
                       <div className="text-right text-slate-50 tabular-nums">{formatCHF(r._endNW.net)}</div>
                       <div className="text-right tabular-nums">
                         <span className={r._deltaNet >= 0 ? "text-emerald-300" : "text-rose-300"}>
                           {fmtDelta(r._deltaNet)}
+                        </span>
+                      </div>
+                      <div className="text-right text-slate-50 tabular-nums">{formatCHF(r._end.liq)}</div>
+                      <div className="text-right tabular-nums">
+                        <span className={r._deltaBuckets.liq >= 0 ? "text-emerald-200" : "text-rose-200"}>
+                          {fmtDelta(r._deltaBuckets.liq)}
                         </span>
                       </div>
                     </div>
@@ -417,33 +421,36 @@ export default function ForecastTableNice({
                     <div className="sm:hidden">
                       <div className="flex items-baseline justify-between">
                         <div className="text-slate-50 font-semibold">{r.year}</div>
-                        <div className="tabular-nums">
-                          <span className="text-xs text-slate-400 mr-2">Eigenkapital</span>
-                          <span className="text-slate-50 font-semibold">{formatCHF(r._endNW.net)}</span>
-                        </div>
+                        <div className="text-xs text-slate-400">31.12.</div>
                       </div>
 
-                      <div className="mt-2 grid grid-cols-3 gap-2 text-xs min-w-0">
+                      <div className="mt-2 grid grid-cols-2 gap-2 text-xs min-w-0">
                         <div className="min-w-0 rounded-lg border border-slate-800 bg-slate-950/40 p-2">
-                          <div className="text-slate-400 truncate">Vermögen</div>
-                          <div className="text-slate-50 tabular-nums mt-1 truncate">{formatCHF(r._endNW.assets)}</div>
+                          <div className="text-slate-400 truncate">Eigenkapital</div>
+                          <div className="text-slate-50 tabular-nums mt-1 truncate">{formatCHF(r._endNW.net)}</div>
                         </div>
 
                         <div className="min-w-0 rounded-lg border border-slate-800 bg-slate-950/40 p-2">
-                          <div className="text-slate-400 truncate">Schulden</div>
-                          <div className="text-slate-50 tabular-nums mt-1 truncate">{formatCHF(r._endNW.debts)}</div>
-                        </div>
-
-                        <div className="min-w-0 rounded-lg border border-slate-800 bg-slate-950/40 p-2">
-                          <div className="text-slate-400 truncate">Δ EK</div>
+                          <div className="text-slate-400 truncate">Δ Eigenkapital</div>
                           <div className={`tabular-nums mt-1 truncate ${r._deltaNet >= 0 ? "text-emerald-300" : "text-rose-300"}`}>
                             {fmtDelta(r._deltaNet)}
+                          </div>
+                        </div>
+
+                        <div className="min-w-0 rounded-lg border border-slate-800 bg-slate-950/40 p-2">
+                          <div className="text-slate-400 truncate">Liquidität</div>
+                          <div className="text-slate-50 tabular-nums mt-1 truncate">{formatCHF(r._end.liq)}</div>
+                        </div>
+
+                        <div className="min-w-0 rounded-lg border border-slate-800 bg-slate-950/40 p-2">
+                          <div className="text-slate-400 truncate">Δ Liquidität</div>
+                          <div className={`tabular-nums mt-1 truncate ${r._deltaBuckets.liq >= 0 ? "text-emerald-200" : "text-rose-200"}`}>
+                            {fmtDelta(r._deltaBuckets.liq)}
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    <div className="mt-2 text-xs text-slate-400">Tippen/Klicken für Details</div>
                   </button>
 
                   {isOpen && (

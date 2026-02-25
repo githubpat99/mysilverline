@@ -168,6 +168,10 @@ export default function LoginDialog({ open, onClose }: LoginDialogProps) {
             {password.length < 6 && "Passwort min. 6 Zeichen."}
           </div>
         )}
+        <div className="mb-4 rounded border border-slate-700 bg-slate-800/50 px-3 py-2 text-xs leading-relaxed text-slate-400">
+          Bei aktiver Synchronisation werden deine Daten gemäss aktuellem Hosting-Setup auf
+          Servern in der Schweiz (Infomaniak) gespeichert.
+        </div>
 
         <div className="flex gap-3">
           <button

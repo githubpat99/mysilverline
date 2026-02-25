@@ -55,6 +55,10 @@ export default function GuestWarning({ onLogin }: GuestWarningProps) {
                 Diese gehen verloren, wenn du den Browser löschst,
                 die App deinstallierst oder das Gerät wechselst.
               </p>
+              <p className="mt-2 text-xs leading-relaxed text-slate-400">
+                Nach Anmeldung und Sync werden deine Daten gemäss aktuellem Hosting-Setup auf
+                Servern in der Schweiz (Infomaniak) gespeichert.
+              </p>
             </div>
           </div>
           <button

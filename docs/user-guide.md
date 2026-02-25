@@ -181,6 +181,7 @@ Die App funktioniert vollständig **ohne Anmeldung**. Alle Daten werden lokal au
 ### Warum anmelden?
 
 Durch eine Anmeldung kannst du deine Daten **auf dem Server sichern** und zwischen Geräten synchronisieren.
+Gemäss aktuellem Hosting-Setup werden synchronisierte Daten auf Servern in der Schweiz (Infomaniak) gespeichert.
 
 ### Konto erstellen
 
@@ -229,6 +230,7 @@ Sobald du wieder online bist und angemeldet bist, kannst du über den **Sync-But
 ### Wo sind meine Daten gespeichert?
 
 Lokal auf deinem Gerät, in der Browser-Datenbank (IndexedDB). Deine Daten werden nicht automatisch an einen Server gesendet – nur wenn du dich anmeldest und synchronisierst.
+Synchronisierte Daten werden gemäss aktuellem Hosting-Setup auf Servern in der Schweiz (Infomaniak) gespeichert.
 
 ### Kann ich die App auf mehreren Geräten nutzen?
 

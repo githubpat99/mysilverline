@@ -39,12 +39,12 @@
 </div>
 <div style="flex:1 1 0;min-width:100px;box-sizing:border-box;padding:12px 14px;border:1px solid #334155;border-radius:10px;background:#0f172a;text-align:center;">
 <div style="font-size:1.3em;margin-bottom:4px;">2</div>
-<strong style="font-size:0.9em;">Aktiven</strong>
+<strong style="font-size:0.9em;">Vermögen</strong>
 <div style="font-size:0.8em;color:#94a3b8;margin-top:4px;">Vermögenswerte</div>
 </div>
 <div style="flex:1 1 0;min-width:100px;box-sizing:border-box;padding:12px 14px;border:1px solid #334155;border-radius:10px;background:#0f172a;text-align:center;">
 <div style="font-size:1.3em;margin-bottom:4px;">3</div>
-<strong style="font-size:0.9em;">Passiven</strong>
+<strong style="font-size:0.9em;">Schulden</strong>
 <div style="font-size:0.8em;color:#94a3b8;margin-top:4px;">Schulden</div>
 </div>
 <div style="flex:1 1 0;min-width:100px;box-sizing:border-box;padding:12px 14px;border:1px solid #334155;border-radius:10px;background:#0f172a;text-align:center;">
@@ -71,7 +71,7 @@
 </div>
 
 <!-- 3. AKTIVEN -->
-<h2>3. Vermögen (Aktiven)</h2>
+<h2>3. Vermögen</h2>
 <p>Dein Vermögen wird nach <strong>Verfügbarkeit</strong> in vier Töpfe eingeteilt. Jeder Topf verhält sich im Forecast unterschiedlich.</p>
 
 <div style="display:flex;flex-wrap:wrap;gap:8px;">
@@ -114,8 +114,8 @@
 </div>
 
 <!-- 4. PASSIVEN -->
-<h2>4. Schulden (Passiven)</h2>
-<p>Schulden werden analog zu den Aktiven nach Verfügbarkeit eingeteilt. Zinsen und Amortisation werden pro Position erfasst.</p>
+<h2>4. Schulden</h2>
+<p>Schulden werden analog zum Vermögen nach Verfügbarkeit eingeteilt. Zinsen und Amortisation werden pro Position erfasst.</p>
 
 <h3>Felder pro Position</h3>
 <div style="padding:14px 16px;border:1px solid #334155;border-radius:10px;background:#0f172a;">
@@ -135,7 +135,7 @@
 
 <!-- 5. ANNUALS -->
 <h2>5. Regelmässige Einnahmen und Ausgaben</h2>
-<p>Die jährlichen Grundströme – Lohn, Lebenshaltung, Versicherungen. Sie bilden das Fundament des Forecasts.</p>
+<p>Die jährlichen Grundströme – Lohn, Lebenshaltung, Versicherungen. Diese bilden für dich das Fundament des Forecasts.</p>
 
 <div style="display:flex;flex-wrap:wrap;gap:8px;">
 <div style="flex:1 1 calc(50% - 8px);min-width:240px;box-sizing:border-box;padding:12px 14px;border:1px solid #334155;border-left:3px solid #4ade80;border-radius:10px;background:#0f172a;">
@@ -260,7 +260,7 @@
 <div style="padding:14px 16px;border:1px solid #334155;border-radius:10px;background:#0f172a;margin-bottom:8px;">
 <strong style="font-size:0.95em;">ETF-Sparplan starten</strong>
 <div style="margin-top:6px;font-size:0.85em;color:#c8d0dc;">
-Position «ETF Sparplan» in Aktiven anlegen mit Wert <b>0 CHF</b> (Kurzfristig)<br>
+Position «ETF Sparplan» im Vermögen anlegen mit Wert <b>0 CHF</b> (Kurzfristig)<br>
 1× <span style="color:#38bdf8;">Transfer</span> «ETF Sparen» – z.B. 6'000 CHF/Jahr, jährlich ab 2026, Von: Liquidität → Nach: ETF Sparplan<br>
 <span style="color:#94a3b8;">→ ETF wächst jedes Jahr, Liquidität sinkt entsprechend. Bilanz bleibt gleich.</span>
 </div>
@@ -313,8 +313,8 @@ Jahreseinkommen anpassen: Einkommen ab Rentenalter reduzieren (z.B. AHV + PK sta
 <div style="padding:14px 16px;border:1px solid #334155;border-radius:10px;background:#0f172a;margin-bottom:8px;">
 <strong style="font-size:0.95em;">Immobilienkauf mit Hypothek</strong>
 <div style="margin-top:6px;font-size:0.85em;color:#c8d0dc;">
-Position «Eigentumswohnung» in Aktiven anlegen (Sachwerte, Wert = Kaufpreis)<br>
-Position «Hypothek» in Passiven anlegen (Betrag, Zinssatz, Amortisation)<br>
+Position «Eigentumswohnung» im Vermögen anlegen (Sachwerte, Wert = Kaufpreis)<br>
+Position «Hypothek» bei Schulden anlegen (Betrag, Zinssatz, Amortisation)<br>
 1× <span style="color:#f87171;">Ausgabe</span> «Eigenkapital» – z.B. 100'000 CHF aus Liquidität<br>
 <span style="color:#94a3b8;">→ Bilanz: Immobilie und Hypothek erscheinen sofort, EK-Abfluss im Kaufjahr.</span>
 </div>
@@ -334,7 +334,7 @@ Position «Hypothek» in Passiven anlegen (Betrag, Zinssatz, Amortisation)<br>
 <h3>Forecast-Grafik</h3>
 <div style="padding:14px 16px;border:1px solid #334155;border-radius:10px;background:#0f172a;margin-bottom:1em;">
 <ul style="margin:0;padding-left:1.2em;font-size:0.88em;color:#c8d0dc;line-height:1.8;">
-<li>Die Linie zeigt das <b>Eigenkapital</b> (Aktiven minus Passiven) pro Jahr</li>
+<li>Die Linie zeigt das <b>Eigenkapital</b> (Vermögen minus Schulden) pro Jahr</li>
 <li><span style="color:#4ade80;">Grüne Abschnitte</span> – Eigenkapital steigt gegenüber Vorjahr</li>
 <li><span style="color:#f87171;">Rote Abschnitte</span> – Eigenkapital sinkt</li>
 <li>Horizontale Linie bei <b>0</b> und beim <b>Startwert</b> als Referenz</li>
@@ -368,16 +368,16 @@ Position «Hypothek» in Passiven anlegen (Betrag, Zinssatz, Amortisation)<br>
 <p style="margin:0 0 8px;font-size:0.9em;">Klick auf ein Jahr öffnet die vollständige Herleitung:</p>
 <ul style="margin:0;padding-left:1.2em;font-size:0.85em;color:#c8d0dc;line-height:1.7;">
 <li><b>Start / Ende</b> pro Bucket (Liquidität, Kurzfristig, Langfristig, Sachwerte)</li>
-<li><b>Passiven</b> Start / Ende (Kurzfristige + Langfristige Schulden)</li>
+<li><b>Schulden</b> Start / Ende (Kurzfristige + Langfristige Schulden)</li>
 <li><b>Eigenkapital</b> und Veränderung</li>
 <li><b>Bewegungen:</b> Annuals (Ein/Aus), Ereignisse, Transfers, Erträge, Zinsen, Amortisation</li>
-<li><b>Herleitung Aktiven</b> – wie sich jeder Topf verändert hat und warum</li>
+<li><b>Herleitung Vermögen</b> – wie sich jeder Topf verändert hat und warum</li>
 </ul>
 </div>
 
 <!-- 10. VORLAGEN -->
 <h2>10. Vorlagen (Templates)</h2>
-<p>Beim ersten Öffnen oder auf der Muster-Seite kannst du aus fünf Lebenssituationen wählen. Die Vorlage füllt Aktiven, Passiven und Einnahmen/Ausgaben vor – du passt dann an deine Situation an.</p>
+<p>Beim ersten Öffnen oder auf der Muster-Seite kannst du aus fünf Lebenssituationen wählen. Die Vorlage füllt Vermögen, Schulden und Einnahmen/Ausgaben vor – du passt dann an deine Situation an.</p>
 
 <div style="display:flex;flex-wrap:wrap;gap:10px;">
 <div style="flex:1 1 calc(50% - 10px);min-width:240px;box-sizing:border-box;padding:14px 16px;border:1px solid #334155;border-radius:10px;background:#0f172a;">

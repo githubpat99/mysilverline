@@ -25,7 +25,7 @@ export default function BalanceSummaryChart({
   return (
     <div className="rounded-2xl bg-slate-900/35 p-4 shadow-xl ring-1 ring-white/5">
       <div className="w-full" style={{ minHeight: 72 }}>
-        {/* EK / Passiven labels */}
+        {/* EK / Schulden labels */}
         <div className="flex items-end mb-1.5">
           <div
             className="text-center text-sm font-semibold text-green-300 tabular-nums"
@@ -63,7 +63,7 @@ export default function BalanceSummaryChart({
           />
         </div>
 
-        {/* Aktiven total with end markers */}
+        {/* Vermögen total with end markers */}
         <div className="flex items-start mt-1.5">
           <div className="bg-slate-600" style={{ width: 1, height: 8 }} />
           <div className="flex-1 text-center text-sm text-slate-400 tabular-nums">

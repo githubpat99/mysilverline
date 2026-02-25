@@ -7,6 +7,8 @@ import { usePathname } from "next/navigation";
 import { whoAmI, clearNonce, clearAuthToken, getApiHeaders } from "@/lib/profileApi";
 import { BASE_PATH } from "@/lib/config";
 import { API_LOGOUT } from "@/lib/endpoints";
+import { db } from "@/lib/db/schema";
+import { getLocalUserId } from "@/lib/services/authService";
 import SyncButton from "./components/SyncButton";
 import LoginDialog from "./components/LoginDialog";
 import GuestWarning from "./components/GuestWarning";
@@ -33,6 +35,28 @@ async function doLogout() {
     clearNonce();
     clearAuthToken();
     window.location.reload();
+  }
+}
+
+async function hasUnsyncedLocalChanges(): Promise<boolean> {
+  try {
+    const uid = getLocalUserId();
+    if (!uid) return false;
+
+    const profile = await db.profile.get(uid);
+    if (profile && (profile.sync_status === "modified" || profile.sync_status === "local_only")) {
+      return true;
+    }
+
+    const modifiedPos = await db.positions
+      .where("local_user_id")
+      .equals(uid)
+      .filter((r) => r.sync_status === "modified" || r.sync_status === "local_only")
+      .count();
+
+    return modifiedPos > 0;
+  } catch {
+    return false;
   }
 }
 
@@ -68,6 +92,17 @@ export default function Header() {
   const userLabel = loggedIn
     ? me.name ?? `User #${me.user_id}`
     : null;
+
+  async function handleLogoutWithUnsyncedWarning() {
+    const dirty = await hasUnsyncedLocalChanges();
+    if (dirty) {
+      const proceed = window.confirm(
+        "Du hast lokale Änderungen, die noch nicht synchronisiert wurden.\n\nDiese Änderungen sind noch nicht auf dem Server gespeichert.\n\nTrotzdem abmelden?"
+      );
+      if (!proceed) return;
+    }
+    await doLogout();
+  }
 
   if (isLanding) return null;
 
@@ -113,7 +148,7 @@ export default function Header() {
                   <SyncButton />
                   <button
                     type="button"
-                    onClick={() => void doLogout()}
+                    onClick={() => void handleLogoutWithUnsyncedWarning()}
                     title="Abmelden"
                     className="rounded-full border border-slate-700 bg-slate-950/30 px-3 py-1 text-xs text-slate-300 hover:border-sky-500/50 hover:text-sky-300 transition cursor-pointer"
                   >
@@ -154,7 +189,7 @@ export default function Header() {
                 {userLabel ? (
                   <button
                     type="button"
-                    onClick={() => { setMenuOpen(false); void doLogout(); }}
+                    onClick={() => { setMenuOpen(false); void handleLogoutWithUnsyncedWarning(); }}
                     title="Abmelden"
                     className="rounded-lg border border-slate-800 bg-slate-950/30 px-3 py-2 text-sm text-slate-200 hover:border-sky-500/50 hover:text-sky-300 transition"
                   >

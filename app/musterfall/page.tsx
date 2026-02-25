@@ -69,7 +69,7 @@ export default function MusterPage() {
           <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-6">
             <h1 className="text-xl font-semibold text-slate-100">Musterfall bearbeiten</h1>
             <p className="mt-2 text-slate-400">
-              Sie sind der Inhaber des Musterfalls. Bearbeiten Sie Ihre Daten im Finanzen – diese werden automatisch als Beispiel für andere Nutzer angezeigt.
+              Du bist der Inhaber des Musterfalls. Bearbeite deine Daten im Bereich Finanzen – diese werden automatisch als Beispiel für andere Nutzer angezeigt.
             </p>
             <Link
               href="/finance"
@@ -94,7 +94,7 @@ export default function MusterPage() {
       <TemplatePicker
         onSelect={handleSelect}
         title="Muster"
-        subtitle="Wählen Sie ein Szenario als Vorlage – bestehende Daten werden überschrieben."
+        subtitle="Wähle ein Szenario als Vorlage – bestehende Daten werden überschrieben."
         musterfallForm={musterfallForm}
       />
     </main>

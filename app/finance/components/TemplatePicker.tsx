@@ -126,7 +126,7 @@ export default function TemplatePicker({
   onSelect,
   onSkip,
   title = "Willkommen bei Silverline",
-  subtitle = "Wählen Sie ein Szenario als Startpunkt – Sie können alle Werte danach anpassen.",
+  subtitle = "Wähle ein Szenario als Startpunkt – du kannst alle Werte danach anpassen.",
   musterfallForm,
 }: Props) {
   const [loadedMusterfall, setLoadedMusterfall] = useState<FormState | null>(null);

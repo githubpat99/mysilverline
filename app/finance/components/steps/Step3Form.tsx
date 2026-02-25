@@ -57,7 +57,7 @@ function buildDestOptions(assets: AssetPosition[]): AccountOption[] {
     const bucket = accountKeyToBucket(key, assets, []);
     return {
       key,
-      label: (p.label || "").trim() || `Aktiv (${p.id})`,
+      label: (p.label || "").trim() || `Vermögen (${p.id})`,
       bucket,
     };
   });
@@ -72,7 +72,7 @@ function buildSrcOptions(assets: AssetPosition[], debts: DebtPosition[]): Accoun
   for (const p of assets) {
     opts.push({
       key: makeKey("asset", p.id),
-      label: (p.label || "").trim() || `Aktiv (${p.id})`,
+      label: (p.label || "").trim() || `Vermögen (${p.id})`,
       bucket: accountKeyToBucket(makeKey("asset", p.id), assets, debts),
     });
   }
@@ -408,7 +408,7 @@ export default function Step3Form({
 
     return (
       <div className="mt-3 rounded-xl border border-slate-800 bg-slate-950/30 p-3">
-        <div className="text-xs font-semibold text-slate-200">Quellen (Ausgabe) – Konten aus Aktiven und Passiven</div>
+        <div className="text-xs font-semibold text-slate-200">Quellen (Ausgabe) – Konten aus Vermögen und Schulden</div>
 
         <div className="mt-3 grid gap-4 sm:grid-cols-2">
           <div>
@@ -564,7 +564,7 @@ export default function Step3Form({
         <div className="text-xs font-semibold text-slate-200">Ziel (Einnahme)</div>
         <div className="mt-3">
           <CustomSelect
-            label="Ziel (Konto aus Aktiven)"
+            label="Ziel (Konto aus Vermögen)"
             options={destOptions.map((o) => ({ value: o.key, label: o.label }))}
             value={selKey}
             onChange={onDestChange}
@@ -856,7 +856,7 @@ export default function Step3Form({
                       />
 
                       <CustomSelect
-                        label="Ziel (Konto aus Aktiven)"
+                        label="Ziel (Konto aus Vermögen)"
                         options={destOptions.map((o) => ({ value: o.key, label: o.label }))}
                         value={annualIncomeDestKey()}
                         onChange={(key) => setAnnualIncome(annualIncomeAmount(), key)}

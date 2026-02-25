@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { loadProfile, saveProfile } from "@/lib/services/dataService";
 import { makeEmptyProfileV2 } from "@/lib/profile/makeEmptyProfileV2";
 import type { ProfileV2 } from "@/lib/types/v2";
@@ -47,8 +47,14 @@ export default function BaseForm() {
     const [profile, setProfile] = useState<ProfileV2 | null>(null);
     const [saving, setSaving] = useState(false);
     const [err, setErr] = useState("");
+    const dirtyRef = useRef(false);
+    const committingRef = useRef(false);
 
     const [loaded, setLoaded] = useState(false);
+    function markDirty() {
+        dirtyRef.current = true;
+    }
+
 
     useEffect(() => {
         (async () => {
@@ -82,6 +88,7 @@ export default function BaseForm() {
     const forecastHorizonYears = profile.meta?.forecastHorizonYears ?? 55;
 
     function patchSelf(patch: Partial<Person>) {
+        markDirty();
         setProfile((prev) => {
             if (!prev) return prev;
             const persons: Person[] = prev.household?.persons ?? [];
@@ -93,6 +100,7 @@ export default function BaseForm() {
     }
 
     function patchMeta(patch: Partial<ProfileV2["meta"]>) {
+        markDirty();
         setProfile((prev) => {
             if (!prev) return prev;
             return { ...prev, meta: { ...(prev.meta ?? {}), ...patch } };
@@ -185,9 +193,28 @@ export default function BaseForm() {
         }
     }
 
+    async function commitIfDirty() {
+        if (!dirtyRef.current) return;
+        dirtyRef.current = false;
+
+        if (committingRef.current) return;
+        committingRef.current = true;
+        try {
+            await onSave();
+        } finally {
+            committingRef.current = false;
+        }
+    }
+
     return (
-        <div className="mx-auto max-w-3xl px-4 py-6">
-            {/* Header row: title + save button */}
+        <div
+            className="mx-auto max-w-3xl px-4 py-6"
+            onBlurCapture={(e) => {
+                const next = e.relatedTarget as Node | null;
+                if (next && e.currentTarget.contains(next)) return;
+                void commitIfDirty();
+            }}
+        >
             <div className="flex items-center justify-between gap-4">
                 <div>
                     <h1 className="text-xl font-extrabold">Basis</h1>
@@ -195,13 +222,9 @@ export default function BaseForm() {
                         Person und Forecast-Horizont definieren.
                     </p>
                 </div>
-                <button
-                    onClick={onSave}
-                    disabled={saving}
-                    className="shrink-0 rounded-lg border border-sky-500/60 bg-sky-500/10 px-4 py-1.5 text-sm font-medium text-sky-300 transition hover:bg-sky-500/20 disabled:opacity-50"
-                >
-                    {saving ? "Speichern…" : "Speichern"}
-                </button>
+                <div className="text-xs text-slate-500">
+                    {saving ? "Speichert…" : "Autosave aktiv"}
+                </div>
             </div>
 
             {err && (

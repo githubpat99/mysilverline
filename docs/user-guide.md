@@ -72,7 +72,7 @@ Die App besteht aus fünf Bereichen, die du über die obere Navigation erreichst
 |---------|-------------------|
 | **Basis** | Persönliche Daten und Forecast-Horizont festlegen |
 | **Finanzen** | Vermögen, Schulden und Einnahmen/Ausgaben erfassen |
-| **Bilanz** | Übersicht deiner Aktiven und Passiven |
+| **Bilanz** | Übersicht deines Vermögens und deiner Schulden |
 | **Forecast** | Mehrjährige Finanzprognose mit Tabelle und Grafik |
 | **Muster** | Vorlage wählen oder Musterfall ansehen |
 
@@ -97,7 +97,7 @@ Klicke auf **Speichern** oben rechts, um deine Angaben zu sichern.
 
 Der Kernbereich der App. Hier erfasst du deine finanzielle Situation in drei Schritten:
 
-### Schritt 1: Vermögen (Aktiven)
+### Schritt 1: Vermögen
 
 Erfasse alle deine Vermögenswerte, aufgeteilt nach Verfügbarkeit:
 
@@ -110,7 +110,7 @@ Erfasse alle deine Vermögenswerte, aufgeteilt nach Verfügbarkeit:
 
 Pro Position gibst du den **Betrag in CHF** und eine **Bezeichnung** an. Optional: jährlicher Cashflow und Zielkonto.
 
-### Schritt 2: Schulden (Passiven)
+### Schritt 2: Schulden
 
 Erfasse alle deine Verbindlichkeiten:
 
@@ -140,9 +140,9 @@ Zusätzlich kannst du **Ereignisse** (Events) definieren – einmalige oder wied
 
 Die **Bilanzübersicht** zeigt dir auf einen Blick:
 
-- **Aktiven** – Gesamtwert deines Vermögens, aufgeteilt in kurzfristig und langfristig
-- **Passiven** – Gesamtwert deiner Schulden, aufgeteilt in kurzfristig und langfristig
-- **Donut-Grafik** – Visueller Vergleich von Aktiven und Passiven
+- **Vermögen** – Gesamtwert deines Vermögens, aufgeteilt in kurzfristig und langfristig
+- **Schulden** – Gesamtwert deiner Schulden, aufgeteilt in kurzfristig und langfristig
+- **Donut-Grafik** – Visueller Vergleich von Vermögen und Schulden
 
 So siehst du sofort, wie dein Nettovermögen (Eigenkapital) aussieht.
 
@@ -152,7 +152,7 @@ So siehst du sofort, wie dein Nettovermögen (Eigenkapital) aussieht.
 
 Der **Forecast** berechnet deine finanzielle Entwicklung über mehrere Jahre hinweg. Du siehst:
 
-- **Pro Jahr**: Aktiven, Passiven, Eigenkapital und die Veränderung zum Vorjahr
+- **Pro Jahr**: Vermögen, Schulden, Eigenkapital und die Veränderung zum Vorjahr
 - **Details pro Jahr** (aufklappbar): Bewegungen wie Zinsen, Amortisation, Cashflow aufgeschlüsselt nach Liquidität, kurzfristigen und langfristigen Positionen
 - **Grafik**: Visuelle Darstellung des Verlaufs
 
@@ -208,7 +208,7 @@ Nach der Anmeldung erscheint dein Name oben rechts. Der **Sync-Button** wird sic
 
 Tippe auf **deinen Namen** oben rechts – du wirst abgemeldet.
 
-> **Wichtig:** Auch ohne Anmeldung gehen keine Daten verloren. Sie bleiben lokal auf deinem Gerät gespeichert.
+> **Wichtig:** Auch ohne Anmeldung gehen keine Daten verloren. Deine Daten bleiben lokal auf deinem Gerät gespeichert.
 
 ---
 
@@ -228,7 +228,7 @@ Sobald du wieder online bist und angemeldet bist, kannst du über den **Sync-But
 
 ### Wo sind meine Daten gespeichert?
 
-Lokal auf deinem Gerät, in der Browser-Datenbank (IndexedDB). Sie werden nicht automatisch an einen Server gesendet – nur wenn du dich anmeldest und synchronisierst.
+Lokal auf deinem Gerät, in der Browser-Datenbank (IndexedDB). Deine Daten werden nicht automatisch an einen Server gesendet – nur wenn du dich anmeldest und synchronisierst.
 
 ### Kann ich die App auf mehreren Geräten nutzen?
 

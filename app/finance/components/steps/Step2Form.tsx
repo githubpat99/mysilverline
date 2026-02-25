@@ -90,7 +90,7 @@ export default function Step2Form({
   value,
   onChange,
   onCommit,
-  assets, // <-- wichtig: Step2 braucht Zugriff auf existierende Aktiven
+  assets, // <-- wichtig: Step2 braucht Zugriff auf existierendes Vermögen
 }: {
   value: Step2Data;
   onChange: (next: Step2Data) => void;
@@ -427,7 +427,7 @@ export default function Step2Form({
 
                   {!defaultLiquidityAccountKey && (
                     <div className="mt-2 text-xs text-amber-400/90">
-                      Hinweis: Kein LIQ-Aktivenkonto gefunden. Für LIQ/ST-Schulden fehlt das Default-Gegenkonto.
+                      Hinweis: Kein LIQ-Vermögenskonto gefunden. Für LIQ/ST-Schulden fehlt das Default-Gegenkonto.
                     </div>
                   )}
                 </div>

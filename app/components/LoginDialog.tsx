@@ -66,7 +66,8 @@ export default function LoginDialog({ open, onClose }: LoginDialogProps) {
       const wpUserId = Number(json?.user?.user_id ?? 0) || undefined;
       setAuthToken(json.token, wpUserId);
       try {
-        await runSync();
+        // On login we only pull server data; pushing local edits remains a manual Sync action.
+        await runSync({ push: false });
       } catch {
         // Non-fatal: user can still continue and sync manually if needed.
       }

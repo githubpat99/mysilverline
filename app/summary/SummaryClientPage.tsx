@@ -232,7 +232,7 @@ export default function SummaryPage() {
 
         <div className="grid gap-10 lg:grid-cols-2">
           <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-lg">
-            <h2 className="text-2xl font-semibold text-green-400">Aktiven</h2>
+            <h2 className="text-2xl font-semibold text-green-400">Vermögen</h2>
             <p className="text-lg text-green-300 mt-1 mb-6">Total: {formatCHF(aktivenTotal)}</p>
 
             <Section title="Kurzfristig">
@@ -249,7 +249,7 @@ export default function SummaryPage() {
           </div>
 
           <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-lg">
-            <h2 className="text-2xl font-semibold text-red-400">Passiven</h2>
+            <h2 className="text-2xl font-semibold text-red-400">Schulden</h2>
             <p className="text-lg text-red-300 mt-1 mb-6">Total: {formatCHF(passivenTotal)}</p>
 
             <Section title="Kurzfristig">

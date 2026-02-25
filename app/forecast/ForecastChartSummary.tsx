@@ -331,6 +331,15 @@ export default function ForecastChartSummary({
     return { delta, pct, end };
   }, [visibleLineData]);
 
+  const liqKpi = useMemo(() => {
+    if (visibleLineData.length < 2) return { delta: 0, pct: 0 };
+    const start = visibleLineData[0].liq;
+    const end = visibleLineData[visibleLineData.length - 1].liq;
+    const delta = end - start;
+    const pct = start !== 0 ? (delta / start) * 100 : 0;
+    return { delta, pct };
+  }, [visibleLineData]);
+
   const strokeStops = useMemo(() => buildStrokeGradient(visibleLineData), [visibleLineData]);
 
   const liqWarnings = useMemo(
@@ -363,6 +372,23 @@ export default function ForecastChartSummary({
               <span className="ml-2 text-sm font-normal text-slate-400">
                 ({lineKpi.pct >= 0 ? "+" : ""}
                 {lineKpi.pct.toFixed(1)} %)
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="rounded-lg border border-amber-500/20 bg-amber-950/20 px-2.5 py-1.5">
+          <div className="text-[11px] text-amber-300/90">Δ Liquidität im Zeitraum</div>
+          <div
+            className={`text-sm font-semibold tabular-nums ${
+              liqKpi.delta >= 0 ? "text-amber-300" : "text-amber-500"
+            }`}
+          >
+            {liqKpi.delta >= 0 ? "+" : ""}
+            {formatCHF(liqKpi.delta)} CHF
+            {liqKpi.pct !== 0 && (
+              <span className="ml-1 hidden text-xs font-normal text-amber-200/80 sm:inline">
+                ({liqKpi.pct >= 0 ? "+" : ""}
+                {liqKpi.pct.toFixed(1)} %)
               </span>
             )}
           </div>

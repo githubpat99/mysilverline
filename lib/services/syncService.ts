@@ -22,6 +22,10 @@ export type SyncResult = {
   pulled?: boolean;
 };
 
+type RunSyncOptions = {
+  push?: boolean;
+};
+
 function getLastSyncAt(): number | null {
   if (typeof window === "undefined") return null;
   const s = localStorage.getItem(STORAGE_KEYS.LAST_SYNC_AT);
@@ -190,8 +194,9 @@ async function clearLocalData(localUserId: string): Promise<void> {
   setLinked(false);
 }
 
-export async function runSync(): Promise<SyncResult> {
+export async function runSync(options?: RunSyncOptions): Promise<SyncResult> {
   const localUserId = getLocalUserId();
+  const allowPush = options?.push ?? true;
 
   const { online, hasSession } = await getAuthState();
   if (!online) return { ok: false, error: "Offline" };
@@ -210,8 +215,9 @@ export async function runSync(): Promise<SyncResult> {
   // 1. Link user (non-fatal)
   await tryLinkUser(localUserId);
 
-  // 2. Push local changes ONLY if same user (skip on user change to avoid data corruption)
-  if (!userChanged) {
+  // 2. Push local changes only when explicitly enabled and same user.
+  // Login flow should typically pull only, while Sync button does full push+pull.
+  if (allowPush && !userChanged) {
     result.pushed = await doPush(localUserId);
   }
 

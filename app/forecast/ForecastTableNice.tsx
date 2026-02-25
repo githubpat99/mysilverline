@@ -283,8 +283,8 @@ export default function ForecastTableNice({
         <div className="px-4 py-3 border-b border-slate-800 hidden sm:block">
           <div className="grid grid-cols-5 gap-2 text-xs uppercase tracking-wide text-slate-400">
             <div>Jahr</div>
-            <div className="text-right">Aktiven</div>
-            <div className="text-right">Passiven</div>
+            <div className="text-right">Vermögen</div>
+            <div className="text-right">Schulden</div>
             <div className="text-right">Eigenkapital Ende</div>
             <div className="text-right">Δ Eigenkapital</div>
           </div>
@@ -295,9 +295,9 @@ export default function ForecastTableNice({
           {computed.length === 0 ? (
             <div className="px-4 py-6 text-sm text-slate-400">Keine Forecast-Daten vorhanden.</div>
           ) : (
-            computed.map((r: any, idx: number) => {
+            computed.map((r: any) => {
               const isOpen = openYears.has(r.year);
-              const startYear = idx > 0 ? computed[idx - 1].year : r.year;
+              const startYear = r.year;
               const endYear = r.year;
 
               const Row = ({
@@ -425,12 +425,12 @@ export default function ForecastTableNice({
 
                       <div className="mt-2 grid grid-cols-3 gap-2 text-xs min-w-0">
                         <div className="min-w-0 rounded-lg border border-slate-800 bg-slate-950/40 p-2">
-                          <div className="text-slate-400 truncate">Aktiven</div>
+                          <div className="text-slate-400 truncate">Vermögen</div>
                           <div className="text-slate-50 tabular-nums mt-1 truncate">{formatCHF(r._endNW.assets)}</div>
                         </div>
 
                         <div className="min-w-0 rounded-lg border border-slate-800 bg-slate-950/40 p-2">
-                          <div className="text-slate-400 truncate">Passiven</div>
+                          <div className="text-slate-400 truncate">Schulden</div>
                           <div className="text-slate-50 tabular-nums mt-1 truncate">{formatCHF(r._endNW.debts)}</div>
                         </div>
 
@@ -511,9 +511,9 @@ export default function ForecastTableNice({
                                   </div>
 
                                   <div className="px-3 py-2">
-                                    {/* Aktiven (mit Details direkt darunter) */}
+                                    {/* Vermögen (mit Details direkt darunter) */}
                                     <Row
-                                      label="Aktiven"
+                                      label="Vermögen"
                                       start={r._startNW.assets}
                                       end={r._endNW.assets}
                                       delta={r._endNW.assets - r._startNW.assets}
@@ -526,9 +526,9 @@ export default function ForecastTableNice({
 
                                     <div className="my-3 border-t border-slate-800" />
 
-                                    {/* Passiven (mit Details direkt darunter) */}
+                                    {/* Schulden (mit Details direkt darunter) */}
                                     <Row
-                                      label="Passiven"
+                                      label="Schulden"
                                       start={r._startNW.debts}
                                       end={r._endNW.debts}
                                       delta={r._endNW.debts - r._startNW.debts}
@@ -608,7 +608,7 @@ export default function ForecastTableNice({
                                           </div>
                                         )}
 
-                                        {/* Herleitung Aktiven: erklärt Δ pro Bucket */}
+                                        {/* Herleitung Vermögen: erklärt Δ pro Bucket */}
                                         {(() => {
                                           const breakdown = r.assetCashflowReinvestBreakdown;
                                           const intFrom = r.transferInterestFrom;
@@ -673,7 +673,7 @@ export default function ForecastTableNice({
                                           return (
                                             <div className="mt-3 rounded-lg border border-slate-800/80 bg-slate-900/30 px-3 py-2">
                                               <div className="text-xs uppercase tracking-wide text-slate-400 mb-2">
-                                                Herleitung Aktiven
+                                                Herleitung Vermögen
                                               </div>
                                               {hasLiqFlow &&
                                                 line("Liquidität", r._deltaBuckets.liq, [
@@ -799,9 +799,9 @@ export default function ForecastTableNice({
                                 <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-3">
 
 
-                                  {/* Aktiven + Details */}
+                                  {/* Vermögen + Details */}
                                   <MobileRow
-                                    label="Aktiven"
+                                    label="Vermögen"
                                     start={r._startNW.assets}
                                     end={r._endNW.assets}
                                     delta={r._endNW.assets - r._startNW.assets}
@@ -813,9 +813,9 @@ export default function ForecastTableNice({
                                   <MobileRow label="Langfristig" start={r._start.longA} end={r._end.longA} delta={r._deltaBuckets.longA} indent deltaMode="asset" />
                                   <MobileRow label="Sachwerte" start={r._start.realA} end={r._end.realA} delta={r._deltaBuckets.realA} indent deltaMode="asset" />
 
-                                  {/* Passiven + Details */}
+                                  {/* Schulden + Details */}
                                   <MobileRow
-                                    label="Passiven"
+                                    label="Schulden"
                                     start={r._startNW.debts}
                                     end={r._endNW.debts}
                                     delta={r._endNW.debts - r._startNW.debts}
@@ -923,7 +923,7 @@ export default function ForecastTableNice({
                                         </div>
                                       )}
 
-                                      {/* Herleitung Aktiven (Mobile) */}
+                                      {/* Herleitung Vermögen (Mobile) */}
                                       {(() => {
                                         const breakdown = r.assetCashflowReinvestBreakdown;
                                         const intFrom = r.transferInterestFrom;
@@ -963,7 +963,7 @@ export default function ForecastTableNice({
                                         return (
                                           <div className="mt-3 rounded-lg border border-slate-800/80 bg-slate-900/30 p-2">
                                             <div className="text-xs uppercase tracking-wide text-slate-400 mb-2">
-                                              Herleitung Aktiven
+                                              Herleitung Vermögen
                                             </div>
                                             {liqParts.length > 0 && (
                                               <div className="text-xs text-slate-300">
@@ -984,7 +984,7 @@ export default function ForecastTableNice({
                               </div>
 
                               <div className="mt-4 text-xs text-slate-500">
-                                Ertrag und Zinsen erklären die Eigenkapitalveränderung. Amortisation ist ein Transfer (Aktiven ↓, Schulden ↓); Quellen werden aus den angegebenen Gegenkonten ermittelt. Wenn Liquidität nicht reicht, steigt der Überzug.
+                                Ertrag und Zinsen erklären die Eigenkapitalveränderung. Amortisation ist ein Transfer (Vermögen ↓, Schulden ↓); Quellen werden aus den angegebenen Gegenkonten ermittelt. Wenn Liquidität nicht reicht, steigt der Überzug.
                               </div>
                             </>
                           );

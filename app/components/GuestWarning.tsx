@@ -52,7 +52,7 @@ export default function GuestWarning({ onLogin }: GuestWarningProps) {
               <p className="text-sm font-medium text-amber-200">Daten nicht gesichert</p>
               <p className="mt-1 text-xs leading-relaxed text-slate-400">
                 Deine Daten sind nur auf diesem Gerät gespeichert.
-                Sie gehen verloren, wenn du den Browser löschst,
+                Diese gehen verloren, wenn du den Browser löschst,
                 die App deinstallierst oder das Gerät wechselst.
               </p>
             </div>

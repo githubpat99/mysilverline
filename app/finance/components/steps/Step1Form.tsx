@@ -118,7 +118,7 @@ export default function Step1Form({
   onActiveBucketChange,
   onCommit, // <- SAVE trigger vom Parent
   rows, // <- Forecast rows (optional), for header CF
-  debts = [], // <- neu: damit Gegenkonto auch Passiven zeigen kann (optional, aber sinnvoll)
+  debts = [], // <- neu: damit Gegenkonto auch Schulden zeigen kann (optional, aber sinnvoll)
 }: {
   value: Step1Data;
   onChange: (next: Step1Data) => void;
@@ -178,7 +178,7 @@ export default function Step1Form({
       const b = bucketFromAvailability(p.availability);
       return {
         key: makeKey("asset", p.id),
-        label: p.label?.trim() ? p.label : `Aktiv (${b})`,
+        label: p.label?.trim() ? p.label : `Vermögen (${b})`,
         bucket: b,
         kind: "asset",
         id: p.id,
@@ -396,7 +396,7 @@ export default function Step1Form({
     if (!hasCf) return "";
 
     const opts = counterOptionsFor(p);
-    if (p.goal === "liq" && opts.length === 0) return "Für Ziel=Liquidität brauchst du mindestens ein LIQ-Konto bei Aktiven.";
+    if (p.goal === "liq" && opts.length === 0) return "Für Ziel=Liquidität brauchst du mindestens ein LIQ-Konto im Vermögen.";
 
     const selfKey = makeKey("asset", p.id);
     if (!p.targetAccountKey) return "Gegenkonto fehlt.";
@@ -553,7 +553,7 @@ export default function Step1Form({
 
                   {!missingPrereqs.hasLiqAsset && (
                     <div className="mt-2 text-xs text-amber-400/90">
-                      Hinweis: Kein LIQ-Aktivenkonto vorhanden.
+                      Hinweis: Kein LIQ-Vermögenskonto vorhanden.
                     </div>
                   )}
                   {!missingPrereqs.hasNonLiqAsset && (

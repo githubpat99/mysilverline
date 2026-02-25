@@ -1,5 +1,6 @@
 import type { FormState, AssetPosition, DebtPosition } from "@/lib/types";
 import type { AnnualIncomeV2, AnnualExpenseV2 } from "@/lib/types/v2/annualsV2";
+import type { ProfileEvent } from "@/lib/types/v2/events";
 
 export type LifeTemplate = {
   id: string;
@@ -11,6 +12,13 @@ export type LifeTemplate = {
 
 function rid(): string {
   return Math.random().toString(36).slice(2, 10);
+}
+
+function forecastYearsUntilAge80(birthDate: string): number {
+  const birthYear = Number(String(birthDate).slice(0, 4));
+  if (!Number.isFinite(birthYear)) return 1;
+  const years = 80 - (new Date().getFullYear() - birthYear);
+  return Math.max(1, years);
 }
 
 function liquidityAsset(amountChf: number): AssetPosition {
@@ -75,8 +83,38 @@ function expense(label: string, amountCHF: number): AnnualExpenseV2 {
   };
 }
 
+function oneOffSpendingEvent(title: string, amountCHF: number, startDate: string): ProfileEvent {
+  return {
+    client_id: `tpl_evt_${rid()}`,
+    title,
+    start_date: startDate,
+    end_date: null,
+    recurrence: "none",
+    active: 1,
+    meta_json: { notes: "" },
+    line: {
+      line_type: "spending",
+      amount_chf: Math.trunc(amountCHF),
+      indexation: null,
+      category: null,
+      meta_json: null,
+      funding: {
+        fundingStrategy: "waterfall",
+        fundingSources: [{ source: "liquidity" }, { source: "short" }],
+        minLiquidityCHF: 10000,
+        allowLoanAsLastResort: true,
+      },
+    },
+  };
+}
+
 export function getLifeTemplates(): LifeTemplate[] {
   const y = new Date().getFullYear();
+  const singleJungBirthDate = `${y - 25}-06-15`;
+  const single45BirthDate = `${y - 45}-03-20`;
+  const familie30BirthDate = `${y - 32}-08-10`;
+  const familie50BirthDate = `${y - 50}-11-05`;
+  const pensionaerBirthDate = `${y - 67}-02-28`;
 
   return [
     {
@@ -85,7 +123,11 @@ export function getLifeTemplates(): LifeTemplate[] {
       description: "Berufseinstieg, erste Ersparnisse, keine grossen Verpflichtungen.",
       icon: "🎓",
       formState: {
-        base: { birthDate: `${y - 25}-06-15`, forecastHorizonYears: 55, retireAtAge: 65 },
+        base: {
+          birthDate: singleJungBirthDate,
+          forecastHorizonYears: forecastYearsUntilAge80(singleJungBirthDate),
+          retireAtAge: 65,
+        },
         step1: {
           positions: [
             liquidityAsset(15_000),
@@ -108,7 +150,11 @@ export function getLifeTemplates(): LifeTemplate[] {
       description: "Etabliert, Eigentumswohnung, solides Wertschriften-Portfolio.",
       icon: "💼",
       formState: {
-        base: { birthDate: `${y - 45}-03-20`, forecastHorizonYears: 55, retireAtAge: 65 },
+        base: {
+          birthDate: single45BirthDate,
+          forecastHorizonYears: forecastYearsUntilAge80(single45BirthDate),
+          retireAtAge: 65,
+        },
         step1: {
           positions: [
             liquidityAsset(45_000),
@@ -132,7 +178,11 @@ export function getLifeTemplates(): LifeTemplate[] {
       description: "Junge Familie, Eigenheim, wachsende Ausgaben.",
       icon: "👨‍👩‍👧",
       formState: {
-        base: { birthDate: `${y - 32}-08-10`, forecastHorizonYears: 55, retireAtAge: 65 },
+        base: {
+          birthDate: familie30BirthDate,
+          forecastHorizonYears: forecastYearsUntilAge80(familie30BirthDate),
+          retireAtAge: 65,
+        },
         step1: {
           positions: [
             liquidityAsset(35_000),
@@ -144,9 +194,11 @@ export function getLifeTemplates(): LifeTemplate[] {
         step3: {
           annualsV2: {
             income: [income("Haushaltseinkommen", 140_000)],
-            expense: [expense("Lebenshaltung", 105_000)],
+            expense: [expense("Lebenshaltung", 110_000)],
           },
-          events: [],
+          events: [
+            oneOffSpendingEvent("Unerwartete Familienausgabe", 130_000, "2029-01-01"),
+          ],
         },
       },
     },
@@ -156,7 +208,11 @@ export function getLifeTemplates(): LifeTemplate[] {
       description: "Kinder aus dem Haus, Hypothek reduziert, Vorsorge im Fokus.",
       icon: "🏠",
       formState: {
-        base: { birthDate: `${y - 50}-11-05`, forecastHorizonYears: 55, retireAtAge: 65 },
+        base: {
+          birthDate: familie50BirthDate,
+          forecastHorizonYears: forecastYearsUntilAge80(familie50BirthDate),
+          retireAtAge: 65,
+        },
         step1: {
           positions: [
             liquidityAsset(75_000),
@@ -180,7 +236,11 @@ export function getLifeTemplates(): LifeTemplate[] {
       description: "Im Ruhestand, AHV + Pensionskasse, Eigenheim abbezahlt bis auf Rest.",
       icon: "🌅",
       formState: {
-        base: { birthDate: `${y - 67}-02-28`, forecastHorizonYears: 30, retireAtAge: 65 },
+        base: {
+          birthDate: pensionaerBirthDate,
+          forecastHorizonYears: forecastYearsUntilAge80(pensionaerBirthDate),
+          retireAtAge: 65,
+        },
         step1: {
           positions: [
             liquidityAsset(120_000),

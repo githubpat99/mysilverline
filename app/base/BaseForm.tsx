@@ -327,6 +327,14 @@ export default function BaseForm() {
                     >
                         mysilverline.it-pin.ch
                     </a>
+                    {" "}·{" "}
+                    <a
+                        href="/releases/0-8"
+                        className="text-sky-400 underline underline-offset-2 hover:text-sky-300 transition"
+                    >
+                        Silverline Rel. 0.8
+                    </a>
+                    <span className="ml-1 text-xs text-slate-600">(25.02.2026)</span>
                 </p>
             </section>
         </div>

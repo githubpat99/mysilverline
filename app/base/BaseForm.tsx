@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { loadProfile, saveProfile } from "@/lib/services/dataService";
 import { makeEmptyProfileV2 } from "@/lib/profile/makeEmptyProfileV2";
 import type { ProfileV2 } from "@/lib/types/v2";
@@ -317,25 +318,42 @@ export default function BaseForm() {
                     </li>
                 </ol>
 
-                <p className="mt-4 text-sm text-slate-500">
-                    Mehr erfahren auf{" "}
-                    <a
-                        href="https://mysilverline.it-pin.ch"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sky-400 underline underline-offset-2 hover:text-sky-300 transition"
-                    >
-                        mysilverline.it-pin.ch
-                    </a>
-                    {" "}·{" "}
-                    <a
-                        href="/releases/0-8"
-                        className="text-sky-400 underline underline-offset-2 hover:text-sky-300 transition"
-                    >
-                        Silverline Rel. 0.8
-                    </a>
-                    <span className="ml-1 text-xs text-slate-600">(25.02.2026)</span>
-                </p>
+                <div className="mt-4 text-sm text-slate-500">
+                    <p>
+                        Mehr erfahren auf{" "}
+                        <a
+                            href="https://mysilverline.it-pin.ch"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sky-400 underline underline-offset-2 hover:text-sky-300 transition"
+                        >
+                            mysilverline.it-pin.ch
+                        </a>
+                    </p>
+                    <div className="mt-3">
+                        <p>Release Notes zu Silverline</p>
+                        <div className="mt-1 space-y-1 pl-6">
+                            <div>
+                                -{" "}
+                                <Link
+                                    href="/releases"
+                                    className="text-sky-400 underline underline-offset-2 hover:text-sky-300 transition"
+                                >
+                                    Generell
+                                </Link>
+                            </div>
+                            <div>
+                                -{" "}
+                                <Link
+                                    href="/releases/0-8"
+                                    className="text-sky-400 underline underline-offset-2 hover:text-sky-300 transition"
+                                >
+                                    Release 0.8 (25.02.2026)
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </section>
         </div>
     );

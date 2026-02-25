@@ -27,12 +27,18 @@ export default function Release08Page() {
             <li>Alle Templates laufen nun bis Alter 80.</li>
           </ul>
 
-          <div className="mt-8">
+          <div className="mt-8 flex flex-wrap items-center gap-4">
             <Link
               href="/releases"
               className="text-sm text-slate-400 underline underline-offset-2 hover:text-slate-200"
             >
               Zurueck zu Release Notes
+            </Link>
+            <Link
+              href="/base"
+              className="text-sm text-slate-400 underline underline-offset-2 hover:text-slate-200"
+            >
+              Zurueck zu Basis
             </Link>
           </div>
         </section>

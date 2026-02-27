@@ -32,6 +32,11 @@ table, td, th { border:none !important; }
   font-family:inherit; resize:vertical; outline:none; box-sizing:border-box;
 }
 .sl-fb textarea:focus { border-color:#3b82f6; }
+.sl-fb input[type="text"].sl-inline-input {
+  width:100%; padding:8px 10px; border:1px solid #334155; border-radius:8px;
+  background:#1e293b; color:#e2e8f0; font-size:0.88em; font-family:inherit; outline:none; box-sizing:border-box;
+}
+.sl-fb input[type="text"].sl-inline-input:focus { border-color:#3b82f6; }
 
 .sl-fb input[type="text"], .sl-fb input[type="email"] {
   width:100%; padding:10px 12px; border:1px solid #334155; border-radius:8px;
@@ -100,6 +105,26 @@ table, td, th { border:none !important; }
 .sl-stat-track { flex:1; height:8px; background:#1e293b; border-radius:4px; overflow:hidden; }
 .sl-stat-fill { height:100%; border-radius:4px; background:linear-gradient(90deg,#2563eb,#3b82f6); }
 .sl-stat-pct { min-width:40px; text-align:right; color:#94a3b8; font-size:0.85em; }
+
+/* Q9 ranking */
+.sl-rank-list { list-style:none; padding:0; margin:8px 0 0; display:flex; flex-direction:column; gap:8px; }
+.sl-rank-item {
+  display:flex; align-items:center; gap:10px; padding:10px 12px;
+  border:1px solid #334155; border-radius:10px; background:#111f32;
+}
+.sl-rank-item[draggable="true"] { cursor:grab; }
+.sl-rank-item.dragging { opacity:.6; border-color:#3b82f6; }
+.sl-rank-badge {
+  min-width:24px; height:24px; border-radius:999px; background:#1e3a5f; color:#bfdbfe;
+  display:flex; align-items:center; justify-content:center; font-size:0.8em; font-weight:700;
+}
+.sl-rank-label { flex:1; color:#dbe5f4; font-size:0.9em; }
+.sl-rank-grip { color:#64748b; font-size:1em; user-select:none; }
+.sl-rank-custom-grid { display:grid; gap:8px; margin-top:10px; }
+@media(min-width:640px){ .sl-rank-custom-grid { grid-template-columns:1fr auto; } }
+.sl-rank-select {
+  padding:8px 10px; border:1px solid #334155; border-radius:8px; background:#1e293b; color:#e2e8f0; font-size:0.85em;
+}
 
 /* Toast */
 .sl-toast {
@@ -218,8 +243,60 @@ table, td, th { border:none !important; }
 
 <!-- Q9 -->
 <div class="sl-fb-card">
-<div class="sl-fb-q">9. Welches Feature wünschst du dir als nächstes?</div>
-<textarea id="sl-q9" placeholder="z.B. Szenario-Vergleich, PDF-Export, Steuerplanung..."></textarea>
+<div class="sl-fb-q">9. Welche Features sollen wir als nächstes bauen?</div>
+<div class="sl-fb-hint">Bitte priorisiere per Drag &amp; Drop (1 = höchste Priorität). Ergänze danach bis zu 3 eigene Vorschläge inkl. Priorität.</div>
+
+<ol id="sl-q9-rank" class="sl-rank-list">
+  <li class="sl-rank-item" draggable="true" data-feature="Szenarienvergleich">
+    <span class="sl-rank-badge">1</span>
+    <span class="sl-rank-label">Szenarienvergleich</span>
+    <span class="sl-rank-grip">↕</span>
+  </li>
+  <li class="sl-rank-item" draggable="true" data-feature="Budget detaillierter">
+    <span class="sl-rank-badge">2</span>
+    <span class="sl-rank-label">Budget detaillierter</span>
+    <span class="sl-rank-grip">↕</span>
+  </li>
+  <li class="sl-rank-item" draggable="true" data-feature="PDF für Beratungsgespräch">
+    <span class="sl-rank-badge">3</span>
+    <span class="sl-rank-label">PDF für Beratungsgespräch</span>
+    <span class="sl-rank-grip">↕</span>
+  </li>
+  <li class="sl-rank-item" draggable="true" data-feature="Was-wäre-wenn Event-Planer">
+    <span class="sl-rank-badge">4</span>
+    <span class="sl-rank-label">Was-wäre-wenn Event-Planer</span>
+    <span class="sl-rank-grip">↕</span>
+  </li>
+  <li class="sl-rank-item" draggable="true" data-feature="Stress-Test (Inflation/Zins/Rendite)">
+    <span class="sl-rank-badge">5</span>
+    <span class="sl-rank-label">Stress-Test (Inflation/Zins/Rendite)</span>
+    <span class="sl-rank-grip">↕</span>
+  </li>
+  <li class="sl-rank-item" draggable="true" data-feature="Massnahmen-Assistent mit Impact">
+    <span class="sl-rank-badge">6</span>
+    <span class="sl-rank-label">Massnahmen-Assistent mit Impact</span>
+    <span class="sl-rank-grip">↕</span>
+  </li>
+</ol>
+
+<div class="sl-fb-hint" style="margin-top:10px;">Eigene Vorschläge (optional)</div>
+<div class="sl-rank-custom-grid">
+  <input id="sl-q9-own-1" class="sl-inline-input" type="text" placeholder="Eigener Vorschlag 1">
+  <select id="sl-q9-own-1-prio" class="sl-rank-select">
+    <option value="">Priorität wählen</option>
+    <option>Top 1</option><option>Top 2</option><option>Top 3</option>
+  </select>
+  <input id="sl-q9-own-2" class="sl-inline-input" type="text" placeholder="Eigener Vorschlag 2">
+  <select id="sl-q9-own-2-prio" class="sl-rank-select">
+    <option value="">Priorität wählen</option>
+    <option>Top 1</option><option>Top 2</option><option>Top 3</option>
+  </select>
+  <input id="sl-q9-own-3" class="sl-inline-input" type="text" placeholder="Eigener Vorschlag 3">
+  <select id="sl-q9-own-3-prio" class="sl-rank-select">
+    <option value="">Priorität wählen</option>
+    <option>Top 1</option><option>Top 2</option><option>Top 3</option>
+  </select>
+</div>
 </div>
 
 <!-- Q10 -->

@@ -150,6 +150,32 @@ export default function AdminUserManagementPage() {
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50">
       <div className="mx-auto max-w-3xl px-4 py-8 space-y-4">
+        <div className="rounded-2xl border border-sky-800/60 bg-sky-950/30 p-5">
+          <div className="text-sm font-medium text-sky-100">Admin-Werkzeuge</div>
+          <p className="mt-1 text-sm text-sky-100/80">
+            Hier findest du User-Management und Analytics.
+          </p>
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Link
+              href="/admin/user-management"
+              className="rounded-lg border border-sky-700/70 bg-sky-900/30 px-3 py-3 text-sm text-sky-100 hover:bg-sky-900/50"
+            >
+              User-Management
+              <div className="mt-1 text-xs text-sky-100/80">User inkl. Datenabhängigkeiten prüfen/löschen</div>
+            </Link>
+            <Link
+              href="/admin/analytics"
+              className="rounded-lg border border-sky-700/70 bg-sky-900/30 px-3 py-3 text-sm text-sky-100 hover:bg-sky-900/50"
+            >
+              Analytics
+              <div className="mt-1 text-xs text-sky-100/80">KPI-Übersicht und Dashboard-Zugang</div>
+            </Link>
+          </div>
+          <Link href="/musterfall" className="mt-4 inline-block text-sm text-sky-200 hover:text-sky-100">
+            Zurück zu Muster →
+          </Link>
+        </div>
+
         <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-6">
           <h1 className="text-xl font-semibold text-slate-100">Admin: User löschen</h1>
           <p className="mt-2 text-sm text-slate-400">

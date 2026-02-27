@@ -157,6 +157,97 @@ add_shortcode('sl_feedback_js', function () {
   function radio(name){var el=document.querySelector('input[name="'+name+'"]:checked');return el?el.value:'';}
   function txt(id){var el=gid(id);return el?(el.value||'').trim():'';}
   function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+  function qsa(sel,ctx){return (ctx||document).querySelectorAll(sel);}
+  function rankUpdateBadges(){
+    var items=qsa('#sl-q9-rank .sl-rank-item');
+    for(var i=0;i<items.length;i++){
+      var b=items[i].querySelector('.sl-rank-badge');
+      if(b)b.textContent=String(i+1);
+    }
+  }
+  function rankInit(){
+    var list=gid('sl-q9-rank');if(!list)return;
+    var dragging=null;
+    function moveItem(li,dir){
+      if(!li)return;
+      if(dir<0&&li.previousElementSibling){list.insertBefore(li,li.previousElementSibling);}
+      if(dir>0&&li.nextElementSibling){list.insertBefore(li.nextElementSibling,li);}
+      rankUpdateBadges();
+    }
+    var items=qsa('.sl-rank-item',list);
+    for(var j=0;j<items.length;j++){
+      var li0=items[j];
+      // Fallback controls for mobile/non-drag browsers
+      if(!li0.querySelector('[data-move]')){
+        var controls=document.createElement('span');
+        controls.style.display='inline-flex';
+        controls.style.gap='4px';
+        controls.style.marginLeft='8px';
+        controls.innerHTML=
+          '<button type="button" data-move="up" style="border:1px solid #334155;background:#1e293b;color:#cbd5e1;border-radius:6px;padding:0 6px;font-size:12px;line-height:20px;cursor:pointer;">↑</button>'+
+          '<button type="button" data-move="down" style="border:1px solid #334155;background:#1e293b;color:#cbd5e1;border-radius:6px;padding:0 6px;font-size:12px;line-height:20px;cursor:pointer;">↓</button>';
+        li0.appendChild(controls);
+      }
+    }
+    list.addEventListener('click',function(e){
+      var btn=e.target.closest('[data-move]');if(!btn)return;
+      e.preventDefault();
+      var li=btn.closest('.sl-rank-item');if(!li)return;
+      moveItem(li,btn.getAttribute('data-move')==='up'?-1:1);
+    });
+    list.addEventListener('dragstart',function(e){
+      var li=e.target.closest('.sl-rank-item');if(!li)return;
+      dragging=li;li.classList.add('dragging');
+      if(e.dataTransfer){
+        e.dataTransfer.effectAllowed='move';
+        try{e.dataTransfer.setData('text/plain',li.getAttribute('data-feature')||'item');}catch(_){}
+      }
+    });
+    list.addEventListener('dragend',function(){
+      if(dragging)dragging.classList.remove('dragging');
+      dragging=null;rankUpdateBadges();
+    });
+    list.addEventListener('dragover',function(e){
+      if(!dragging)return;
+      e.preventDefault();
+      var after=null;
+      var nodes=qsa('.sl-rank-item',list);
+      for(var i=0;i<nodes.length;i++){
+        var it=nodes[i];
+        if(it===dragging)continue;
+        var r=it.getBoundingClientRect();
+        if(e.clientY<r.top+r.height/2){after=it;break;}
+      }
+      if(after)list.insertBefore(dragging,after);else list.appendChild(dragging);
+    });
+    rankUpdateBadges();
+  }
+  function readRankOrder(){
+    var items=qsa('#sl-q9-rank .sl-rank-item'),out=[];
+    for(var i=0;i<items.length;i++){
+      out.push(items[i].getAttribute('data-feature')||items[i].textContent.trim());
+    }
+    return out;
+  }
+  function readOwnIdeas(){
+    var out=[];
+    for(var i=1;i<=3;i++){
+      var idea=txt('sl-q9-own-'+i),prio=txt('sl-q9-own-'+i+'-prio');
+      if(!idea)continue;
+      out.push({idea:idea,priority:prio||''});
+    }
+    return out;
+  }
+  function buildQ9Summary(){
+    var rank=readRankOrder(),own=readOwnIdeas(),parts=[],i;
+    if(rank.length){parts.push('Ranking: '+rank.map(function(x,idx){return (idx+1)+'. '+x;}).join(' | '));}
+    if(own.length){
+      var ownTxt=[];
+      for(i=0;i<own.length;i++){ownTxt.push((own[i].priority?own[i].priority+': ':'')+own[i].idea);}
+      parts.push('Eigene Vorschläge: '+ownTxt.join(' | '));
+    }
+    return parts.join(' || ');
+  }
   function toast(msg,err){
     var el=gid('sl-toast');if(!el)return;
     el.textContent=msg;
@@ -170,7 +261,20 @@ add_shortcode('sl_feedback_js', function () {
 
   function getAnswers(){
     var q8v=gid('sl-q8-range');
-    return {q1:radio('q1'),q2:txt('sl-q2'),q3:txt('sl-q3'),q4:radio('q4'),q5:txt('sl-q5'),q6:radio('q6'),q7:radio('q7'),q8:q8v?q8v.value:'',q9:txt('sl-q9'),q10:txt('sl-q10')};
+    return {
+      q1:radio('q1'),
+      q2:txt('sl-q2'),
+      q3:txt('sl-q3'),
+      q4:radio('q4'),
+      q5:txt('sl-q5'),
+      q6:radio('q6'),
+      q7:radio('q7'),
+      q8:q8v?q8v.value:'',
+      q9:buildQ9Summary(),
+      q9_rank:readRankOrder(),
+      q9_own:readOwnIdeas(),
+      q10:txt('sl-q10')
+    };
   }
 
   function slSubmit(){
@@ -284,6 +388,32 @@ add_shortcode('sl_feedback_js', function () {
       for(q=0;q<QS.length;q++){
         var qd=QS[q],val=a[qd.id];
         if(val===''||val===null||val===undefined)continue;
+        if(qd.id==='q9'){
+          var rank=Array.isArray(a.q9_rank)?a.q9_rank:[];
+          var own=Array.isArray(a.q9_own)?a.q9_own:[];
+          h+='<div style="'+S.ql+'">Feature-Priorisierung</div>';
+          if(rank.length){
+            h+='<div style="'+S.al+'">';
+            for(var ri=0;ri<rank.length;ri++){
+              h+='<div>'+(ri+1)+'. '+esc(String(rank[ri]))+'</div>';
+            }
+            h+='</div>';
+          } else {
+            h+='<div style="'+S.al+'">'+esc(String(val))+'</div>';
+          }
+          if(own.length){
+            h+='<div style="'+S.ql+'">Eigene Vorschläge</div>';
+            h+='<div style="'+S.al+'">';
+            for(var oi=0;oi<own.length;oi++){
+              var pr=own[oi]&&own[oi].priority?String(own[oi].priority):'';
+              var iv=own[oi]&&own[oi].idea?String(own[oi].idea):'';
+              if(!iv)continue;
+              h+='<div>'+(pr?esc(pr)+': ':'')+esc(iv)+'</div>';
+            }
+            h+='</div>';
+          }
+          continue;
+        }
         if(qd.t==='s')val=val+' / 5 \u2605';
         else if(qd.t==='n')val=val+' / 10';
         else val=esc(String(val));
@@ -301,6 +431,7 @@ add_shortcode('sl_feedback_js', function () {
   }
 
   loadR();
+  rankInit();
 })();
 </script>
   <?php

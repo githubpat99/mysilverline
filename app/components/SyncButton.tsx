@@ -6,6 +6,7 @@ import { runSync, getLastSyncAtExport } from "@/lib/services/syncService";
 import { getAuthState, isOfflineMode } from "@/lib/services/authService";
 import { db } from "@/lib/db/schema";
 import { getLocalUserId } from "@/lib/services/authService";
+import { trackEvent } from "@/lib/analytics";
 
 function formatTime(ts: number): string {
   const d = new Date(ts);
@@ -61,6 +62,7 @@ export default function SyncButton() {
 
   const handleSync = async () => {
     if (syncing) return;
+    trackEvent("sync_clicked");
     const auth = await getAuthState();
     if (!auth.online) {
       setMessage("Offline");
@@ -77,9 +79,11 @@ export default function SyncButton() {
     try {
       const result = await runSync();
       if (result.ok) {
+        trackEvent("sync_success");
         window.location.reload();
         return;
       }
+      trackEvent("sync_failed");
       setMessage(result.error ?? "Fehler");
       setTimeout(() => setMessage(null), 5000);
     } finally {

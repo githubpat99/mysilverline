@@ -4,6 +4,7 @@ import { useState } from "react";
 import { setAuthToken } from "@/lib/authTokenStorage";
 import { SL_API_BASE } from "@/lib/config";
 import { runSync } from "@/lib/services/syncService";
+import { trackEvent } from "@/lib/analytics";
 
 const API = SL_API_BASE || "/wp-json/silverline/v1";
 const LOGIN_URL = `${API}/auth/login`;
@@ -65,6 +66,7 @@ export default function LoginDialog({ open, onClose }: LoginDialogProps) {
 
       const wpUserId = Number(json?.user?.user_id ?? 0) || undefined;
       setAuthToken(json.token, wpUserId);
+      trackEvent(isRegister ? "register_success" : "login_success");
       try {
         // On login we only pull server data; pushing local edits remains a manual Sync action.
         await runSync({ push: false });

@@ -86,6 +86,20 @@ export default function MusterPage() {
             >
               Zu Finanzen →
             </Link>
+            {isAdmin && (
+              <div className="mt-4 rounded-lg border border-sky-800/60 bg-sky-950/30 px-4 py-3 text-sm text-sky-200">
+                <div className="font-medium">Admin-Werkzeug</div>
+                <div className="mt-1 text-sky-100/80">
+                  User-Management (inkl. Löschhilfe für User + Datenabhängigkeiten):
+                </div>
+                <Link
+                  href="/admin/user-management"
+                  className="mt-2 inline-block rounded border border-sky-700/70 bg-sky-900/30 px-3 py-1.5 text-xs text-sky-100 hover:bg-sky-900/50"
+                >
+                  Admin User-Management öffnen →
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </main>

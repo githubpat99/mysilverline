@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tennisteam</title>
+  <meta name="theme-color" content="#0f172a">
+  <style>
+    :root {
+      --bg: #0b1220;
+      --panel: #111a2b;
+      --card: #162238;
+      --border: #253553;
+      --text: #eef4ff;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --yes: #16a34a;
+      --no: #dc2626;
+      --maybe: #d97706;
+      --replacement: #7c3aed;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #09111e 0%, #0b1220 100%);
+      color: var(--text);
+      font-family: Arial, sans-serif;
+      min-height: 100vh;
+    }
+
+    .app {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+    }
+
+    .hero,
+    .card {
+      background: rgba(17, 26, 43, 0.95);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+    }
+
+    .hero {
+      margin-bottom: 14px;
+    }
+
+    .eyebrow {
+      color: var(--accent);
+      font-size: 12px;
+      letter-spacing: 1.8px;
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .compact-title {
+      color: var(--accent);
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .compact-subtitle {
+      color: var(--accent);
+      font-size: 16px;
+      font-weight: 800;
+      margin: 0;
+    }
+
+    .section-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .info-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--accent);
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+
+    h1, h2, h3, p {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: 22px;
+      margin-bottom: 6px;
+    }
+
+    .sub {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .helper-list {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .helper-list li + li {
+      margin-top: 6px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .meta-grid,
+    .summary-grid,
+    .status-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .meta-grid,
+    .summary-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .top-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .details-panel {
+      margin-top: 12px;
+    }
+
+    .meta-item,
+    .summary-item {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .meta-label,
+    .summary-label {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+
+    .meta-value,
+    .summary-value {
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .session-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      background: rgba(22, 163, 74, 0.12);
+      border: 1px solid rgba(22, 163, 74, 0.35);
+      color: #86efac;
+    }
+
+    .session-status.cancelled {
+      background: rgba(220, 38, 38, 0.12);
+      border-color: rgba(220, 38, 38, 0.35);
+      color: #fecaca;
+    }
+
+    .session-status.provisional {
+      background: rgba(245, 158, 11, 0.12);
+      border-color: rgba(245, 158, 11, 0.35);
+      color: #fde68a;
+    }
+
+    .session-status.completed {
+      background: rgba(59, 130, 246, 0.12);
+      border-color: rgba(59, 130, 246, 0.35);
+      color: #bfdbfe;
+    }
+
+    .note {
+      margin-top: 12px;
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      color: #d8f4ff;
+      border-radius: 12px;
+      padding: 12px 14px;
+      line-height: 1.5;
+      font-size: 14px;
+    }
+
+    .status-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .status-hint {
+      margin-bottom: 12px;
+    }
+
+    .current-status {
+      margin-bottom: 12px;
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 12px;
+      padding: 12px 14px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .current-status-label {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+
+    .current-status-value {
+      font-weight: 800;
+      font-size: 16px;
+    }
+
+    .status-btn {
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 14px 12px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    }
+
+    .status-btn:hover,
+    .status-btn:focus-visible {
+      transform: translateY(-1px);
+      border-color: var(--accent);
+      outline: none;
+    }
+
+    .status-btn.active {
+      color: white;
+    }
+
+    .status-btn[data-status="yes"].active { background: rgba(22, 163, 74, 0.9); border-color: rgba(22, 163, 74, 1); }
+    .status-btn[data-status="no"].active { background: rgba(220, 38, 38, 0.9); border-color: rgba(220, 38, 38, 1); }
+    .status-btn[data-status="maybe"].active { background: rgba(217, 119, 6, 0.9); border-color: rgba(217, 119, 6, 1); }
+    .status-btn[data-status="replacement"].active { background: rgba(124, 58, 237, 0.9); border-color: rgba(124, 58, 237, 1); }
+
+    textarea,
+    input {
+      width: 100%;
+      background: #0d1525;
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 14px;
+    }
+
+    textarea {
+      min-height: 92px;
+      resize: vertical;
+      margin-top: 12px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .primary-btn {
+      border: none;
+      border-radius: 12px;
+      background: var(--accent);
+      color: #042036;
+      font-weight: 800;
+      font-size: 14px;
+      padding: 13px 16px;
+      cursor: pointer;
+    }
+
+    .secondary-btn {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--card);
+      color: var(--text);
+      font-weight: 700;
+      font-size: 14px;
+      padding: 12px 14px;
+      cursor: pointer;
+    }
+
+    .primary-btn:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+
+    .muted-text {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .players {
+      display: grid;
+      gap: 10px;
+    }
+
+    .player-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: center;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+    }
+
+    .player-row.current {
+      border-color: rgba(56, 189, 248, 0.65);
+    }
+
+    .session-item {
+      scroll-margin-top: 18px;
+      color: var(--text);
+      border: 1px solid var(--border);
+      appearance: none;
+      -webkit-appearance: none;
+    }
+
+    .session-item .player-name {
+      color: var(--text);
+    }
+
+    .season-btn.active {
+      background: rgba(56, 189, 248, 0.18);
+      border-color: rgba(56, 189, 248, 0.9);
+      color: #d8f4ff;
+    }
+
+    .selected-card {
+      scroll-margin-top: 18px;
+    }
+
+    .player-name {
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .player-comment {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .player-comment.empty {
+      opacity: 0.75;
+      font-style: italic;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 94px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: white;
+    }
+
+    .pill.yes { background: var(--yes); }
+    .pill.no { background: var(--no); }
+    .pill.provisional { background: #f59e0b; }
+    .pill.completed { background: #2563eb; }
+    .pill.maybe { background: var(--maybe); }
+    .pill.replacement { background: var(--replacement); }
+    .pill.none { background: #475569; }
+
+    .empty,
+    .error {
+      border-radius: 12px;
+      padding: 12px 14px;
+      line-height: 1.5;
+    }
+
+    .empty {
+      background: rgba(148, 163, 184, 0.08);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      color: var(--muted);
+    }
+
+    .error {
+      background: rgba(220, 38, 38, 0.08);
+      border: 1px solid rgba(220, 38, 38, 0.25);
+      color: #fecaca;
+    }
+
+    .scroll-top-btn {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      width: 48px;
+      height: 48px;
+      border: 1px solid rgba(56, 189, 248, 0.55);
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.92);
+      color: var(--accent);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
+      cursor: pointer;
+      z-index: 50;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .scroll-top-btn svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .hidden { display: none; }
+
+    @media (max-width: 640px) {
+      h1 { font-size: 20px; }
+      .meta-grid,
+      .summary-grid,
+      .status-grid {
+        grid-template-columns: 1fr;
+      }
+      .player-row {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .top-card-header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .pill {
+        min-width: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section class="hero">
+      <div class="section-row" style="margin-bottom:6px;">
+        <h1 id="team-name" class="compact-title">Lade Teamdaten...</h1>
+        <button id="app-help-toggle-btn" class="info-btn" type="button" aria-expanded="false" aria-label="Hinweise anzeigen" title="Hinweise anzeigen">i</button>
+      </div>
+      <p class="sub">Trainings, Turniere und mehr...</p>
+      <div id="app-help-panel" class="details-panel hidden">
+        <div class="note">
+          <div style="font-weight:700; margin-bottom:8px;">Hinweise zu Link, Installation und Updates</div>
+          <ul class="helper-list">
+            <li>Dein persoenlicher Link mit Token bleibt in der Regel gleich, solange ihn der Admin nicht erneuert.</li>
+            <li>Du kannst die Seite im Browser oeffnen und optional auf den Homescreen legen.</li>
+            <li>Bei Updates die App einfach neu oeffnen oder die Seite neu laden, die neue Version kommt direkt vom Server.</li>
+            <li>Wenn dein Link nicht mehr funktioniert oder du ein neues Geraet nutzt, frag den Admin nach deinem Spieler-Link.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <div id="error-box" class="error hidden"></div>
+
+    <section id="token-card" class="card hidden">
+      <h2>Spielerlink oeffnen</h2>
+      <p class="muted-text" style="margin-top:8px;">Diese Ansicht braucht einen Token in der URL, z.B. `?token=...`.</p>
+      <input id="token-input" type="text" placeholder="Spieler-Token einfuegen">
+      <div class="actions">
+        <button id="token-btn" class="primary-btn" type="button">Mit Token laden</button>
+      </div>
+    </section>
+
+    <div id="app-content" class="stack hidden">
+      <section class="card">
+        <div class="section-row">
+          <div class="eyebrow" style="margin-bottom:0;">Event</div>
+          <button id="season-toggle-btn" class="info-btn" type="button" aria-expanded="false" aria-label="Saisoninfo anzeigen" title="Saisoninfo anzeigen">i</button>
+        </div>
+        <div id="season-selector" class="actions" style="margin-top:0; margin-bottom:0;"></div>
+        <div id="season-details" class="details-panel hidden">
+          <div class="meta-grid">
+            <div class="meta-item">
+              <div class="meta-label">Saison</div>
+              <div id="season-range" class="meta-value">-</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-label">Standard-Zeit</div>
+              <div id="season-time" class="meta-value">-</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-label">Standard-Dauer</div>
+              <div id="season-duration" class="meta-value">-</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-label">Standard-Ort</div>
+              <div id="season-location" class="meta-value">-</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-label">Beschreibung</div>
+              <div id="season-description" class="meta-value">-</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div id="overview-season-label" class="eyebrow">Saison</div>
+        <div id="sessions-list" class="players"></div>
+      </section>
+
+      <section id="response-card" class="card selected-card">
+        <div class="section-row">
+          <h2 id="highlight-title" class="compact-subtitle">Noch kein Termin gewaehlt</h2>
+          <button id="selected-session-toggle-btn" class="info-btn" type="button" aria-expanded="false" aria-label="Termininfo anzeigen" title="Termininfo anzeigen">i</button>
+        </div>
+        <div id="selected-session-meta" class="meta-grid hidden" style="margin-bottom:12px;">
+          <div class="meta-item">
+            <div class="meta-label">Zeit</div>
+            <div id="selected-session-time" class="meta-value">-</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Dauer</div>
+            <div id="selected-session-duration" class="meta-value">-</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Ort</div>
+            <div id="selected-session-location" class="meta-value">-</div>
+          </div>
+        </div>
+        <div id="session-note" class="note hidden"></div>
+        <p id="own-player-name" class="muted-text" style="margin-bottom:12px;"></p>
+        <div class="current-status">
+          <div>
+            <div class="current-status-label">Aktueller Eintrag</div>
+            <div id="current-status-value" class="current-status-value">Noch offen</div>
+          </div>
+          <div id="current-status-pill" class="pill none">Offen</div>
+        </div>
+        <p class="muted-text status-hint">Waehle deinen Status fuer den markierten Termin und speichere ihn anschliessend.</p>
+        <div class="status-grid">
+          <button class="status-btn" data-status="yes" type="button">Dabei</button>
+          <button class="status-btn" data-status="no" type="button">Abwesend</button>
+          <button class="status-btn" data-status="maybe" type="button">Ersatz org.</button>
+          <button class="status-btn" data-status="replacement" type="button">Bei Bedarf</button>
+        </div>
+        <textarea id="comment-input" placeholder="Optionaler Kommentar, z.B. komme 10 Minuten spaeter"></textarea>
+        <div class="actions">
+          <button id="save-btn" class="primary-btn" type="button">Status speichern</button>
+          <span id="save-msg" class="muted-text"></span>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="eyebrow">Alle Spieler</div>
+        <h2 style="margin-bottom:12px;">Statusliste</h2>
+        <div id="players-list" class="players"></div>
+      </section>
+    </div>
+  </div>
+  <button id="scroll-top-btn" class="scroll-top-btn hidden" type="button" aria-label="Nach oben">
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path
+        d="M12 5l-7 7 1.4 1.4L11 8.8V19h2V8.8l4.6 4.6L19 12z"
+        fill="currentColor"
+      ></path>
+    </svg>
+  </button>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    let playerToken = params.get("token") || "";
+    let seasonPayload = null;
+    let selectedSeasonId = params.get("season_id") ? Number(params.get("season_id")) : null;
+    let selectedSessionId = params.get("session_id") ? Number(params.get("session_id")) : null;
+    let selectedStatus = null;
+    let currentDetailPayload = null;
+    let seasonDetailsOpen = false;
+    let selectedSessionDetailsOpen = false;
+    let appHelpOpen = false;
+
+    const teamNameEl = document.getElementById("team-name");
+    const errorBoxEl = document.getElementById("error-box");
+    const tokenCardEl = document.getElementById("token-card");
+    const tokenInputEl = document.getElementById("token-input");
+    const tokenBtnEl = document.getElementById("token-btn");
+    const appContentEl = document.getElementById("app-content");
+    const appHelpToggleBtnEl = document.getElementById("app-help-toggle-btn");
+    const appHelpPanelEl = document.getElementById("app-help-panel");
+    const overviewSeasonLabelEl = document.getElementById("overview-season-label");
+    const seasonRangeEl = document.getElementById("season-range");
+    const seasonSelectorEl = document.getElementById("season-selector");
+    const seasonToggleBtnEl = document.getElementById("season-toggle-btn");
+    const seasonDetailsEl = document.getElementById("season-details");
+    const highlightTitleEl = document.getElementById("highlight-title");
+    const seasonTimeEl = document.getElementById("season-time");
+    const seasonDurationEl = document.getElementById("season-duration");
+    const seasonLocationEl = document.getElementById("season-location");
+    const seasonDescriptionEl = document.getElementById("season-description");
+    const selectedSessionToggleBtnEl = document.getElementById("selected-session-toggle-btn");
+    const selectedSessionMetaEl = document.getElementById("selected-session-meta");
+    const selectedSessionTimeEl = document.getElementById("selected-session-time");
+    const selectedSessionDurationEl = document.getElementById("selected-session-duration");
+    const selectedSessionLocationEl = document.getElementById("selected-session-location");
+    const sessionNoteEl = document.getElementById("session-note");
+    const sessionsListEl = document.getElementById("sessions-list");
+    const responseCardEl = document.getElementById("response-card");
+    const ownPlayerNameEl = document.getElementById("own-player-name");
+    const currentStatusValueEl = document.getElementById("current-status-value");
+    const currentStatusPillEl = document.getElementById("current-status-pill");
+    const commentInputEl = document.getElementById("comment-input");
+    const saveBtnEl = document.getElementById("save-btn");
+    const saveMsgEl = document.getElementById("save-msg");
+    const playersListEl = document.getElementById("players-list");
+    const scrollTopBtnEl = document.getElementById("scroll-top-btn");
+    const statusButtons = Array.from(document.querySelectorAll(".status-btn"));
+
+    const statusLabels = {
+      yes: "Dabei",
+      no: "Abwesend",
+      maybe: "Ersatz org.",
+      replacement: "Bei Bedarf",
+      none: "Offen"
+    };
+
+    const sessionStatusLabels = {
+      scheduled: "Geplant",
+      provisional: "Provisorisch",
+      completed: "Durchgefuehrt",
+      cancelled: "Abgesagt"
+    };
+
+    const weekdayLabels = {
+      1: "Montag",
+      2: "Dienstag",
+      3: "Mittwoch",
+      4: "Donnerstag",
+      5: "Freitag",
+      6: "Samstag",
+      7: "Sonntag"
+    };
+
+    function saveTokenLocally(token) {
+      try {
+        localStorage.setItem("tennisteam_player_token", token);
+      } catch (error) {}
+    }
+
+    function loadTokenLocally() {
+      try {
+        return localStorage.getItem("tennisteam_player_token") || "";
+      } catch (error) {
+        return "";
+      }
+    }
+
+    function showError(message) {
+      errorBoxEl.textContent = message;
+      errorBoxEl.classList.remove("hidden");
+    }
+
+    function clearError() {
+      errorBoxEl.textContent = "";
+      errorBoxEl.classList.add("hidden");
+    }
+
+    function updateScrollTopVisibility() {
+      scrollTopBtnEl.classList.toggle("hidden", window.scrollY < 320);
+    }
+
+    function setSelectedStatus(status) {
+      selectedStatus = status || null;
+      statusButtons.forEach((button) => {
+        button.classList.toggle("active", button.dataset.status === selectedStatus);
+      });
+    }
+
+    function formatDate(value) {
+      if (!value) return "-";
+      const date = new Date(value + "T00:00:00");
+      return new Intl.DateTimeFormat("de-CH", {
+        weekday: "long",
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric"
+      }).format(date);
+    }
+
+    /** Kompakte Saisonzeile: z. B. Di, 24.3.2026 (nur Spieler-Saisoninfo) */
+    function formatSeasonRangeEndpoint(value) {
+      if (!value) return "-";
+      const date = new Date(value + "T00:00:00");
+      const wdRaw = new Intl.DateTimeFormat("de-CH", { weekday: "short" }).format(date);
+      const wd = wdRaw.replace(/\.$/, "").trim();
+      const d = date.getDate();
+      const m = date.getMonth() + 1;
+      const y = date.getFullYear();
+      return wd + ", " + d + "." + m + "." + y;
+    }
+
+    function formatShortDate(value) {
+      if (!value) return "-";
+      const date = new Date(value + "T00:00:00");
+      return new Intl.DateTimeFormat("de-CH", {
+        weekday: "short",
+        day: "2-digit",
+        month: "2-digit"
+      }).format(date);
+    }
+
+    function formatTimeValue(value) {
+      return String(value || "").slice(0, 5);
+    }
+
+    function formatDurationLabel(value) {
+      if (value === 0) return "Unbestimmt";
+      if (value === null || value === undefined || value === "") return "-";
+      return String(value) + " Min.";
+    }
+
+    function weekdayName(value) {
+      return weekdayLabels[Number(value)] || "-";
+    }
+
+    function formatEventHeadline(value, timeValue) {
+      if (!value) return "Noch kein Termin gewaehlt";
+      const date = new Date(value + "T00:00:00");
+      const dateLabel = new Intl.DateTimeFormat("de-CH", {
+        weekday: "long",
+        day: "numeric",
+        month: "numeric",
+        year: "2-digit"
+      }).format(date);
+      return timeValue ? dateLabel + ", " + formatTimeValue(timeValue) : dateLabel;
+    }
+
+    function updateCurrentStatus(status) {
+      const state = status || "none";
+      currentStatusValueEl.textContent = statusLabels[state] || "Offen";
+      currentStatusPillEl.className = "pill " + state;
+      currentStatusPillEl.textContent = statusLabels[state] || "Offen";
+    }
+
+    function getSessionPillData(session, ownStatus) {
+      if (session.status === "cancelled" || session.status === "provisional" || session.status === "completed") {
+        return {
+          className: session.status,
+          label: sessionStatusLabels[session.status] || "Geplant"
+        };
+      }
+
+      return {
+        className: ownStatus,
+        label: statusLabels[ownStatus] || "Offen"
+      };
+    }
+
+    function renderPlayers(players) {
+      playersListEl.innerHTML = "";
+      players.forEach((player) => {
+        const row = document.createElement("div");
+        row.className = "player-row" + (player.is_current_player ? " current" : "");
+
+        const left = document.createElement("div");
+        const commentText = player.comment || "Noch kein Kommentar";
+        const commentClass = player.comment ? "player-comment" : "player-comment empty";
+        left.innerHTML =
+          '<div class="player-name">' + player.name + '</div>' +
+          '<div class="' + commentClass + '">' + commentText + '</div>';
+
+        const pill = document.createElement("div");
+        const state = player.attendance_status || "none";
+        pill.className = "pill " + state;
+        pill.textContent = statusLabels[state] || state;
+
+        row.appendChild(left);
+        row.appendChild(pill);
+        playersListEl.appendChild(row);
+      });
+    }
+
+    function updateUrl() {
+      const url = new URL(window.location.href);
+      if (playerToken) url.searchParams.set("token", playerToken);
+      if (selectedSeasonId) url.searchParams.set("season_id", String(selectedSeasonId));
+      else url.searchParams.delete("season_id");
+      if (selectedSessionId) url.searchParams.set("session_id", String(selectedSessionId));
+      else url.searchParams.delete("session_id");
+      window.history.replaceState({}, "", url.toString());
+    }
+
+    function getNextRelevantSessionId(sessions) {
+      if (!sessions || sessions.length === 0) return null;
+      const today = new Date();
+      const todayIso = today.toISOString().slice(0, 10);
+      const future = sessions.find((session) => session.session_date >= todayIso);
+      return (future || sessions[0]).id;
+    }
+
+    function scrollToSessionInList(sessionId, behavior) {
+      if (!sessionId) return;
+      const target = sessionsListEl.querySelector('[data-session-id="' + sessionId + '"]');
+      if (!target) return;
+      target.scrollIntoView({
+        behavior: behavior || "auto",
+        block: "center"
+      });
+    }
+
+    function jumpToRelevantSession(behavior) {
+      const targetSessionId = selectedSessionId || getNextRelevantSessionId(seasonPayload?.sessions || []);
+      scrollToSessionInList(targetSessionId, behavior || "smooth");
+    }
+
+    function updateSeasonDetailsVisibility() {
+      seasonDetailsEl.classList.toggle("hidden", !seasonDetailsOpen);
+      seasonToggleBtnEl.setAttribute("aria-expanded", seasonDetailsOpen ? "true" : "false");
+      seasonToggleBtnEl.setAttribute("aria-label", seasonDetailsOpen ? "Saisoninfo ausblenden" : "Saisoninfo anzeigen");
+      seasonToggleBtnEl.setAttribute("title", seasonDetailsOpen ? "Saisoninfo ausblenden" : "Saisoninfo anzeigen");
+    }
+
+    function updateAppHelpVisibility() {
+      appHelpPanelEl.classList.toggle("hidden", !appHelpOpen);
+      appHelpToggleBtnEl.setAttribute("aria-expanded", appHelpOpen ? "true" : "false");
+      appHelpToggleBtnEl.setAttribute("aria-label", appHelpOpen ? "Hinweise ausblenden" : "Hinweise anzeigen");
+      appHelpToggleBtnEl.setAttribute("title", appHelpOpen ? "Hinweise ausblenden" : "Hinweise anzeigen");
+    }
+
+    function updateSelectedSessionDetailsVisibility() {
+      selectedSessionMetaEl.classList.toggle("hidden", !selectedSessionDetailsOpen);
+      selectedSessionToggleBtnEl.setAttribute("aria-expanded", selectedSessionDetailsOpen ? "true" : "false");
+      selectedSessionToggleBtnEl.setAttribute("aria-label", selectedSessionDetailsOpen ? "Termininfo ausblenden" : "Termininfo anzeigen");
+      selectedSessionToggleBtnEl.setAttribute("title", selectedSessionDetailsOpen ? "Termininfo ausblenden" : "Termininfo anzeigen");
+    }
+
+    function scrollToSessionDetail(behavior) {
+      if (!responseCardEl) return;
+      responseCardEl.scrollIntoView({
+        behavior: behavior || "smooth",
+        block: "start"
+      });
+    }
+
+    function getSeasonSortDistance(season) {
+      const todayIso = new Date().toISOString().slice(0, 10);
+      const todayTime = new Date(todayIso + "T00:00:00").getTime();
+
+      if (todayIso >= season.start_date && todayIso <= season.end_date) return 0;
+
+      if (todayIso < season.start_date) {
+        return Math.abs(new Date(season.start_date + "T00:00:00").getTime() - todayTime);
+      }
+
+      return Math.abs(new Date(season.end_date + "T00:00:00").getTime() - todayTime);
+    }
+
+    function getSeasonTypeOptions(seasons) {
+      const byType = new Map();
+
+      (seasons || []).forEach((season) => {
+        const existing = byType.get(season.season_type);
+        if (!existing || getSeasonSortDistance(season) < getSeasonSortDistance(existing)) {
+          byType.set(season.season_type, season);
+        }
+      });
+
+      return ["summer", "winter"]
+        .map((seasonType) => byType.get(seasonType))
+        .filter(Boolean);
+    }
+
+    function renderSeasonSelector() {
+      seasonSelectorEl.innerHTML = "";
+      (seasonPayload.seasons || []).forEach((season) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "status-btn season-btn" + (season.id === selectedSeasonId ? " active" : "");
+        button.textContent = season.name;
+        button.addEventListener("click", () => {
+          if (season.id === selectedSeasonId) return;
+          selectedSeasonId = season.id;
+          selectedSessionId = null;
+          loadSeasonSessions();
+        });
+        seasonSelectorEl.appendChild(button);
+      });
+    }
+
+    function renderSessionsList() {
+      sessionsListEl.innerHTML = "";
+
+      if (!seasonPayload.sessions.length) {
+        sessionsListEl.innerHTML = '<div class="empty">Fuer diese Saison sind noch keine Termine hinterlegt.</div>';
+        return;
+      }
+
+      seasonPayload.sessions.forEach((session) => {
+        const acceptanceCount = (session.summary?.yes ?? 0) + (session.summary?.maybe ?? 0) + (session.summary?.replacement ?? 0);
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "player-row session-item" + (session.id === selectedSessionId ? " current" : "");
+        button.dataset.sessionId = String(session.id);
+        button.style.width = "100%";
+        button.style.textAlign = "left";
+        button.style.cursor = "pointer";
+        button.style.background = "var(--card)";
+
+        const ownStatus = session.own_response?.attendance_status || "none";
+        const left = document.createElement("div");
+        left.innerHTML =
+          '<div class="player-name">' + formatShortDate(session.session_date) + '</div>' +
+          '<div class="player-comment">' +
+            (session.start_time ? formatTimeValue(session.start_time) + ' · ' : '') +
+            (session.location || 'Ort offen') +
+            ' · Zusagen: ' + acceptanceCount +
+            ' · Absagen: ' + (session.summary?.no ?? 0) +
+            ' · Offen: ' + session.summary.missing +
+            ' · Dein Status: ' + statusLabels[ownStatus] +
+          '</div>';
+
+        const pill = document.createElement("div");
+        const pillData = getSessionPillData(session, ownStatus);
+        pill.className = "pill " + pillData.className;
+        pill.textContent = pillData.label;
+
+        button.appendChild(left);
+        button.appendChild(pill);
+        button.addEventListener("click", () => {
+          selectedSessionId = session.id;
+          loadSessionDetail({ scrollToDetail: true });
+        });
+
+        sessionsListEl.appendChild(button);
+      });
+    }
+
+    function renderSessionDetail(payload) {
+      currentDetailPayload = payload;
+      teamNameEl.textContent = payload.team.name;
+      ownPlayerNameEl.textContent = payload.own_response
+        ? "Eingeloggt als " + payload.own_response.name
+        : "Spielerstatus wird geladen";
+
+      if (payload.session) {
+        highlightTitleEl.textContent = formatEventHeadline(payload.session.session_date, payload.session.start_time);
+        selectedSessionTimeEl.textContent = payload.session.start_time ? formatTimeValue(payload.session.start_time) : "-";
+        selectedSessionDurationEl.textContent = formatDurationLabel(payload.session.duration_minutes);
+        selectedSessionLocationEl.textContent = payload.session.location || "-";
+
+        const noteParts = [payload.session.description, payload.session.admin_note].filter(Boolean);
+        if (noteParts.length > 0) {
+          sessionNoteEl.textContent = noteParts.join(" | ");
+          sessionNoteEl.classList.remove("hidden");
+        } else {
+          sessionNoteEl.classList.add("hidden");
+        }
+      } else {
+        highlightTitleEl.textContent = "Noch kein Termin gewaehlt";
+        selectedSessionTimeEl.textContent = "-";
+        selectedSessionDurationEl.textContent = "-";
+        selectedSessionLocationEl.textContent = "-";
+        sessionNoteEl.classList.add("hidden");
+      }
+
+      renderPlayers(payload.players);
+
+      if (payload.own_response) {
+        commentInputEl.value = payload.own_response.comment || "";
+        setSelectedStatus(payload.own_response.attendance_status);
+        updateCurrentStatus(payload.own_response.attendance_status);
+      } else {
+        commentInputEl.value = "";
+        setSelectedStatus(null);
+        updateCurrentStatus(null);
+      }
+    }
+
+    async function loadSeasonSessions(options = {}) {
+      const allowRetry = options.allowRetry !== false;
+      clearError();
+      saveMsgEl.textContent = "";
+
+      let url = "api/sessions.php?token=" + encodeURIComponent(playerToken);
+      if (selectedSeasonId) {
+        url += "&season_id=" + encodeURIComponent(selectedSeasonId);
+      }
+
+      try {
+        const response = await fetch(url);
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.error || "Saisondaten konnten nicht geladen werden.");
+        }
+
+        seasonPayload = result.data;
+        selectedSeasonId = result.data.season.id;
+        overviewSeasonLabelEl.textContent = result.data.season.name;
+        seasonRangeEl.textContent =
+          formatSeasonRangeEndpoint(result.data.season.start_date) + " bis " + formatSeasonRangeEndpoint(result.data.season.end_date);
+        seasonTimeEl.textContent = result.data.season.default_start_time
+          ? ((result.data.season.default_weekday ? weekdayName(result.data.season.default_weekday) + ", " : "") + formatTimeValue(result.data.season.default_start_time))
+          : (result.data.team.start_time ? weekdayName(result.data.team.weekday) + ", " + formatTimeValue(result.data.team.start_time) : "-");
+        seasonDurationEl.textContent = result.data.season.default_duration_minutes !== null && result.data.season.default_duration_minutes !== undefined
+          ? formatDurationLabel(result.data.season.default_duration_minutes)
+          : formatDurationLabel(result.data.team.duration_minutes);
+        seasonLocationEl.textContent = result.data.season.default_location || result.data.team.location || "-";
+        seasonDescriptionEl.textContent = result.data.season.description || "-";
+        renderSeasonSelector();
+        renderSessionsList();
+
+        if (!selectedSessionId || !seasonPayload.sessions.some((session) => session.id === selectedSessionId)) {
+          selectedSessionId = getNextRelevantSessionId(seasonPayload.sessions);
+        }
+
+        updateUrl();
+
+        if (selectedSessionId) {
+          await loadSessionDetail();
+          jumpToRelevantSession("auto");
+        }
+      } catch (error) {
+        if (allowRetry && /season not found/i.test(String(error?.message || ""))) {
+          selectedSeasonId = null;
+          selectedSessionId = null;
+          updateUrl();
+          return loadSeasonSessions({ allowRetry: false });
+        }
+        showError(error.message || "Saison konnte nicht geladen werden.");
+      }
+    }
+
+    async function loadSessionDetail(options = {}) {
+      const allowRetry = options.allowRetry !== false;
+      clearError();
+      saveMsgEl.textContent = "";
+
+      if (!selectedSessionId) return;
+
+      try {
+        const response = await fetch(
+          "api/session.php?token=" + encodeURIComponent(playerToken) + "&session_id=" + encodeURIComponent(selectedSessionId)
+        );
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.error || "Termin konnte nicht geladen werden.");
+        }
+
+        renderSessionDetail(result.data);
+        renderSessionsList();
+        updateUrl();
+        jumpToRelevantSession("auto");
+        if (options.scrollToDetail) {
+          scrollToSessionDetail("smooth");
+        }
+      } catch (error) {
+        if (allowRetry && /session not found/i.test(String(error?.message || ""))) {
+          const fallbackSessionId = getNextRelevantSessionId(seasonPayload?.sessions || []);
+          if (fallbackSessionId && fallbackSessionId !== selectedSessionId) {
+            selectedSessionId = fallbackSessionId;
+            updateUrl();
+            return loadSessionDetail({ ...options, allowRetry: false });
+          }
+        }
+        showError(error.message || "Termin konnte nicht geladen werden.");
+      }
+    }
+
+    async function saveResponse() {
+      clearError();
+      saveMsgEl.textContent = "";
+
+      if (!selectedStatus) {
+        showError("Bitte zuerst einen Status auswaehlen.");
+        return;
+      }
+
+      if (!selectedSessionId) {
+        showError("Bitte zuerst einen Termin auswaehlen.");
+        return;
+      }
+
+      saveBtnEl.disabled = true;
+      saveMsgEl.textContent = "Speichere...";
+
+      try {
+        const response = await fetch("api/response.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            token: playerToken,
+            session_id: selectedSessionId,
+            status: selectedStatus,
+            comment: commentInputEl.value
+          })
+        });
+
+        const result = await response.json();
+        if (!response.ok || !result.success) {
+          throw new Error(result.error || "Antwort konnte nicht gespeichert werden.");
+        }
+
+        renderSessionDetail(result.data);
+        saveMsgEl.textContent = "Gespeichert.";
+        await loadSeasonSessions();
+      } catch (error) {
+        saveMsgEl.textContent = "";
+        showError(error.message || "Fehler beim Speichern.");
+      } finally {
+        saveBtnEl.disabled = false;
+      }
+    }
+
+    statusButtons.forEach((button) => {
+      button.addEventListener("click", () => setSelectedStatus(button.dataset.status));
+    });
+
+    saveBtnEl.addEventListener("click", saveResponse);
+    scrollTopBtnEl.addEventListener("click", () => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+    seasonToggleBtnEl.addEventListener("click", () => {
+      seasonDetailsOpen = !seasonDetailsOpen;
+      updateSeasonDetailsVisibility();
+    });
+    appHelpToggleBtnEl.addEventListener("click", () => {
+      appHelpOpen = !appHelpOpen;
+      updateAppHelpVisibility();
+    });
+    selectedSessionToggleBtnEl.addEventListener("click", () => {
+      selectedSessionDetailsOpen = !selectedSessionDetailsOpen;
+      updateSelectedSessionDetailsVisibility();
+    });
+    updateAppHelpVisibility();
+    updateSeasonDetailsVisibility();
+    updateSelectedSessionDetailsVisibility();
+    updateScrollTopVisibility();
+    window.addEventListener("scroll", updateScrollTopVisibility, { passive: true });
+
+    tokenBtnEl.addEventListener("click", () => {
+      const value = tokenInputEl.value.trim();
+      if (!value) {
+        showError("Bitte einen Spieler-Token eingeben.");
+        return;
+      }
+
+      saveTokenLocally(value);
+      const url = new URL(window.location.href);
+      url.searchParams.set("token", value);
+      window.location.href = url.toString();
+    });
+
+    if (!playerToken) {
+      const storedToken = loadTokenLocally();
+      if (storedToken) {
+        playerToken = storedToken;
+      }
+    } else {
+      saveTokenLocally(playerToken);
+    }
+
+    if (!playerToken) {
+      tokenCardEl.classList.remove("hidden");
+      teamNameEl.textContent = "Tennisteam Testansicht";
+    } else {
+      appContentEl.classList.remove("hidden");
+      tokenCardEl.classList.add("hidden");
+      loadSeasonSessions();
+    }
+  </script>
+</body>
+</html>

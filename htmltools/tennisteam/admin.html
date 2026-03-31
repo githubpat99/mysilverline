@@ -1,0 +1,1796 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tennisteam Admin</title>
+  <meta name="theme-color" content="#0f172a">
+  <style>
+    :root {
+      --bg: #0b1220;
+      --panel: #111a2b;
+      --card: #162238;
+      --border: #253553;
+      --text: #eef4ff;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --yes: #16a34a;
+      --no: #dc2626;
+      --maybe: #d97706;
+      --replacement: #7c3aed;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #09111e 0%, #0b1220 100%);
+      color: var(--text);
+      font-family: Arial, sans-serif;
+      min-height: 100vh;
+    }
+
+    .app {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 24px 16px 64px;
+    }
+
+    .hero,
+    .card {
+      background: rgba(17, 26, 43, 0.95);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+    }
+
+    .hero { margin-bottom: 14px; }
+    .stack { display: grid; gap: 14px; margin-top: 14px; }
+    .eyebrow {
+      color: var(--accent);
+      font-size: 12px;
+      letter-spacing: 1.8px;
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    h1, h2, h3, p { margin: 0; }
+    h1 { font-size: 28px; margin-bottom: 8px; }
+    h2 { margin-bottom: 12px; }
+
+    .sub,
+    .muted-text {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 12px;
+    }
+
+    .primary-btn,
+    .secondary-btn,
+    .status-btn {
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .primary-btn {
+      border: none;
+      background: var(--accent);
+      color: #042036;
+      padding: 13px 16px;
+    }
+
+    .secondary-btn,
+    .status-btn {
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      padding: 12px 14px;
+    }
+
+    .status-btn.active,
+    .secondary-btn.active {
+      border-color: rgba(56, 189, 248, 0.95);
+      background: rgba(56, 189, 248, 0.18);
+      color: #d8f4ff;
+    }
+
+    .status-btn[data-status="scheduled"].active {
+      border-color: rgba(22, 163, 74, 1);
+      background: rgba(22, 163, 74, 0.18);
+      color: #bbf7d0;
+    }
+
+    .status-btn[data-status="cancelled"].active {
+      border-color: rgba(220, 38, 38, 1);
+      background: rgba(220, 38, 38, 0.18);
+      color: #fecaca;
+    }
+
+    .status-btn[data-status="provisional"].active {
+      border-color: rgba(245, 158, 11, 1);
+      background: rgba(245, 158, 11, 0.18);
+      color: #fde68a;
+    }
+
+    .status-btn[data-status="completed"].active {
+      border-color: rgba(59, 130, 246, 1);
+      background: rgba(59, 130, 246, 0.18);
+      color: #bfdbfe;
+    }
+
+    .grid-2,
+    .meta-grid,
+    .summary-grid {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .grid-3 {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .grid-4 {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .meta-item,
+    .summary-item,
+    .list-row,
+    .roster-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .meta-label,
+    .summary-label,
+    .field-label {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+
+    .meta-value,
+    .summary-value {
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    textarea,
+    input,
+    select {
+      width: 100%;
+      background: #0d1525;
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 14px;
+    }
+
+    .picker-field {
+      position: relative;
+      cursor: pointer;
+    }
+
+    .picker-display {
+      pointer-events: none;
+      padding-right: 52px;
+    }
+
+    .picker-native {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .picker-field::after {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      border-radius: 999px;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      color: var(--accent);
+      background: rgba(56, 189, 248, 0.08);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.6px;
+      padding: 4px 7px;
+      pointer-events: none;
+    }
+
+    .picker-field.picker-date::after {
+      content: "PICK";
+    }
+
+    .picker-field.picker-time::after {
+      content: "24H";
+    }
+
+    .time-picker-popover {
+      position: absolute;
+      z-index: 80;
+      min-width: 190px;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: rgba(17, 26, 43, 0.98);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+      display: grid;
+      gap: 8px;
+    }
+
+    .time-picker-popover.hidden {
+      display: none;
+    }
+
+    .time-picker-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 8px;
+    }
+
+    .time-picker-actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .time-picker-actions button {
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      padding: 8px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .time-picker-actions .primary-time-btn {
+      border-color: rgba(56, 189, 248, 0.45);
+      background: rgba(56, 189, 248, 0.15);
+      color: #d8f4ff;
+    }
+
+    textarea {
+      min-height: 96px;
+      resize: vertical;
+    }
+
+    .error,
+    .success,
+    .note {
+      border-radius: 12px;
+      padding: 12px 14px;
+      line-height: 1.5;
+      font-size: 14px;
+    }
+
+    .error {
+      background: rgba(220, 38, 38, 0.08);
+      border: 1px solid rgba(220, 38, 38, 0.25);
+      color: #fecaca;
+    }
+
+    .success {
+      background: rgba(22, 163, 74, 0.08);
+      border: 1px solid rgba(22, 163, 74, 0.25);
+      color: #bbf7d0;
+    }
+
+    .note {
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      color: #d8f4ff;
+    }
+
+    .helper-text {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+      margin-top: 10px;
+    }
+
+    .hidden { display: none; }
+
+    .list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .list-row {
+      display: flex;
+      gap: 12px;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      color: var(--text);
+      text-align: left;
+      appearance: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+    }
+
+    .list-row.current {
+      border-color: rgba(56, 189, 248, 0.95);
+    }
+
+    .list-title {
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .list-subtitle {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .compact-editor {
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .compact-editor .actions {
+      margin-top: 8px;
+    }
+
+    .compact-editor textarea {
+      min-height: 72px;
+    }
+
+    .compact-editor .summary-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .compact-editor .summary-item {
+      padding: 10px;
+    }
+
+    .compact-list .list-row {
+      padding: 10px;
+      gap: 10px;
+    }
+
+    .compact-list .list-title {
+      margin-bottom: 2px;
+    }
+
+    .compact-list .pill {
+      min-width: 78px;
+      padding: 6px 8px;
+      font-size: 11px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 90px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: white;
+    }
+
+    .pill.yes,
+    .pill.scheduled { background: var(--yes); }
+    .pill.no,
+    .pill.cancelled { background: var(--no); }
+    .pill.provisional { background: #f59e0b; }
+    .pill.completed { background: #2563eb; }
+    .pill.maybe { background: var(--maybe); }
+    .pill.replacement { background: var(--replacement); }
+    .pill.none { background: #475569; }
+
+    .roster-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .roster-card {
+      display: grid;
+      gap: 10px;
+    }
+
+    .selected-players-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .response-row {
+      display: grid;
+      gap: 8px;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: rgba(13, 21, 37, 0.85);
+    }
+
+    .response-row-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .response-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .response-btn {
+      padding: 8px 10px;
+      font-size: 12px;
+      border-radius: 999px;
+    }
+
+    .response-btn[data-player-status="yes"].active {
+      border-color: rgba(22, 163, 74, 1);
+      background: rgba(22, 163, 74, 0.18);
+      color: #bbf7d0;
+    }
+
+    .response-btn[data-player-status="no"].active {
+      border-color: rgba(220, 38, 38, 1);
+      background: rgba(220, 38, 38, 0.18);
+      color: #fecaca;
+    }
+
+    .response-btn[data-player-status="maybe"].active {
+      border-color: rgba(217, 119, 6, 1);
+      background: rgba(217, 119, 6, 0.18);
+      color: #fde68a;
+    }
+
+    .response-btn[data-player-status="replacement"].active {
+      border-color: rgba(124, 58, 237, 1);
+      background: rgba(124, 58, 237, 0.18);
+      color: #ddd6fe;
+    }
+
+    .response-btn[data-player-status="none"].active {
+      border-color: rgba(100, 116, 139, 1);
+      background: rgba(100, 116, 139, 0.18);
+      color: #e2e8f0;
+    }
+
+    .roster-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .inline-check {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .inline-check input {
+      width: auto;
+      margin: 0;
+    }
+
+    .copy-row {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+    }
+
+    .scroll-top-btn {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      width: 48px;
+      height: 48px;
+      border: 1px solid rgba(56, 189, 248, 0.55);
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.92);
+      color: var(--accent);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
+      cursor: pointer;
+      z-index: 50;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .scroll-top-btn svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    @media (max-width: 640px) {
+      h1 { font-size: 24px; }
+      .grid-2,
+      .grid-3,
+      .grid-4,
+      .meta-grid,
+      .summary-grid,
+      .copy-row {
+        grid-template-columns: 1fr;
+      }
+      .list-row {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section class="hero">
+      <div class="eyebrow">Admin</div>
+      <h1 id="page-title">Lade Admin...</h1>
+      <p class="sub">Plane dein Team ueber Saisons mit Standardwerten und passe einzelne Termine nur dort an, wo es noetig ist.</p>
+    </section>
+
+    <div id="error-box" class="error hidden"></div>
+    <div id="success-box" class="success hidden"></div>
+
+    <section id="token-card" class="card hidden">
+      <h2>Admin-Link oeffnen</h2>
+      <p class="muted-text" style="margin-top:8px;">Diese Ansicht braucht einen Admin-Token in der URL, z.B. `?token=...`.</p>
+      <input id="token-input" type="text" placeholder="Admin-Token einfuegen">
+      <div class="actions">
+        <button id="token-btn" class="primary-btn" type="button">Mit Token laden</button>
+      </div>
+    </section>
+
+    <div id="app-content" class="stack hidden">
+      <section class="card">
+        <div class="eyebrow">Grunddaten</div>
+        <h2>Teamdaten</h2>
+        <p class="muted-text" id="admin-label"></p>
+        <div class="grid-2">
+          <div>
+            <div class="field-label">Titel</div>
+            <input id="team-name-input" type="text" placeholder="Eventtitel">
+          </div>
+          <div>
+            <div class="field-label">Ort (Default)</div>
+            <input id="team-location-input" type="text" placeholder="Standard-Ort">
+          </div>
+        </div>
+        <div class="actions">
+          <button id="team-save-btn" class="primary-btn" type="button">Team speichern</button>
+          <span id="team-save-msg" class="muted-text"></span>
+        </div>
+        <p class="helper-text" id="season-context-summary">Bestehende Saisons auswaehlen, bearbeiten, loeschen oder neu anlegen.</p>
+        <div id="season-selector" class="actions"></div>
+        <div class="actions">
+          <button id="season-new-btn" class="secondary-btn" type="button">Neue Saison</button>
+          <button id="season-delete-btn" class="secondary-btn" type="button" disabled>Saison loeschen</button>
+        </div>
+        <h2 id="event-heading" style="margin-top:8px;">Saisondetails</h2>
+        <div class="grid-2">
+          <div>
+            <div class="field-label">Name</div>
+            <input id="season-name-input" type="text" placeholder="Sommer - Trainingssaison 2026">
+          </div>
+          <div>
+            <div class="field-label">Typ</div>
+            <select id="season-type-input">
+              <option value="summer">Sommer</option>
+              <option value="winter">Winter</option>
+              <option value="interclub">Interclub</option>
+              <option value="custom">Custom</option>
+            </select>
+          </div>
+          <div>
+            <div class="field-label">Startdatum</div>
+            <div class="picker-field picker-date">
+              <input id="season-start-input" class="picker-display" type="text" placeholder="01.05.2026" readonly>
+              <input id="season-start-picker" class="picker-native" type="date" aria-label="Startdatum waehlen">
+            </div>
+          </div>
+          <div>
+            <div class="field-label">Enddatum</div>
+            <div class="picker-field picker-date">
+              <input id="season-end-input" class="picker-display" type="text" placeholder="30.09.2026" readonly>
+              <input id="season-end-picker" class="picker-native" type="date" aria-label="Enddatum waehlen">
+            </div>
+          </div>
+          <div>
+            <div class="field-label">Standard-Wochentag</div>
+            <select id="season-weekday-input">
+              <option value="">Kein Standard</option>
+              <option value="1">Montag</option>
+              <option value="2">Dienstag</option>
+              <option value="3">Mittwoch</option>
+              <option value="4">Donnerstag</option>
+              <option value="5">Freitag</option>
+              <option value="6">Samstag</option>
+              <option value="7">Sonntag</option>
+            </select>
+          </div>
+          <div>
+            <div class="field-label">Standard-Zeit</div>
+            <div id="season-time-trigger" class="picker-field picker-time">
+              <input id="season-time-input" class="picker-display" type="text" placeholder="19:00" readonly>
+            </div>
+          </div>
+          <div>
+            <div class="field-label">Standard-Dauer Minuten</div>
+            <input id="season-duration-input" type="number" min="1" step="1" placeholder="90">
+          </div>
+          <div>
+            <div class="field-label">Standard-Ort</div>
+            <input id="season-location-input" type="text" placeholder="Tennisplatz Silverline">
+          </div>
+        </div>
+        <div style="margin-top:10px;">
+          <div class="field-label">Saison-Beschreibung</div>
+          <textarea id="season-description-input" placeholder="z.B. Mittwochstraining Sommer oder IC-Heimspiele als Grundkontext"></textarea>
+        </div>
+        <p class="helper-text">Saisons definieren Zeitraum und Standardwerte. Automatisch erzeugte Termine uebernehmen Wochentag, Zeit, Dauer und Ort aus der Saison. Datum bleibt im Format `tt.mm.jjjj`, Zeit im 24h-Format `hh:mm`, jeweils mit Picker.</p>
+        <div class="actions">
+          <label class="inline-check"><input id="season-active-input" type="checkbox"> Aktiv setzen</label>
+          <label class="inline-check"><input id="season-generate-input" type="checkbox" checked> Termine automatisch erzeugen</label>
+        </div>
+        <div class="actions">
+          <button id="season-save-btn" class="primary-btn" type="button">Saison speichern</button>
+          <span id="season-save-msg" class="muted-text"></span>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="eyebrow">Termine</div>
+        <h2>Terminpflege</h2>
+        <div id="sessions-list" class="list compact-list"></div>
+        <div id="session-editor" class="stack compact-editor">
+          <div>
+            <div class="field-label">Ausgewaehlter Termin</div>
+            <h3 id="selected-session-title">Noch kein Termin gewaehlt</h3>
+          </div>
+          <div id="selected-session-summary" class="summary-grid"></div>
+          <div class="actions">
+            <button class="status-btn" data-status="scheduled" type="button">Geplant</button>
+            <button class="status-btn" data-status="provisional" type="button">Provisorisch</button>
+            <button class="status-btn" data-status="completed" type="button">Durchgefuehrt</button>
+            <button class="status-btn" data-status="cancelled" type="button">Abgesagt</button>
+          </div>
+          <div class="grid-4">
+            <div>
+              <div class="field-label">Datum</div>
+              <div class="picker-field picker-date">
+                <input id="session-date-input" class="picker-display" type="text" placeholder="08.05.2026" readonly>
+                <input id="session-date-picker" class="picker-native" type="date" aria-label="Termin-Datum waehlen">
+              </div>
+            </div>
+            <div>
+              <div class="field-label">Zeit</div>
+              <div id="session-time-trigger" class="picker-field picker-time">
+                <input id="session-time-input" class="picker-display" type="text" placeholder="18:00" readonly>
+              </div>
+            </div>
+            <div>
+              <div class="field-label">Ort</div>
+              <input id="session-location-input" type="text" placeholder="leer = Saison/Team-Fallback">
+            </div>
+            <div>
+              <div class="field-label">Dauer Minuten</div>
+              <input id="session-duration-input" type="number" min="1" step="1" placeholder="leer = Standard">
+              <label class="inline-check" style="margin-top:8px;"><input id="session-duration-open-ended-input" type="checkbox"> Unbestimmt</label>
+            </div>
+          </div>
+          <div>
+            <div class="field-label">Beschreibung fuer Spieler</div>
+            <textarea id="session-description-input" placeholder="z.B. IC auswaerts in Bern, Besammlung 12:15"></textarea>
+          </div>
+          <div>
+            <div class="field-label">Spielerantworten</div>
+            <div id="selected-players-list" class="selected-players-list"></div>
+          </div>
+          <div class="actions">
+            <button id="session-save-btn" class="primary-btn" type="button">Termin speichern</button>
+            <span id="session-save-msg" class="muted-text"></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="eyebrow">Spieler & Tokens</div>
+        <h2>Spielerliste</h2>
+        <div id="roster-list" class="roster-list"></div>
+        <div class="stack" style="margin-top:14px;">
+          <div>
+            <div class="field-label">Neuen Spieler anlegen</div>
+          </div>
+          <div class="grid-3">
+            <input id="new-player-name" type="text" placeholder="Name">
+            <input id="new-player-order" type="number" min="1" step="1" placeholder="Reihenfolge">
+            <button id="new-player-btn" class="primary-btn" type="button">Spieler anlegen</button>
+          </div>
+          <span id="player-save-msg" class="muted-text"></span>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div id="time-picker-popover" class="time-picker-popover hidden" aria-hidden="true">
+    <div class="time-picker-grid">
+      <div>
+        <div class="field-label">Stunde</div>
+        <select id="time-picker-hour"></select>
+      </div>
+      <div>
+        <div class="field-label">Minute</div>
+        <select id="time-picker-minute"></select>
+      </div>
+    </div>
+    <div class="time-picker-actions">
+      <button id="time-picker-clear-btn" type="button">Leeren</button>
+      <button id="time-picker-apply-btn" class="primary-time-btn" type="button">Uebernehmen</button>
+    </div>
+  </div>
+
+  <button id="scroll-top-btn" class="scroll-top-btn hidden" type="button" aria-label="Nach oben">
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M12 5l-7 7 1.4 1.4L11 8.8V19h2V8.8l4.6 4.6L19 12z" fill="currentColor"></path>
+    </svg>
+  </button>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    let adminToken = params.get("token") || "";
+    let dashboardPayload = null;
+    let selectedSeasonId = params.get("season_id") ? Number(params.get("season_id")) : null;
+    let selectedSessionId = params.get("session_id") ? Number(params.get("session_id")) : null;
+    let selectedSessionStatus = null;
+
+    const weekdayLabels = {
+      1: "Montag",
+      2: "Dienstag",
+      3: "Mittwoch",
+      4: "Donnerstag",
+      5: "Freitag",
+      6: "Samstag",
+      7: "Sonntag"
+    };
+
+    const summaryLabels = {
+      total_players: "Spieler",
+      responded: "Geantwortet",
+      missing: "Offen",
+      yes: "Dabei",
+      no: "Abwesend",
+      maybe: "Ersatz org.",
+      replacement: "Bei Bedarf"
+    };
+
+    const playerStatusLabels = {
+      yes: "Dabei",
+      no: "Abwesend",
+      maybe: "Ersatz org.",
+      replacement: "Bei Bedarf",
+      none: "Offen"
+    };
+
+    const sessionStatusLabels = {
+      scheduled: "Geplant",
+      provisional: "Provisorisch",
+      completed: "Durchgefuehrt",
+      cancelled: "Abgesagt"
+    };
+
+    const pageTitleEl = document.getElementById("page-title");
+    const errorBoxEl = document.getElementById("error-box");
+    const successBoxEl = document.getElementById("success-box");
+    const tokenCardEl = document.getElementById("token-card");
+    const tokenInputEl = document.getElementById("token-input");
+    const tokenBtnEl = document.getElementById("token-btn");
+    const appContentEl = document.getElementById("app-content");
+    const eventHeadingEl = document.getElementById("event-heading");
+    const adminLabelEl = document.getElementById("admin-label");
+    const seasonContextSummaryEl = document.getElementById("season-context-summary");
+    const seasonSelectorEl = document.getElementById("season-selector");
+    const teamNameInputEl = document.getElementById("team-name-input");
+    const teamLocationInputEl = document.getElementById("team-location-input");
+    const teamSaveBtnEl = document.getElementById("team-save-btn");
+    const teamSaveMsgEl = document.getElementById("team-save-msg");
+    const sessionsListEl = document.getElementById("sessions-list");
+    const selectedSessionTitleEl = document.getElementById("selected-session-title");
+    const selectedSessionSummaryEl = document.getElementById("selected-session-summary");
+    const selectedPlayersListEl = document.getElementById("selected-players-list");
+    const sessionDateInputEl = document.getElementById("session-date-input");
+    const sessionDatePickerEl = document.getElementById("session-date-picker");
+    const sessionLocationInputEl = document.getElementById("session-location-input");
+    const sessionTimeInputEl = document.getElementById("session-time-input");
+    const sessionDurationInputEl = document.getElementById("session-duration-input");
+    const sessionDurationOpenEndedInputEl = document.getElementById("session-duration-open-ended-input");
+    const sessionDescriptionInputEl = document.getElementById("session-description-input");
+    const sessionSaveBtnEl = document.getElementById("session-save-btn");
+    const sessionSaveMsgEl = document.getElementById("session-save-msg");
+    const seasonNameInputEl = document.getElementById("season-name-input");
+    const seasonTypeInputEl = document.getElementById("season-type-input");
+    const seasonStartInputEl = document.getElementById("season-start-input");
+    const seasonStartPickerEl = document.getElementById("season-start-picker");
+    const seasonEndInputEl = document.getElementById("season-end-input");
+    const seasonEndPickerEl = document.getElementById("season-end-picker");
+    const seasonWeekdayInputEl = document.getElementById("season-weekday-input");
+    const seasonTimeInputEl = document.getElementById("season-time-input");
+    const seasonDurationInputEl = document.getElementById("season-duration-input");
+    const seasonLocationInputEl = document.getElementById("season-location-input");
+    const seasonDescriptionInputEl = document.getElementById("season-description-input");
+    const seasonActiveInputEl = document.getElementById("season-active-input");
+    const seasonGenerateInputEl = document.getElementById("season-generate-input");
+    const seasonSaveBtnEl = document.getElementById("season-save-btn");
+    const seasonNewBtnEl = document.getElementById("season-new-btn");
+    const seasonDeleteBtnEl = document.getElementById("season-delete-btn");
+    const seasonSaveMsgEl = document.getElementById("season-save-msg");
+    const rosterListEl = document.getElementById("roster-list");
+    const newPlayerNameEl = document.getElementById("new-player-name");
+    const newPlayerOrderEl = document.getElementById("new-player-order");
+    const newPlayerBtnEl = document.getElementById("new-player-btn");
+    const playerSaveMsgEl = document.getElementById("player-save-msg");
+    const scrollTopBtnEl = document.getElementById("scroll-top-btn");
+    const sessionStatusButtons = Array.from(document.querySelectorAll('#session-editor .status-btn[data-status]'));
+    const timePickerPopoverEl = document.getElementById("time-picker-popover");
+    const timePickerHourEl = document.getElementById("time-picker-hour");
+    const timePickerMinuteEl = document.getElementById("time-picker-minute");
+    const timePickerApplyBtnEl = document.getElementById("time-picker-apply-btn");
+    const timePickerClearBtnEl = document.getElementById("time-picker-clear-btn");
+    let activeTimeInputEl = null;
+
+    function saveTokenLocally(token) {
+      try {
+        localStorage.setItem("tennisteam_admin_token", token);
+      } catch (error) {}
+    }
+
+    function loadTokenLocally() {
+      try {
+        return localStorage.getItem("tennisteam_admin_token") || "";
+      } catch (error) {
+        return "";
+      }
+    }
+
+    function showError(message) {
+      errorBoxEl.textContent = message;
+      errorBoxEl.classList.remove("hidden");
+    }
+
+    function clearError() {
+      errorBoxEl.textContent = "";
+      errorBoxEl.classList.add("hidden");
+    }
+
+    function showSuccess(message) {
+      successBoxEl.textContent = message;
+      successBoxEl.classList.remove("hidden");
+      window.setTimeout(() => {
+        successBoxEl.classList.add("hidden");
+      }, 2400);
+    }
+
+    function updateScrollTopVisibility() {
+      scrollTopBtnEl.classList.toggle("hidden", window.scrollY < 320);
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    function formatDate(value) {
+      if (!value) return "-";
+      const date = new Date(value + "T00:00:00");
+      return new Intl.DateTimeFormat("de-CH", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric"
+      }).format(date);
+    }
+
+    function formatShortDate(value) {
+      if (!value) return "-";
+      const date = new Date(value + "T00:00:00");
+      return new Intl.DateTimeFormat("de-CH", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric"
+      }).format(date);
+    }
+
+    function formatTimeValue(value) {
+      return String(value || "").slice(0, 5);
+    }
+
+    function formatDurationLabel(value) {
+      if (value === 0) return "Unbestimmt";
+      if (value === null || value === undefined || value === "") return "-";
+      return String(value) + " Min.";
+    }
+
+    function formatDateForInput(value) {
+      if (!value) return "";
+      const isoValue = parseDisplayDate(value);
+      return isoValue ? formatDate(isoValue) : "";
+    }
+
+    function parseDisplayDate(value) {
+      const isoMatch = String(value || "").trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (isoMatch) {
+        return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+      }
+      const match = String(value || "").trim().match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+      if (!match) return null;
+      const [, day, month, year] = match;
+      return `${year}-${month}-${day}`;
+    }
+
+    function parseDisplayTime(value) {
+      const match = String(value || "").trim().match(/^(\d{2}):(\d{2})$/);
+      if (!match) return null;
+      const hours = Number(match[1]);
+      const minutes = Number(match[2]);
+      if (hours > 23 || minutes > 59) return null;
+      return `${match[1]}:${match[2]}`;
+    }
+
+    function openNativePicker(input) {
+      if (!input) return;
+      if (typeof input.showPicker === "function") {
+        input.showPicker();
+        return;
+      }
+      input.focus();
+      input.click();
+    }
+
+    function attachDatePicker(textInput, pickerInput) {
+      pickerInput.addEventListener("change", () => {
+        textInput.value = formatDateForInput(pickerInput.value);
+      });
+      textInput.closest(".picker-field").addEventListener("click", () => {
+        openNativePicker(pickerInput);
+      });
+    }
+
+    function setTimePickerValue(value) {
+      const parsedTime = parseDisplayTime(value || "") || "18:00";
+      const [hours, minutes] = parsedTime.split(":");
+      timePickerHourEl.value = hours;
+      timePickerMinuteEl.value = minutes;
+    }
+
+    function closeTimePicker() {
+      timePickerPopoverEl.classList.add("hidden");
+      timePickerPopoverEl.setAttribute("aria-hidden", "true");
+      activeTimeInputEl = null;
+    }
+
+    function openTimePicker(textInput) {
+      activeTimeInputEl = textInput;
+      setTimePickerValue(textInput.value);
+
+      const rect = textInput.closest(".picker-field").getBoundingClientRect();
+      timePickerPopoverEl.style.left = `${window.scrollX + rect.left}px`;
+      timePickerPopoverEl.style.top = `${window.scrollY + rect.bottom + 8}px`;
+      timePickerPopoverEl.classList.remove("hidden");
+      timePickerPopoverEl.setAttribute("aria-hidden", "false");
+    }
+
+    function applyTimePickerValue(value) {
+      if (!activeTimeInputEl) return;
+      activeTimeInputEl.value = value;
+      closeTimePicker();
+    }
+
+    function attachTimePicker(textInput) {
+      textInput.closest(".picker-field").addEventListener("click", () => {
+        openTimePicker(textInput);
+      });
+    }
+
+    function updateSessionDurationInputState() {
+      const isOpenEnded = !!sessionDurationOpenEndedInputEl.checked;
+      sessionDurationInputEl.disabled = isOpenEnded;
+      if (isOpenEnded) {
+        sessionDurationInputEl.value = "";
+      }
+    }
+
+    function updateUrl() {
+      const url = new URL(window.location.href);
+      if (adminToken) url.searchParams.set("token", adminToken);
+      if (selectedSeasonId) url.searchParams.set("season_id", String(selectedSeasonId));
+      else url.searchParams.delete("season_id");
+      if (selectedSessionId) url.searchParams.set("session_id", String(selectedSessionId));
+      else url.searchParams.delete("session_id");
+      window.history.replaceState({}, "", url.toString());
+    }
+
+    function setSelectedSessionStatus(status) {
+      selectedSessionStatus = status || null;
+      sessionStatusButtons.forEach((button) => {
+        button.classList.toggle("active", button.dataset.status === selectedSessionStatus);
+      });
+    }
+
+    function scrollToSessionEditor() {
+      document.getElementById("session-editor").scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+    }
+
+    function buildPlayerLink(token) {
+      const url = new URL(window.location.href);
+      url.pathname = url.pathname.replace(/admin\.html$/, "index.html");
+      url.search = "";
+      url.searchParams.set("token", token);
+      return url.toString();
+    }
+
+    async function copyText(value, label) {
+      try {
+        await navigator.clipboard.writeText(value);
+        showSuccess(label + " kopiert.");
+      } catch (error) {
+        showError(label + " konnte nicht kopiert werden.");
+      }
+    }
+
+    function renderSelectedSessionEditor() {
+      const session = dashboardPayload.selected_session;
+      selectedSessionSummaryEl.innerHTML = "";
+      selectedPlayersListEl.innerHTML = "";
+
+      if (!session) {
+        selectedSessionTitleEl.textContent = "Noch kein Termin gewaehlt";
+        sessionDateInputEl.value = "";
+        sessionDatePickerEl.value = "";
+        sessionLocationInputEl.value = "";
+        sessionTimeInputEl.value = "";
+        sessionDurationInputEl.value = "";
+        sessionDurationOpenEndedInputEl.checked = false;
+        updateSessionDurationInputState();
+        sessionDescriptionInputEl.value = "";
+        setSelectedSessionStatus(null);
+        return;
+      }
+
+      selectedSessionTitleEl.textContent = formatDate(session.session_date) + (session.start_time ? " · " + formatTimeValue(session.start_time) : "");
+      sessionDateInputEl.value = formatDateForInput(session.session_date || "");
+      sessionDatePickerEl.value = session.session_date || "";
+      sessionLocationInputEl.value = session.location || "";
+      sessionTimeInputEl.value = formatTimeValue(session.start_time || "");
+      sessionDurationOpenEndedInputEl.checked = session.duration_minutes === 0;
+      sessionDurationInputEl.value = session.duration_minutes && session.duration_minutes > 0 ? String(session.duration_minutes) : "";
+      updateSessionDurationInputState();
+      sessionDescriptionInputEl.value = session.description || "";
+      setSelectedSessionStatus(session.status);
+
+      const metaItems = [
+        ["Ort", session.location || "-"],
+        ["Zeit", session.start_time ? formatTimeValue(session.start_time) : "-"],
+        ["Dauer", formatDurationLabel(session.duration_minutes)],
+      ];
+
+      metaItems.forEach(([label, value]) => {
+        const item = document.createElement("div");
+        item.className = "summary-item";
+        item.innerHTML = '<div class="summary-label">' + label + '</div><div class="summary-value">' + value + '</div>';
+        selectedSessionSummaryEl.appendChild(item);
+      });
+
+      Object.entries(summaryLabels).forEach(([key, label]) => {
+        const item = document.createElement("div");
+        item.className = "summary-item";
+        item.innerHTML = '<div class="summary-label">' + label + '</div><div class="summary-value">' + (dashboardPayload.selected_summary[key] ?? 0) + '</div>';
+        selectedSessionSummaryEl.appendChild(item);
+      });
+
+      renderSelectedPlayers();
+    }
+
+    function renderSelectedPlayers() {
+      selectedPlayersListEl.innerHTML = "";
+
+      if (!dashboardPayload.selected_session) {
+        return;
+      }
+
+      if (!dashboardPayload.selected_players?.length) {
+        selectedPlayersListEl.innerHTML = '<div class="note">Noch keine Spieler fuer diesen Termin gefunden.</div>';
+        return;
+      }
+
+      dashboardPayload.selected_players.forEach((player) => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "response-row";
+
+        const currentStatus = player.attendance_status || "none";
+        const head = document.createElement("div");
+        head.className = "response-row-head";
+        head.innerHTML =
+          '<div><div class="list-title">' + escapeHtml(player.name) + '</div><div class="list-subtitle">Aktuell: ' + escapeHtml(playerStatusLabels[currentStatus] || playerStatusLabels.none) + '</div></div>' +
+          '<div class="pill ' + currentStatus + '">' + escapeHtml(playerStatusLabels[currentStatus] || playerStatusLabels.none) + '</div>';
+
+        const actions = document.createElement("div");
+        actions.className = "response-actions";
+        ["yes", "no", "maybe", "replacement", "none"].forEach((status) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "status-btn response-btn" + (currentStatus === status ? " active" : "");
+          button.dataset.playerStatus = status;
+          button.textContent = playerStatusLabels[status];
+          button.addEventListener("click", () => {
+            saveSelectedPlayerResponse(player.id, status === "none" ? null : status);
+          });
+          actions.appendChild(button);
+        });
+
+        wrapper.appendChild(head);
+        wrapper.appendChild(actions);
+        selectedPlayersListEl.appendChild(wrapper);
+      });
+    }
+
+    function renderSeasonSelector() {
+      seasonSelectorEl.innerHTML = "";
+
+      dashboardPayload.seasons.forEach((season) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "secondary-btn" + (season.id === selectedSeasonId ? " active" : "");
+        button.textContent = season.name;
+        button.addEventListener("click", () => {
+          if (season.id === selectedSeasonId) return;
+          selectedSeasonId = season.id;
+          selectedSessionId = null;
+          loadDashboard();
+        });
+        seasonSelectorEl.appendChild(button);
+      });
+    }
+
+    function renderSessionsList() {
+      sessionsListEl.innerHTML = "";
+
+      if (!dashboardPayload.sessions.length) {
+        sessionsListEl.innerHTML = '<div class="note">Fuer diese Saison sind noch keine Termine vorhanden.</div>';
+        return;
+      }
+
+      dashboardPayload.sessions.forEach((session) => {
+        const acceptanceCount = (session.summary?.yes ?? 0) + (session.summary?.maybe ?? 0) + (session.summary?.replacement ?? 0);
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "list-row" + (session.id === selectedSessionId ? " current" : "");
+
+        const left = document.createElement("div");
+        left.innerHTML =
+          '<div class="list-title">' + formatShortDate(session.session_date) + '</div>' +
+          '<div class="list-subtitle">' +
+            (session.start_time ? formatTimeValue(session.start_time) + ' · ' : '') +
+            (session.location || 'Kein Ort') +
+            ' · Zusagen: ' + acceptanceCount +
+            ' · Absagen: ' + (session.summary?.no ?? 0) +
+            ' · Offen: ' + session.summary.missing +
+          '</div>';
+
+        const pill = document.createElement("div");
+        pill.className = "pill " + (session.status || "scheduled");
+        pill.textContent = sessionStatusLabels[session.status] || "Geplant";
+
+        button.appendChild(left);
+        button.appendChild(pill);
+        button.addEventListener("click", () => {
+          selectedSessionId = session.id;
+          loadDashboard().then(() => scrollToSessionEditor());
+        });
+
+        sessionsListEl.appendChild(button);
+      });
+    }
+
+    function renderRoster() {
+      rosterListEl.innerHTML = "";
+
+      dashboardPayload.roster.forEach((player) => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "roster-card";
+        wrapper.innerHTML =
+          '<div class="roster-header">' +
+            '<div><div class="list-title">' + escapeHtml(player.name) + '</div><div class="list-subtitle">Token-Link fuer Spieleransicht</div></div>' +
+            '<div class="pill ' + (player.is_active ? "scheduled" : "none") + '">' + (player.is_active ? "Aktiv" : "Inaktiv") + '</div>' +
+          '</div>' +
+          '<div class="grid-2">' +
+            '<div><div class="field-label">Name</div><input data-field="name" type="text" value="' + escapeHtml(player.name) + '"></div>' +
+            '<div><div class="field-label">Reihenfolge</div><input data-field="sort_order" type="number" min="1" step="1" value="' + player.sort_order + '"></div>' +
+          '</div>' +
+          '<label class="inline-check"><input data-field="is_active" type="checkbox"' + (player.is_active ? " checked" : "") + '> Aktiv</label>' +
+          '<div><div class="field-label">Spieler-Token</div><div class="copy-row"><input type="text" value="' + escapeHtml(player.player_token) + '" readonly><button data-action="copy-token" class="secondary-btn" type="button">Token kopieren</button></div></div>' +
+          '<div><div class="field-label">Spieler-Link</div><div class="copy-row"><input type="text" value="' + escapeHtml(buildPlayerLink(player.player_token)) + '" readonly><button data-action="copy-link" class="secondary-btn" type="button">Link kopieren</button></div></div>' +
+          '<div class="actions">' +
+            '<button data-action="save-player" class="primary-btn" type="button">Spieler speichern</button>' +
+            '<button data-action="regen-token" class="secondary-btn" type="button">Token erneuern</button>' +
+            '<button data-action="delete-player" class="secondary-btn" type="button">Spieler loeschen</button>' +
+          '</div>';
+
+        const nameInput = wrapper.querySelector('[data-field="name"]');
+        const orderInput = wrapper.querySelector('[data-field="sort_order"]');
+        const activeInput = wrapper.querySelector('[data-field="is_active"]');
+
+        wrapper.querySelector('[data-action="copy-token"]').addEventListener("click", () => {
+          copyText(player.player_token, "Token");
+        });
+        wrapper.querySelector('[data-action="copy-link"]').addEventListener("click", () => {
+          copyText(buildPlayerLink(player.player_token), "Spieler-Link");
+        });
+        wrapper.querySelector('[data-action="save-player"]').addEventListener("click", () => {
+          savePlayer({
+            player_id: player.id,
+            name: nameInput.value.trim(),
+            sort_order: Number(orderInput.value),
+            is_active: activeInput.checked,
+            regenerate_token: false
+          });
+        });
+        wrapper.querySelector('[data-action="regen-token"]').addEventListener("click", () => {
+          savePlayer({
+            player_id: player.id,
+            name: nameInput.value.trim(),
+            sort_order: Number(orderInput.value),
+            is_active: activeInput.checked,
+            regenerate_token: true
+          });
+        });
+        wrapper.querySelector('[data-action="delete-player"]').addEventListener("click", () => {
+          deletePlayerAction(player.id, player.name);
+        });
+
+        rosterListEl.appendChild(wrapper);
+      });
+    }
+
+    function fillTeamForm(team) {
+      teamNameInputEl.value = team.name || "";
+      teamLocationInputEl.value = team.location || "";
+    }
+
+    function fillSeasonForm(season) {
+      if (!season) {
+        seasonNameInputEl.value = "";
+        seasonTypeInputEl.value = "custom";
+        seasonStartInputEl.value = "";
+        seasonStartPickerEl.value = "";
+        seasonEndInputEl.value = "";
+        seasonEndPickerEl.value = "";
+        seasonWeekdayInputEl.value = "";
+        seasonTimeInputEl.value = "";
+        seasonDurationInputEl.value = "";
+        seasonLocationInputEl.value = "";
+        seasonDescriptionInputEl.value = "";
+        seasonActiveInputEl.checked = true;
+        seasonGenerateInputEl.checked = true;
+        seasonDeleteBtnEl.disabled = true;
+        return;
+      }
+
+      seasonNameInputEl.value = season.name || "";
+      seasonTypeInputEl.value = season.season_type || "custom";
+      seasonStartInputEl.value = formatDateForInput(season.start_date || "");
+      seasonStartPickerEl.value = season.start_date || "";
+      seasonEndInputEl.value = formatDateForInput(season.end_date || "");
+      seasonEndPickerEl.value = season.end_date || "";
+      seasonWeekdayInputEl.value = season.default_weekday ? String(season.default_weekday) : "";
+      seasonTimeInputEl.value = formatTimeValue(season.default_start_time || "");
+      seasonDurationInputEl.value = season.default_duration_minutes ? String(season.default_duration_minutes) : "";
+      seasonLocationInputEl.value = season.default_location || "";
+      seasonDescriptionInputEl.value = season.description || "";
+      seasonActiveInputEl.checked = !!season.is_active;
+      seasonDeleteBtnEl.disabled = false;
+    }
+
+    async function loadDashboard(options = {}) {
+      const allowRetry = options.allowRetry !== false;
+      clearError();
+      teamSaveMsgEl.textContent = "";
+      seasonSaveMsgEl.textContent = "";
+      sessionSaveMsgEl.textContent = "";
+
+      let url = "api/admin/dashboard.php?token=" + encodeURIComponent(adminToken);
+      if (selectedSeasonId) url += "&season_id=" + encodeURIComponent(selectedSeasonId);
+      if (selectedSessionId) url += "&session_id=" + encodeURIComponent(selectedSessionId);
+
+      const response = await fetch(url);
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        const message = result.error || "Admin-Dashboard konnte nicht geladen werden.";
+        if (allowRetry && /season not found/i.test(String(message))) {
+          selectedSeasonId = null;
+          selectedSessionId = null;
+          updateUrl();
+          return loadDashboard({ allowRetry: false });
+        }
+        throw new Error(message);
+      }
+
+      dashboardPayload = result.data;
+      selectedSeasonId = result.data.season?.id || null;
+      selectedSessionId = result.data.selected_session?.id || null;
+      pageTitleEl.textContent = result.data.team.name + " Admin";
+      eventHeadingEl.textContent = result.data.season?.name || result.data.team.name;
+      adminLabelEl.textContent = "Admin: " + result.data.admin.label;
+      if (result.data.season) {
+        const timeLabel = result.data.season.default_start_time
+          ? ((result.data.season.default_weekday ? weekdayLabels[result.data.season.default_weekday] + ", " : "") + formatTimeValue(result.data.season.default_start_time))
+          : (result.data.team.start_time ? weekdayLabels[result.data.team.weekday] + ", " + formatTimeValue(result.data.team.start_time) : "-");
+        const durationLabel = result.data.season.default_duration_minutes !== null && result.data.season.default_duration_minutes !== undefined
+          ? formatDurationLabel(result.data.season.default_duration_minutes)
+          : formatDurationLabel(result.data.team.duration_minutes);
+        const locationLabel = result.data.season.default_location || result.data.team.location || "-";
+        seasonContextSummaryEl.textContent =
+          formatDate(result.data.season.start_date) +
+          " bis " +
+          formatDate(result.data.season.end_date) +
+          " · " +
+          timeLabel +
+          " · " +
+          durationLabel +
+          " · " +
+          locationLabel;
+      } else {
+        seasonContextSummaryEl.textContent = 'Waehle oben die Saison. Bearbeitet wird sie weiter unten nur einmal im Bereich "Saison verwalten".';
+      }
+
+      fillTeamForm(result.data.team);
+      fillSeasonForm(result.data.season);
+      renderSeasonSelector();
+      renderSessionsList();
+      renderSelectedSessionEditor();
+      renderRoster();
+      updateUrl();
+    }
+
+    async function saveTeam() {
+      clearError();
+      teamSaveBtnEl.disabled = true;
+      teamSaveMsgEl.textContent = "Speichere...";
+
+      try {
+        const response = await fetch("api/admin/team-save.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            token: adminToken,
+            name: teamNameInputEl.value,
+            location: teamLocationInputEl.value
+          })
+        });
+        const result = await response.json();
+        if (!response.ok || !result.success) {
+          throw new Error(result.error || "Team konnte nicht gespeichert werden.");
+        }
+
+        teamSaveMsgEl.textContent = "Gespeichert.";
+        showSuccess("Team gespeichert.");
+        await loadDashboard();
+      } catch (error) {
+        teamSaveMsgEl.textContent = "";
+        showError(error.message || "Team konnte nicht gespeichert werden.");
+      } finally {
+        teamSaveBtnEl.disabled = false;
+      }
+    }
+
+    async function saveSession() {
+      clearError();
+      if (!selectedSessionId || !selectedSessionStatus) {
+        showError("Bitte zuerst einen Termin und Status waehlen.");
+        return;
+      }
+
+      sessionSaveBtnEl.disabled = true;
+      sessionSaveMsgEl.textContent = "Speichere...";
+
+      try {
+        const parsedDate = parseDisplayDate(sessionDateInputEl.value);
+        const parsedTime = sessionTimeInputEl.value.trim() === ""
+          ? ""
+          : parseDisplayTime(sessionTimeInputEl.value);
+        if (!parsedDate) {
+          throw new Error("Bitte ein gueltiges Datum auswaehlen.");
+        }
+        if (sessionTimeInputEl.value.trim() !== "" && !parsedTime) {
+          throw new Error("Bitte eine gueltige Zeit auswaehlen.");
+        }
+
+        const response = await fetch("api/admin/session-update.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            token: adminToken,
+            session_id: selectedSessionId,
+            session_date: parsedDate,
+            status: selectedSessionStatus,
+            location: sessionLocationInputEl.value,
+            start_time: parsedTime || "",
+            duration_minutes: sessionDurationOpenEndedInputEl.checked
+              ? 0
+              : (sessionDurationInputEl.value === "" ? null : Number(sessionDurationInputEl.value)),
+            description: sessionDescriptionInputEl.value
+          })
+        });
+        const result = await response.json();
+        if (!response.ok || !result.success) {
+          throw new Error(result.error || "Termin konnte nicht gespeichert werden.");
+        }
+
+        sessionSaveMsgEl.textContent = "Gespeichert.";
+        showSuccess("Termin gespeichert.");
+        await loadDashboard();
+      } catch (error) {
+        sessionSaveMsgEl.textContent = "";
+        showError(error.message || "Termin konnte nicht gespeichert werden.");
+      } finally {
+        sessionSaveBtnEl.disabled = false;
+      }
+    }
+
+    async function saveSelectedPlayerResponse(playerId, status) {
+      clearError();
+      if (!selectedSessionId) {
+        showError("Bitte zuerst einen Termin waehlen.");
+        return;
+      }
+      playerSaveMsgEl.textContent = "Speichere Antwort...";
+
+      try {
+        const response = await fetch("api/admin/response-save.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            token: adminToken,
+            session_id: selectedSessionId,
+            player_id: playerId,
+            status
+          })
+        });
+        const result = await response.json();
+        if (!response.ok || !result.success) {
+          throw new Error(result.error || "Antwort konnte nicht gespeichert werden.");
+        }
+
+        dashboardPayload.selected_players = result.data.selected_players || [];
+        dashboardPayload.selected_summary = result.data.selected_summary || dashboardPayload.selected_summary;
+        dashboardPayload.sessions = dashboardPayload.sessions.map((session) =>
+          session.id === selectedSessionId
+            ? { ...session, summary: dashboardPayload.selected_summary }
+            : session
+        );
+        renderSessionsList();
+        renderSelectedSessionEditor();
+        playerSaveMsgEl.textContent = "Antwort gespeichert.";
+        showSuccess("Spielerantwort gespeichert.");
+      } catch (error) {
+        playerSaveMsgEl.textContent = "";
+        showError(error.message || "Antwort konnte nicht gespeichert werden.");
+      }
+    }
+
+    async function saveSeason() {
+      clearError();
+      seasonSaveBtnEl.disabled = true;
+      seasonSaveMsgEl.textContent = "Speichere...";
+
+      try {
+        const startDate = parseDisplayDate(seasonStartInputEl.value);
+        const endDate = parseDisplayDate(seasonEndInputEl.value);
+        const parsedTime = seasonTimeInputEl.value.trim() === ""
+          ? ""
+          : parseDisplayTime(seasonTimeInputEl.value);
+        if (!startDate || !endDate) {
+          throw new Error("Bitte gueltige Saison-Daten auswaehlen.");
+        }
+        if (seasonTimeInputEl.value.trim() !== "" && !parsedTime) {
+          throw new Error("Bitte eine gueltige Zeit auswaehlen.");
+        }
+
+        const response = await fetch("api/admin/season-save.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            token: adminToken,
+            season_id: selectedSeasonId || 0,
+            name: seasonNameInputEl.value,
+            season_type: seasonTypeInputEl.value,
+            start_date: startDate,
+            end_date: endDate,
+            default_weekday: seasonWeekdayInputEl.value === "" ? null : Number(seasonWeekdayInputEl.value),
+            default_start_time: parsedTime || "",
+            default_duration_minutes: seasonDurationInputEl.value === "" ? null : Number(seasonDurationInputEl.value),
+            default_location: seasonLocationInputEl.value,
+            description: seasonDescriptionInputEl.value,
+            is_active: seasonActiveInputEl.checked,
+            generate_sessions: seasonGenerateInputEl.checked
+          })
+        });
+        const result = await response.json();
+        if (!response.ok || !result.success) {
+          throw new Error(result.error || "Saison konnte nicht gespeichert werden.");
+        }
+
+        if (result.data.season?.id) {
+          selectedSeasonId = result.data.season.id;
+        }
+
+        const messageParts = [];
+        if (result.data.future_sessions?.shifted) {
+          messageParts.push(result.data.future_sessions.shifted + " kuenftige Termine verschoben.");
+        }
+        if (result.data.future_sessions?.skipped_conflicts) {
+          messageParts.push(result.data.future_sessions.skipped_conflicts + " Konflikte uebersprungen.");
+        }
+        if (result.data.future_sessions?.out_of_range) {
+          messageParts.push(result.data.future_sessions.out_of_range + " Termine ausserhalb Saisonbereich belassen.");
+        }
+        if (result.data.generated_sessions) {
+          messageParts.push(result.data.generated_sessions + " Termine erzeugt.");
+        }
+        const seasonMessage = messageParts.length > 0 ? messageParts.join(" ") : "Gespeichert.";
+        seasonSaveMsgEl.textContent = seasonMessage;
+        showSuccess("Saison gespeichert.");
+        await loadDashboard();
+        seasonSaveMsgEl.textContent = seasonMessage;
+      } catch (error) {
+        seasonSaveMsgEl.textContent = "";
+        showError(error.message || "Saison konnte nicht gespeichert werden.");
+      } finally {
+        seasonSaveBtnEl.disabled = false;
+      }
+    }
+
+    async function deleteSeason() {
+      clearError();
+      if (!selectedSeasonId) {
+        showError("Bitte zuerst eine Saison waehlen.");
+        return;
+      }
+
+      const confirmed = window.confirm("Diese Saison inklusive zugehoeriger Termine loeschen?");
+      if (!confirmed) {
+        return;
+      }
+
+      seasonDeleteBtnEl.disabled = true;
+      seasonSaveMsgEl.textContent = "Loesche...";
+
+      try {
+        const response = await fetch("api/admin/season-delete.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            token: adminToken,
+            season_id: selectedSeasonId
+          })
+        });
+        const result = await response.json();
+        if (!response.ok || !result.success) {
+          throw new Error(result.error || "Saison konnte nicht geloescht werden.");
+        }
+
+        selectedSeasonId = null;
+        selectedSessionId = null;
+        const deleteMessage = (result.data.deleted_sessions || 0) + " Termine geloescht.";
+        seasonSaveMsgEl.textContent = deleteMessage;
+        showSuccess("Saison geloescht.");
+        await loadDashboard();
+        seasonSaveMsgEl.textContent = deleteMessage;
+      } catch (error) {
+        seasonSaveMsgEl.textContent = "";
+        showError(error.message || "Saison konnte nicht geloescht werden.");
+      } finally {
+        seasonDeleteBtnEl.disabled = !selectedSeasonId;
+      }
+    }
+
+    async function savePlayer(payload) {
+      clearError();
+      playerSaveMsgEl.textContent = "Speichere...";
+
+      try {
+        const response = await fetch("api/admin/player-save.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(Object.assign({ token: adminToken }, payload))
+        });
+        const result = await response.json();
+        if (!response.ok || !result.success) {
+          throw new Error(result.error || "Spieler konnte nicht gespeichert werden.");
+        }
+
+        playerSaveMsgEl.textContent = "Gespeichert.";
+        showSuccess("Spieler gespeichert.");
+        newPlayerNameEl.value = "";
+        newPlayerOrderEl.value = "";
+        await loadDashboard();
+      } catch (error) {
+        playerSaveMsgEl.textContent = "";
+        showError(error.message || "Spieler konnte nicht gespeichert werden.");
+      }
+    }
+
+    async function deletePlayerAction(playerId, playerName) {
+      clearError();
+      const confirmed = window.confirm('Spieler "' + playerName + '" loeschen?');
+      if (!confirmed) {
+        return;
+      }
+
+      playerSaveMsgEl.textContent = "Loesche...";
+
+      try {
+        const response = await fetch("api/admin/player-delete.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            token: adminToken,
+            player_id: playerId
+          })
+        });
+        const result = await response.json();
+        if (!response.ok || !result.success) {
+          throw new Error(result.error || "Spieler konnte nicht geloescht werden.");
+        }
+
+        playerSaveMsgEl.textContent = "Geloescht.";
+        showSuccess("Spieler geloescht.");
+        await loadDashboard();
+        playerSaveMsgEl.textContent = "Geloescht.";
+      } catch (error) {
+        playerSaveMsgEl.textContent = "";
+        showError(error.message || "Spieler konnte nicht geloescht werden.");
+      }
+    }
+
+    teamSaveBtnEl.addEventListener("click", saveTeam);
+    sessionSaveBtnEl.addEventListener("click", saveSession);
+    seasonSaveBtnEl.addEventListener("click", saveSeason);
+    seasonNewBtnEl.addEventListener("click", () => {
+      selectedSeasonId = null;
+      fillSeasonForm(null);
+      seasonSaveMsgEl.textContent = "Neue Saison vorbereitet.";
+    });
+    seasonDeleteBtnEl.addEventListener("click", deleteSeason);
+    newPlayerBtnEl.addEventListener("click", () => {
+      savePlayer({
+        name: newPlayerNameEl.value.trim(),
+        sort_order: Number(newPlayerOrderEl.value),
+        is_active: true,
+        regenerate_token: false
+      });
+    });
+    tokenBtnEl.addEventListener("click", () => {
+      const value = tokenInputEl.value.trim();
+      if (!value) {
+        showError("Bitte einen Admin-Token eingeben.");
+        return;
+      }
+
+      saveTokenLocally(value);
+      const url = new URL(window.location.href);
+      url.searchParams.set("token", value);
+      window.location.href = url.toString();
+    });
+    sessionStatusButtons.forEach((button) => {
+      button.addEventListener("click", () => setSelectedSessionStatus(button.dataset.status));
+    });
+    sessionDurationOpenEndedInputEl.addEventListener("change", updateSessionDurationInputState);
+
+    for (let hour = 0; hour < 24; hour += 1) {
+      const option = document.createElement("option");
+      option.value = String(hour).padStart(2, "0");
+      option.textContent = option.value;
+      timePickerHourEl.appendChild(option);
+    }
+
+    for (let minute = 0; minute < 60; minute += 1) {
+      const option = document.createElement("option");
+      option.value = String(minute).padStart(2, "0");
+      option.textContent = option.value;
+      timePickerMinuteEl.appendChild(option);
+    }
+
+    timePickerApplyBtnEl.addEventListener("click", () => {
+      applyTimePickerValue(`${timePickerHourEl.value}:${timePickerMinuteEl.value}`);
+    });
+
+    timePickerClearBtnEl.addEventListener("click", () => {
+      applyTimePickerValue("");
+    });
+
+    document.addEventListener("click", (event) => {
+      if (timePickerPopoverEl.classList.contains("hidden")) return;
+      if (timePickerPopoverEl.contains(event.target)) return;
+      if (event.target.closest(".picker-field.picker-time")) return;
+      closeTimePicker();
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        closeTimePicker();
+      }
+    });
+
+    attachDatePicker(seasonStartInputEl, seasonStartPickerEl);
+    attachDatePicker(seasonEndInputEl, seasonEndPickerEl);
+    attachDatePicker(sessionDateInputEl, sessionDatePickerEl);
+    attachTimePicker(seasonTimeInputEl);
+    attachTimePicker(sessionTimeInputEl);
+
+    scrollTopBtnEl.addEventListener("click", () => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+    updateScrollTopVisibility();
+    window.addEventListener("scroll", updateScrollTopVisibility, { passive: true });
+
+    if (!adminToken) {
+      const storedToken = loadTokenLocally();
+      if (storedToken) {
+        adminToken = storedToken;
+      }
+    } else {
+      saveTokenLocally(adminToken);
+    }
+
+    if (!adminToken) {
+      tokenCardEl.classList.remove("hidden");
+      pageTitleEl.textContent = "Tennisteam Admin";
+    } else {
+      appContentEl.classList.remove("hidden");
+      tokenCardEl.classList.add("hidden");
+      loadDashboard().catch((error) => {
+        showError(error.message || "Admin-Dashboard konnte nicht geladen werden.");
+      });
+    }
+  </script>
+</body>
+</html>

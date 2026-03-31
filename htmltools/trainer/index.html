@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trainer</title>
+
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Trainer">
+  <meta name="application-name" content="Trainer">
+  <meta name="mobile-web-app-capable" content="yes">
+
+  <link rel="manifest" href="manifest.webmanifest?v=7">
+  <meta name="theme-color" content="#0f172a">
+
+  <link rel="icon" type="image/png" sizes="192x192" href="trainer-192.png?v=7">
+  <link rel="shortcut icon" type="image/png" href="trainer-192.png?v=7">
+  <link rel="apple-touch-icon" sizes="192x192" href="trainer-192.png?v=7">
+
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Karla:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #0F1A14;
+      --surface: #172010;
+      --card: #1E2C18;
+      --border: #2A3D22;
+      --green: #4A7C59;
+      --lime: #8DB560;
+      --gold: #D4A843;
+      --amber: #F0C060;
+      --red: #C0503A;
+      --blue: #4A7CB4;
+      --text: #E8EDE4;
+      --muted: #7A9070;
+      --cream: #F0EAD8;
+    }
+
+    * { margin:0; padding:0; box-sizing:border-box; }
+
+    body {
+      font-family:'Karla',sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      min-height:100vh;
+    }
+
+    .header {
+      padding: 52px 40px 44px;
+      background: linear-gradient(160deg, #1A2E1A 0%, #0F1A14 60%);
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header::after {
+      content:'';
+      position:absolute;
+      top:0;
+      right:0;
+      width:400px;
+      height:400px;
+      background: radial-gradient(circle at 80% 20%, rgba(74,124,89,0.15) 0%, transparent 60%);
+      pointer-events:none;
+    }
+
+    .plan-label {
+      font-size:11px;
+      font-weight:700;
+      letter-spacing:3px;
+      text-transform:uppercase;
+      color:var(--lime);
+      margin-bottom:12px;
+    }
+
+    .header h1 {
+      font-family:'Playfair Display',serif;
+      font-size:clamp(28px,5vw,46px);
+      line-height:1.15;
+      color:var(--cream);
+      margin-bottom:12px;
+    }
+
+    .header h1 em {
+      font-style:italic;
+      color:var(--amber);
+    }
+
+    .header p {
+      font-size:14px;
+      color:var(--muted);
+      line-height:1.7;
+      max-width:520px;
+    }
+
+    .equip-row {
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:24px;
+    }
+
+    .equip-pill {
+      background:rgba(74,124,89,.15);
+      border:1px solid rgba(74,124,89,.35);
+      color:var(--lime);
+      font-size:12px;
+      font-weight:600;
+      padding:5px 12px;
+      border-radius:20px;
+    }
+
+    .knie-banner {
+      background: rgba(192,80,58,.08);
+      border:1px solid rgba(192,80,58,.25);
+      margin: 0;
+      padding: 14px 40px;
+      font-size:13px;
+      color:#E07060;
+      line-height:1.7;
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+
+    .main {
+      max-width:900px;
+      margin:0 auto;
+      padding:40px 24px;
+    }
+
+    .week-grid {
+      display:grid;
+      grid-template-columns:repeat(7,1fr);
+      gap:8px;
+      margin-bottom:36px;
+    }
+
+    .wday {
+      background:var(--card);
+      border-radius:12px;
+      padding:14px 6px;
+      text-align:center;
+      cursor:pointer;
+      transition:all .2s;
+      border:1px solid var(--border);
+      color: var(--text);
+    }
+
+    .wday:hover { border-color:var(--green); }
+    .wday.active { background:var(--green); border-color:var(--green); }
+    .wday.rest { background:var(--surface); }
+    .wday.plank-day { border-top:3px solid var(--gold); }
+
+    .wday-name {
+      font-size:10px;
+      font-weight:700;
+      letter-spacing:1.5px;
+      text-transform:uppercase;
+      color:var(--muted);
+      margin-bottom:8px;
+    }
+
+    .wday.active .wday-name { color:rgba(255,255,255,.7); }
+
+    .wday-icons {
+      font-size:17px;
+      line-height:1.5;
+      margin-bottom:6px;
+    }
+
+    .wday-label {
+      font-size:10px;
+      font-weight:600;
+      color:var(--text);
+      line-height:1.3;
+    }
+
+    .wday.rest .wday-label { color:var(--muted); }
+
+    .plank-pip {
+      display:inline-block;
+      background:var(--gold);
+      color:#1A1A0A;
+      font-size:8px;
+      font-weight:800;
+      letter-spacing:1px;
+      padding:2px 6px;
+      border-radius:3px;
+      margin-top:5px;
+    }
+
+    .day-panel { display:none; }
+    .day-panel.active { display:block; }
+
+    .day-card-header {
+      border-radius:16px;
+      padding:22px 24px;
+      margin-bottom:22px;
+      display:flex;
+      align-items:flex-start;
+      gap:16px;
+      border:1px solid var(--border);
+    }
+
+    .day-card-header.upper {
+      background:linear-gradient(135deg,rgba(74,124,89,.15),rgba(74,124,89,.04));
+      border-color:rgba(74,124,89,.3);
+    }
+
+    .day-card-header.full {
+      background:linear-gradient(135deg,rgba(74,124,89,.12),rgba(74,124,89,.03));
+      border-color:rgba(74,124,89,.25);
+    }
+
+    .day-card-header.plank-h {
+      background:linear-gradient(135deg,rgba(212,168,67,.12),rgba(212,168,67,.03));
+      border-color:rgba(212,168,67,.3);
+    }
+
+    .day-card-header.rest-h { background:var(--surface); }
+
+    .dch-icon {
+      font-size:30px;
+      flex-shrink:0;
+      margin-top:2px;
+    }
+
+    .dch-title {
+      font-family:'Playfair Display',serif;
+      font-size:19px;
+      color:var(--cream);
+      margin-bottom:4px;
+    }
+
+    .dch-desc {
+      font-size:13px;
+      color:var(--muted);
+      line-height:1.6;
+    }
+
+    .dch-badge {
+      display:inline-block;
+      margin-top:8px;
+      font-size:11px;
+      font-weight:700;
+      padding:4px 10px;
+      border-radius:20px;
+    }
+
+    .upper .dch-badge,
+    .full .dch-badge {
+      background:var(--green);
+      color:white;
+    }
+
+    .plank-h .dch-badge {
+      background:var(--gold);
+      color:#1A1A0A;
+    }
+
+    .block-title {
+      font-size:11px;
+      font-weight:700;
+      letter-spacing:2px;
+      text-transform:uppercase;
+      color:var(--muted);
+      margin:22px 0 10px 2px;
+    }
+
+    .ex-grid {
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+
+    .ex-card {
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:12px;
+      overflow:hidden;
+      transition:border-color .2s;
+    }
+
+    .ex-card:hover { border-color:var(--green); }
+
+    .ex-header {
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding:14px 16px;
+      cursor:pointer;
+      user-select:none;
+      width:100%;
+      background:none;
+      border:none;
+      color:inherit;
+      font:inherit;
+      text-align:left;
+    }
+
+    .ex-icon {
+      width:40px;
+      height:40px;
+      background:rgba(74,124,89,.15);
+      border-radius:10px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:18px;
+      flex-shrink:0;
+    }
+
+    .ex-meta { flex:1; }
+
+    .ex-name {
+      font-weight:700;
+      font-size:14px;
+      color:var(--cream);
+      margin-bottom:5px;
+    }
+
+    .ex-tags {
+      display:flex;
+      gap:5px;
+      flex-wrap:wrap;
+    }
+
+    .tag {
+      font-size:11px;
+      font-weight:600;
+      padding:2px 8px;
+      border-radius:20px;
+    }
+
+    .tag.reps { background:rgba(74,124,89,.2); color:var(--lime); }
+    .tag.sets { background:rgba(212,168,67,.15); color:var(--gold); }
+    .tag.equip { background:rgba(192,80,58,.15); color:#E07060; }
+    .tag.easy { background:rgba(74,124,89,.12); color:var(--muted); }
+    .tag.medium { background:rgba(212,168,67,.12); color:var(--gold); }
+    .tag.kniefrei { background:rgba(141,181,96,.2); color:var(--lime); }
+
+    .ex-toggle {
+      color:var(--muted);
+      font-size:20px;
+      transition:transform .2s;
+      font-weight:300;
+    }
+
+    .ex-card.open .ex-toggle { transform:rotate(45deg); }
+
+    .ex-body {
+      display:none;
+      padding:0 16px 16px 68px;
+      border-top:1px solid var(--border);
+    }
+
+    .ex-card.open .ex-body { display:block; }
+
+    .ex-body[hidden] { display:none; }
+
+    .ex-steps {
+      list-style:none;
+      margin:12px 0 0;
+      counter-reset:step;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+
+    .ex-steps li {
+      font-size:13px;
+      color:var(--text);
+      line-height:1.6;
+      padding-left:22px;
+      position:relative;
+      counter-increment:step;
+    }
+
+    .ex-steps li::before {
+      content:counter(step);
+      position:absolute;
+      left:0;
+      font-weight:800;
+      font-size:11px;
+      color:var(--gold);
+      top:3px;
+    }
+
+    .ex-tip {
+      margin-top:10px;
+      padding:10px 14px;
+      background:rgba(212,168,67,.08);
+      border-left:3px solid var(--gold);
+      border-radius:0 8px 8px 0;
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.6;
+    }
+
+    .plank-note-box {
+      background:rgba(212,168,67,.07);
+      border:1px solid rgba(212,168,67,.25);
+      border-radius:12px;
+      padding:16px 18px;
+      margin-top:14px;
+    }
+
+    .plank-note-title {
+      font-weight:700;
+      font-size:13px;
+      color:var(--gold);
+      margin-bottom:8px;
+    }
+
+    .plank-note-text {
+      font-size:13px;
+      color:var(--muted);
+      line-height:1.7;
+    }
+
+    .warning {
+      background:rgba(192,80,58,.07);
+      border:1px solid rgba(192,80,58,.2);
+      border-radius:12px;
+      padding:16px 18px;
+      margin-top:36px;
+      display:flex;
+      gap:12px;
+    }
+
+    .warning-text {
+      font-size:13px;
+      color:#C08070;
+      line-height:1.7;
+    }
+
+    .final-note {
+      background:linear-gradient(135deg,#1E3020,#172010);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:28px;
+      margin-top:20px;
+      position:relative;
+      overflow:hidden;
+    }
+
+    .final-note h3 {
+      font-family:'Playfair Display',serif;
+      font-size:20px;
+      color:var(--cream);
+      margin-bottom:10px;
+    }
+
+    .final-note p {
+      font-size:13px;
+      color:var(--muted);
+      line-height:1.7;
+      max-width:500px;
+    }
+
+    .tracker {
+      margin-top:14px;
+      background:rgba(74,124,89,.08);
+      border:1px solid rgba(74,124,89,.25);
+      border-radius:12px;
+      padding:14px 16px;
+    }
+
+    .tracker-title {
+      font-size:11px;
+      font-weight:700;
+      letter-spacing:2px;
+      text-transform:uppercase;
+      color:var(--lime);
+      margin-bottom:10px;
+    }
+
+    .tracker-sets {
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+
+    .tracker-set {
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+
+    .tracker-set-label {
+      font-size:12px;
+      color:var(--muted);
+      font-weight:600;
+      min-width:52px;
+    }
+
+    .tracker-inputs {
+      display:flex;
+      gap:6px;
+      flex:1;
+    }
+
+    .tracker-field {
+      display:flex;
+      flex-direction:column;
+      gap:3px;
+      flex:1;
+    }
+
+    .tracker-field label {
+      font-size:10px;
+      color:var(--muted);
+      font-weight:600;
+      letter-spacing:1px;
+      text-transform:uppercase;
+    }
+
+    .tracker-field input {
+      background:var(--surface);
+      border:1px solid var(--border);
+      border-radius:8px;
+      color:var(--text);
+      font-family:'Karla',sans-serif;
+      font-size:14px;
+      font-weight:700;
+      padding:7px 10px;
+      width:100%;
+      outline:none;
+      transition:border-color .15s;
+      text-align:center;
+    }
+
+    .tracker-field input:focus { border-color:var(--lime); }
+    .tracker-field input.filled { border-color:rgba(74,124,89,.5); color:var(--lime); }
+
+    .tracker-save {
+      margin-top:10px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .tracker-btn {
+      background:var(--green);
+      color:var(--cream);
+      border:none;
+      border-radius:20px;
+      font-family:'Karla',sans-serif;
+      font-size:12px;
+      font-weight:700;
+      padding:7px 16px;
+      cursor:pointer;
+      transition:background .15s;
+    }
+
+    .tracker-btn:hover {
+      background:var(--lime);
+      color:var(--bg);
+    }
+
+    .tracker-btn.secondary {
+      background:transparent;
+      border:1px solid rgba(192,80,58,.35);
+      color:#E07060;
+    }
+
+    .tracker-btn.secondary:hover {
+      background:rgba(192,80,58,.12);
+      color:#F3B3A6;
+    }
+
+    .tracker-saved-msg {
+      font-size:12px;
+      color:var(--lime);
+      font-weight:600;
+      opacity:0;
+      transition:opacity .3s;
+    }
+
+    .tracker-saved-msg.show { opacity:1; }
+
+    .tracker-history {
+      margin-top:10px;
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+
+    .tracker-hist-row {
+      display:flex;
+      gap:8px;
+      align-items:center;
+      font-size:11px;
+      color:var(--muted);
+      background:var(--surface);
+      border-radius:6px;
+      padding:5px 10px;
+      flex-wrap:wrap;
+    }
+
+    .tracker-hist-del {
+      margin-left:auto;
+      background:transparent;
+      border:1px solid rgba(192,80,58,.25);
+      color:#C08070;
+      border-radius:999px;
+      width:24px;
+      height:24px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-size:14px;
+      line-height:1;
+      cursor:pointer;
+      flex-shrink:0;
+    }
+
+    .tracker-hist-del:hover {
+      background:rgba(192,80,58,.12);
+      color:#F3B3A6;
+    }
+
+    .tracker-hist-date {
+      font-weight:700;
+      color:var(--gold);
+      min-width:70px;
+    }
+
+    .tracker-hist-vals span {
+      background:rgba(74,124,89,.15);
+      border-radius:4px;
+      padding:1px 6px;
+      margin-right:4px;
+      color:var(--text);
+      font-weight:600;
+    }
+
+    .tracker-note-input {
+      background:var(--surface);
+      border:1px solid var(--border);
+      border-radius:8px;
+      color:var(--text);
+      font-family:'Karla',sans-serif;
+      font-size:13px;
+      padding:7px 10px;
+      width:100%;
+      outline:none;
+      margin-top:6px;
+      transition:border-color .15s;
+    }
+
+    .tracker-note-input:focus { border-color:var(--lime); }
+
+    .tracker-note-input::placeholder {
+      color:var(--muted);
+      font-style:italic;
+    }
+
+    .tracker-progress-bar-wrap {
+      margin-top:10px;
+      background:var(--surface);
+      border-radius:6px;
+      height:6px;
+      overflow:hidden;
+    }
+
+    .tracker-progress-bar {
+      height:100%;
+      border-radius:6px;
+      background:linear-gradient(90deg,var(--green),var(--lime));
+      transition:width .5s ease;
+    }
+
+    .tracker-progress-label {
+      font-size:11px;
+      color:var(--muted);
+      margin-top:4px;
+      display:flex;
+      justify-content:space-between;
+      gap: 12px;
+    }
+
+    @media (max-width:640px) {
+      .header { padding:36px 20px 32px; }
+      .knie-banner { padding:12px 20px; }
+      .week-grid { grid-template-columns:repeat(4,1fr); }
+      .ex-body { padding-left:16px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="plan-label">Trainingsplan</div>
+    <h1>Mein <em>Wochenplan</em> fuer Kraft und Stabilitaet</h1>
+    <p>
+      Ein klarer Ueberblick fuer jeden Trainingstag mit Fokus auf Oberkoerper,
+      Core, knieschonende Beine und sauberem Progress-Tracking.
+    </p>
+    <div class="equip-row">
+      <span class="equip-pill">Kurzhanteln</span>
+      <span class="equip-pill">Langhantel</span>
+      <span class="equip-pill">Koerpergewicht</span>
+      <span class="equip-pill">Progress-Tracker</span>
+    </div>
+  </header>
+
+  <div class="knie-banner">
+    <span>Hinweis</span>
+    <span>Alle Uebungen sind moeglichst kniefreundlich gehalten. Bei Schmerz Intensitaet reduzieren oder ueberspringen.</span>
+  </div>
+
+  <main class="main">
+    <section class="week-grid" aria-label="Wochenuebersicht">
+      <button class="wday active" type="button" data-day="mo" aria-pressed="true" aria-controls="day-mo">
+        <div class="wday-name">Mo</div>
+        <div class="wday-icons">💪</div>
+        <div class="wday-label">Oberkoerper A</div>
+      </button>
+      <button class="wday plank-day" type="button" data-day="di" aria-pressed="false" aria-controls="day-di">
+        <div class="wday-name">Di</div>
+        <div class="wday-icons">🧱</div>
+        <div class="wday-label">Core</div>
+        <div class="plank-pip">CORE</div>
+      </button>
+      <button class="wday" type="button" data-day="mi" aria-pressed="false" aria-controls="day-mi">
+        <div class="wday-name">Mi</div>
+        <div class="wday-icons">🦵</div>
+        <div class="wday-label">Beine + Schulter</div>
+      </button>
+      <button class="wday" type="button" data-day="do" aria-pressed="false" aria-controls="day-do">
+        <div class="wday-name">Do</div>
+        <div class="wday-icons">💪</div>
+        <div class="wday-label">Arme</div>
+      </button>
+      <button class="wday plank-day" type="button" data-day="fr" aria-pressed="false" aria-controls="day-fr">
+        <div class="wday-name">Fr</div>
+        <div class="wday-icons">🔥</div>
+        <div class="wday-label">Mix</div>
+        <div class="plank-pip">PULL</div>
+      </button>
+      <button class="wday rest" type="button" data-day="sa" aria-pressed="false" aria-controls="day-sa">
+        <div class="wday-name">Sa</div>
+        <div class="wday-icons">🌿</div>
+        <div class="wday-label">Erholung</div>
+      </button>
+      <button class="wday rest" type="button" data-day="so" aria-pressed="false" aria-controls="day-so">
+        <div class="wday-name">So</div>
+        <div class="wday-icons">☀️</div>
+        <div class="wday-label">Locker</div>
+      </button>
+    </section>
+
+    <section id="day-mo" class="day-panel active">
+      <div class="day-card-header upper">
+        <div class="dch-icon">💪</div>
+        <div>
+          <div class="dch-title">Montag · Oberkoerper A</div>
+          <div class="dch-desc">Zug, Schulter und Arme. Ruhig kontrolliert arbeiten und Wiederholungen sauber fuehren.</div>
+          <div class="dch-badge">6 Tracker</div>
+        </div>
+      </div>
+      <div class="block-title">Uebungen</div>
+      <div class="ex-grid">
+        <article class="ex-card">
+          <button class="ex-header" type="button" aria-expanded="false" aria-controls="ex-body-liegezuege-mo">
+            <div class="ex-icon">⬇️</div>
+            <div class="ex-meta">
+              <div class="ex-name">Liegezuege</div>
+              <div class="ex-tags">
+                <span class="tag reps">3 x 8-10</span>
+                <span class="tag sets">Kontrolle</span>
+                <span class="tag kniefrei">kniefrei</span>
+              </div>
+            </div>
+            <div class="ex-toggle" aria-hidden="true">+</div>
+          </button>
+          <div class="ex-body" id="ex-body-liegezuege-mo" hidden>
+            <ol class="ex-steps">
+              <li>Schultern tief ziehen und mit Spannung starten.</li>
+              <li>Brust aktiv heben, nicht aus dem unteren Ruecken ziehen.</li>
+              <li>Jede Wiederholung kurz sauber beenden.</li>
+            </ol>
+            <div class="ex-tip">Wenn die letzten Wiederholungen brechen, lieber sauber stoppen als schummeln.</div>
+            <div class="tracker" id="tr-liegezuege-mo"></div>
+          </div>
+        </article>
+
+        <article class="ex-card">
+          <button class="ex-header" type="button" aria-expanded="false" aria-controls="ex-body-rudern-mo">
+            <div class="ex-icon">🏋️</div>
+            <div class="ex-meta">
+              <div class="ex-name">Rudern, Bizeps und Schulterarbeit</div>
+              <div class="ex-tags">
+                <span class="tag reps">3 Tracker</span>
+                <span class="tag equip">Lang- und Kurzhantel</span>
+                <span class="tag medium">mittel</span>
+              </div>
+            </div>
+            <div class="ex-toggle" aria-hidden="true">+</div>
+          </button>
+          <div class="ex-body" id="ex-body-rudern-mo" hidden>
+            <ol class="ex-steps">
+              <li>Rudern mit stabilem Oberkoerper und engem Ellbogenpfad.</li>
+              <li>Bizepscurls ohne Schwung, nur im Ellenbogen bewegen.</li>
+              <li>Schulterdruecken kontrolliert nach oben und sauber absenken.</li>
+            </ol>
+            <div class="tracker" id="tr-rudern-mo"></div>
+            <div class="tracker" id="tr-bizeps-mo"></div>
+            <div class="tracker" id="tr-schulter-mo"></div>
+          </div>
+        </article>
+
+        <article class="ex-card">
+          <button class="ex-header" type="button" aria-expanded="false" aria-controls="ex-body-seitheben-mo">
+            <div class="ex-icon">✨</div>
+            <div class="ex-meta">
+              <div class="ex-name">Seitheben und Trizeps</div>
+              <div class="ex-tags">
+                <span class="tag reps">Pump</span>
+                <span class="tag sets">3 Saetze</span>
+                <span class="tag easy">leicht bis sauber</span>
+              </div>
+            </div>
+            <div class="ex-toggle" aria-hidden="true">+</div>
+          </button>
+          <div class="ex-body" id="ex-body-seitheben-mo" hidden>
+            <ol class="ex-steps">
+              <li>Seitheben nur bis etwa Schulterhoehe.</li>
+              <li>Trizeps mit sauberer Endstreckung und ohne Hohlkreuz.</li>
+            </ol>
+            <div class="tracker" id="tr-seitheben-mo"></div>
+            <div class="tracker" id="tr-trizeps-mo"></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="day-di" class="day-panel">
+      <div class="day-card-header plank-h">
+        <div class="dch-icon">🧱</div>
+        <div>
+          <div class="dch-title">Dienstag · Core</div>
+          <div class="dch-desc">Rumpfspannung, Beinheben und Rotation. Fokus auf Stabilitaet statt Tempo.</div>
+          <div class="dch-badge">3 Tracker</div>
+        </div>
+      </div>
+      <div class="plank-note-box">
+        <div class="plank-note-title">Core-Regel</div>
+        <div class="plank-note-text">Aus dem Bauch arbeiten, nicht aus Schwung. Lieber weniger Wiederholungen, aber komplett kontrolliert.</div>
+      </div>
+      <div class="block-title">Uebungen</div>
+      <div class="ex-grid">
+        <article class="ex-card">
+          <button class="ex-header" type="button" aria-expanded="false" aria-controls="ex-body-knieheben-di">
+            <div class="ex-icon">⬆️</div>
+            <div class="ex-meta">
+              <div class="ex-name">Knieheben und Beinheben</div>
+              <div class="ex-tags">
+                <span class="tag reps">Bauch</span>
+                <span class="tag sets">3 Saetze</span>
+                <span class="tag kniefrei">kniefrei</span>
+              </div>
+            </div>
+            <div class="ex-toggle" aria-hidden="true">+</div>
+          </button>
+          <div class="ex-body" id="ex-body-knieheben-di" hidden>
+            <ol class="ex-steps">
+              <li>Becken leicht einrollen und den Bauch fest halten.</li>
+              <li>Im oberen Punkt kurz stoppen statt abfedern.</li>
+            </ol>
+            <div class="tracker" id="tr-knieheben-di"></div>
+            <div class="tracker" id="tr-beinheben-di"></div>
+          </div>
+        </article>
+
+        <article class="ex-card">
+          <button class="ex-header" type="button" aria-expanded="false" aria-controls="ex-body-seitrotation-di">
+            <div class="ex-icon">🔄</div>
+            <div class="ex-meta">
+              <div class="ex-name">Seitrotation</div>
+              <div class="ex-tags">
+                <span class="tag reps">je Seite</span>
+                <span class="tag medium">Stabilitaet</span>
+                <span class="tag kniefrei">kniefreundlich</span>
+              </div>
+            </div>
+            <div class="ex-toggle" aria-hidden="true">+</div>
+          </button>
+          <div class="ex-body" id="ex-body-seitrotation-di" hidden>
+            <ol class="ex-steps">
+              <li>Rippen unten halten und nur kontrolliert rotieren.</li>
+              <li>Bewegung aus dem Oberkoerper fuehren, nicht aus Schwung.</li>
+            </ol>
+            <div class="tracker" id="tr-seitrotation-di"></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="day-mi" class="day-panel">
+      <div class="day-card-header full">
+        <div class="dch-icon">🦵</div>
+        <div>
+          <div class="dch-title">Mittwoch · Beine und Schulter</div>
+          <div class="dch-desc">Knieschonende Unterkoerperarbeit plus Schulter-Finisher fuer Stabilitaet und Haltung.</div>
+          <div class="dch-badge">5 Tracker</div>
+        </div>
+      </div>
+      <div class="block-title">Uebungen</div>
+      <div class="ex-grid">
+        <article class="ex-card">
+          <button class="ex-header" type="button" aria-expanded="false" aria-controls="ex-body-glutebridge-mi">
+            <div class="ex-icon">🍑</div>
+            <div class="ex-meta">
+              <div class="ex-name">Glute Bridge und Beinheben</div>
+              <div class="ex-tags">
+                <span class="tag reps">Glutes</span>
+                <span class="tag sets">3 Saetze</span>
+                <span class="tag kniefrei">schonend</span>
+              </div>
+            </div>
+            <div class="ex-toggle" aria-hidden="true">+</div>
+          </button>
+          <div class="ex-body" id="ex-body-glutebridge-mi" hidden>
+            <ol class="ex-steps">
+              <li>Bruecke oben kurz halten und Gesaess aktiv anspannen.</li>
+              <li>Seitliches Beinheben ohne Kippen im Becken.</li>
+            </ol>
+            <div class="tracker" id="tr-glutebridge-mi"></div>
+            <div class="tracker" id="tr-beinheben-mi"></div>
+          </div>
+        </article>
+
+        <article class="ex-card">
+          <button class="ex-header" type="button" aria-expanded="false" aria-controls="ex-body-birddog-mi">
+            <div class="ex-icon">🐦</div>
+            <div class="ex-meta">
+              <div class="ex-name">Bird Dog und Schulterblock</div>
+              <div class="ex-tags">
+                <span class="tag reps">Haltung</span>
+                <span class="tag equip">Kurzhanteln</span>
+                <span class="tag medium">kontrolliert</span>
+              </div>
+            </div>
+            <div class="ex-toggle" aria-hidden="true">+</div>
+          </button>
+          <div class="ex-body" id="ex-body-birddog-mi" hidden>
+            <ol class="ex-steps">
+              <li>Bird Dog mit ruhigem Becken und langer Linie arbeiten.</li>
+              <li>Schulterdruecken sitzend fuer mehr Rumpfkontrolle.</li>
+              <li>Frontheben langsam hoch und noch langsamer absenken.</li>
+            </ol>
+            <div class="tracker" id="tr-birddog-mi"></div>
+            <div class="tracker" id="tr-schulter-mi"></div>
+            <div class="tracker" id="tr-frontheben-mi"></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="day-do" class="day-panel">
+      <div class="day-card-header upper">
+        <div class="dch-icon">💪</div>
+        <div>
+          <div class="dch-title">Donnerstag · Armfokus</div>
+          <div class="dch-desc">Kurze Einheit fuer Bizeps und Unterarmkraft. Spannung halten, Schwung vermeiden.</div>
+          <div class="dch-badge">2 Tracker</div>
+        </div>
+      </div>
+      <div class="block-title">Uebungen</div>
+      <div class="ex-grid">
+        <article class="ex-card">
+          <button class="ex-header" type="button" aria-expanded="false" aria-controls="ex-body-bizeps-do">
+            <div class="ex-icon">💥</div>
+            <div class="ex-meta">
+              <div class="ex-name">Bizepscurls und Hammer Curls</div>
+              <div class="ex-tags">
+                <span class="tag reps">Arme</span>
+                <span class="tag sets">3 Saetze</span>
+                <span class="tag equip">Kurzhantel</span>
+              </div>
+            </div>
+            <div class="ex-toggle" aria-hidden="true">+</div>
+          </button>
+          <div class="ex-body" id="ex-body-bizeps-do" hidden>
+            <ol class="ex-steps">
+              <li>Ellbogen ruhig am Koerper halten.</li>
+              <li>In der negativen Phase besonders langsam arbeiten.</li>
+            </ol>
+            <div class="tracker" id="tr-bizeps-do"></div>
+            <div class="tracker" id="tr-hammer-do"></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="day-fr" class="day-panel">
+      <div class="day-card-header full">
+        <div class="dch-icon">🔥</div>
+        <div>
+          <div class="dch-title">Freitag · Pull und Finish</div>
+          <div class="dch-desc">Ein gemischter Tag aus Ziehen, Core und Waden fuer einen runden Wochenabschluss.</div>
+          <div class="dch-badge">4 Tracker</div>
+        </div>
+      </div>
+      <div class="block-title">Uebungen</div>
+      <div class="ex-grid">
+        <article class="ex-card">
+          <button class="ex-header" type="button" aria-expanded="false" aria-controls="ex-body-liegezuege-fr">
+            <div class="ex-icon">🪝</div>
+            <div class="ex-meta">
+              <div class="ex-name">Liegezuege Untergriff und Rudern</div>
+              <div class="ex-tags">
+                <span class="tag reps">Pull</span>
+                <span class="tag equip">Hantel</span>
+                <span class="tag medium">mittel</span>
+              </div>
+            </div>
+            <div class="ex-toggle" aria-hidden="true">+</div>
+          </button>
+          <div class="ex-body" id="ex-body-liegezuege-fr" hidden>
+            <ol class="ex-steps">
+              <li>Untergriff fuer Bizeps-Beteiligung, aber weiter aus dem Ruecken ziehen.</li>
+              <li>Beim einarmigen Rudern den Oberkoerper stabil halten.</li>
+            </ol>
+            <div class="tracker" id="tr-liegezuege-fr"></div>
+            <div class="tracker" id="tr-rudern-fr"></div>
+          </div>
+        </article>
+
+        <article class="ex-card">
+          <button class="ex-header" type="button" aria-expanded="false" aria-controls="ex-body-knieheben-fr">
+            <div class="ex-icon">🧍</div>
+            <div class="ex-meta">
+              <div class="ex-name">Knieheben und Wadenheben</div>
+              <div class="ex-tags">
+                <span class="tag reps">Finish</span>
+                <span class="tag sets">3 Saetze</span>
+                <span class="tag kniefrei">schonend</span>
+              </div>
+            </div>
+            <div class="ex-toggle" aria-hidden="true">+</div>
+          </button>
+          <div class="ex-body" id="ex-body-knieheben-fr" hidden>
+            <ol class="ex-steps">
+              <li>Knieheben langsam und ohne Schwung.</li>
+              <li>Wadenheben mit vollem Bewegungsweg und kurzer Pause oben.</li>
+            </ol>
+            <div class="tracker" id="tr-knieheben-fr"></div>
+            <div class="tracker" id="tr-waden-fr"></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="day-sa" class="day-panel">
+      <div class="day-card-header rest-h">
+        <div class="dch-icon">🌿</div>
+        <div>
+          <div class="dch-title">Samstag · Erholung</div>
+          <div class="dch-desc">Spazieren, lockere Mobilitaet oder einfach regenerieren.</div>
+        </div>
+      </div>
+      <div class="final-note">
+        <h3>Aktive Pause</h3>
+        <p>10 bis 20 Minuten lockere Bewegung reichen. Ziel ist Erholung, nicht Leistung.</p>
+      </div>
+    </section>
+
+    <section id="day-so" class="day-panel">
+      <div class="day-card-header rest-h">
+        <div class="dch-icon">☀️</div>
+        <div>
+          <div class="dch-title">Sonntag · Lockerer Check-in</div>
+          <div class="dch-desc">Kurz auf den Wochenverlauf schauen und die naechste Woche vorbereiten.</div>
+        </div>
+      </div>
+      <div class="warning">
+        <div>!</div>
+        <div class="warning-text">Wenn eine Uebung uebers Wochenende noch nachwirkt, Montag mit weniger Volumen oder Tempo starten.</div>
+      </div>
+      <div class="final-note">
+        <h3>Wochenziel</h3>
+        <p>Wichtiger als Perfektion ist Regelmaessigkeit. Lieber jede Woche solide trainieren als einzelne harte Einheiten erzwingen.</p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    function showDay(day) {
+      document.querySelectorAll('.day-panel').forEach(d => {
+        d.classList.remove('active');
+        d.hidden = true;
+      });
+      document.querySelectorAll('.wday').forEach(w => {
+        w.classList.remove('active');
+        w.setAttribute('aria-pressed', 'false');
+      });
+      const panel = document.getElementById('day-' + day);
+      if (panel) {
+        panel.classList.add('active');
+        panel.hidden = false;
+      }
+      const map = {mo:0,di:1,mi:2,do:3,fr:4,sa:5,so:6};
+      const dayButtons = document.querySelectorAll('.wday');
+      if (map[day] !== undefined && dayButtons[map[day]]) {
+        dayButtons[map[day]].classList.add('active');
+        dayButtons[map[day]].setAttribute('aria-pressed', 'true');
+      }
+      const weekGrid = document.querySelector('.week-grid');
+      if (weekGrid) weekGrid.scrollIntoView({behavior:'smooth',block:'nearest'});
+    }
+
+    function toggleExercise(button) {
+      const card = button.closest('.ex-card');
+      const bodyId = button.getAttribute('aria-controls');
+      const body = bodyId ? document.getElementById(bodyId) : null;
+      const isOpen = card.classList.toggle('open');
+      button.setAttribute('aria-expanded', String(isOpen));
+      if (body) {
+        body.hidden = !isOpen;
+      }
+    }
+
+    const TRACKERS = [
+      { id:'tr-liegezuege-mo', label:'Liegezuege (Mo)', sets:3, defaultReps:[4,4,4], defaultKg:[0,0,0], showKg:false, goal:'3 x 8-10', goalReps:8 },
+      { id:'tr-rudern-mo', label:'Rudern Langhantel (Mo)', sets:3, defaultReps:[0,0,0], defaultKg:[0,0,0], showKg:true, kgLabel:'kg', goal:'3 x 12', goalReps:12 },
+      { id:'tr-bizeps-mo', label:'Bizepscurls (Mo)', sets:3, defaultReps:[0,0,0], defaultKg:[0,0,0], showKg:true, kgLabel:'kg', goal:'3 x 12', goalReps:12 },
+      { id:'tr-schulter-mo', label:'Schulterdruecken (Mo)', sets:3, defaultReps:[0,0,0], defaultKg:[0,0,0], showKg:true, kgLabel:'kg', goal:'3 x 12', goalReps:12 },
+      { id:'tr-seitheben-mo', label:'Seitheben (Mo)', sets:3, defaultReps:[0,0,0], defaultKg:[4,4,4], showKg:true, kgLabel:'kg', goal:'3 x 15 mit 4 kg', goalReps:15 },
+      { id:'tr-trizeps-mo', label:'Trizeps (Mo)', sets:3, defaultReps:[12,12,12], defaultKg:[0,0,0], showKg:true, kgLabel:'kg', goal:'3 x 15', goalReps:15 },
+      { id:'tr-knieheben-di', label:'Knieheben (Di)', sets:3, defaultReps:[6,5,5], defaultKg:[0,0,0], showKg:false, goal:'3 x 12', goalReps:12 },
+      { id:'tr-beinheben-di', label:'Beinheben gestreckt (Di)', sets:3, defaultReps:[6,0,0], defaultKg:[0,0,0], showKg:false, goal:'3 x 10', goalReps:10 },
+      { id:'tr-seitrotation-di', label:'Seitrotation (Di)', sets:3, defaultReps:[0,0,0], defaultKg:[0,0,0], showKg:false, goal:'3 x 8 je Seite', goalReps:8 },
+      { id:'tr-glutebridge-mi', label:'Glute Bridge (Mi)', sets:3, defaultReps:[0,0,0], defaultKg:[0,0,0], showKg:true, kgLabel:'kg', goal:'3 x 15', goalReps:15 },
+      { id:'tr-beinheben-mi', label:'Seitl. Beinheben (Mi)', sets:3, defaultReps:[0,0,0], defaultKg:[0,0,0], showKg:false, goal:'3 x 15', goalReps:15 },
+      { id:'tr-birddog-mi', label:'Bird Dog (Mi)', sets:3, defaultReps:[0,0,0], defaultKg:[0,0,0], showKg:false, goal:'3 x 10 je Seite', goalReps:10 },
+      { id:'tr-schulter-mi', label:'Schulterdruecken sitzend (Mi)', sets:3, defaultReps:[0,0,0], defaultKg:[0,0,0], showKg:true, kgLabel:'kg', goal:'3 x 12', goalReps:12 },
+      { id:'tr-frontheben-mi', label:'Frontheben (Mi)', sets:3, defaultReps:[0,0,0], defaultKg:[0,0,0], showKg:true, kgLabel:'kg', goal:'3 x 12', goalReps:12 },
+      { id:'tr-bizeps-do', label:'Bizepscurls (Do)', sets:3, defaultReps:[10,6,4], defaultKg:[0,0,0], showKg:true, kgLabel:'kg', goal:'3 x 12', goalReps:12 },
+      { id:'tr-hammer-do', label:'Hammer Curls (Do)', sets:3, defaultReps:[0,0,0], defaultKg:[0,0,0], showKg:true, kgLabel:'kg', goal:'3 x 10', goalReps:10 },
+      { id:'tr-liegezuege-fr', label:'Liegezuege Untergriff (Fr)', sets:3, defaultReps:[4,4,4], defaultKg:[0,0,0], showKg:false, goal:'3 x 10-12', goalReps:10 },
+      { id:'tr-rudern-fr', label:'Einarmiges Rudern (Fr)', sets:3, defaultReps:[0,0,0], defaultKg:[0,0,0], showKg:true, kgLabel:'kg', goal:'3 x 12 je Seite', goalReps:12 },
+      { id:'tr-knieheben-fr', label:'Knieheben (Fr)', sets:3, defaultReps:[0,0,0], defaultKg:[0,0,0], showKg:false, goal:'3 x 12', goalReps:12 },
+      { id:'tr-waden-fr', label:'Wadenheben (Fr)', sets:3, defaultReps:[0,0,0], defaultKg:[0,0,0], showKg:false, goal:'3 x 20', goalReps:20 }
+    ];
+
+    function storageKey(id) { return 'tracker_' + id; }
+    function historyKey(id) { return 'history_' + id; }
+    function loadData(id) { try { return JSON.parse(localStorage.getItem(storageKey(id))) || null; } catch(e) { return null; } }
+    function saveData(id, data) { try { localStorage.setItem(storageKey(id), JSON.stringify(data)); } catch(e) {} }
+    function loadHistory(id) { try { return JSON.parse(localStorage.getItem(historyKey(id))) || []; } catch(e) { return []; } }
+    function saveHistory(id, hist) { try { localStorage.setItem(historyKey(id), JSON.stringify(hist.slice(-8))); } catch(e) {} }
+    function clearData(id) { try { localStorage.removeItem(storageKey(id)); } catch(e) {} }
+    function clearHistory(id) { try { localStorage.removeItem(historyKey(id)); } catch(e) {} }
+
+    function buildTracker(cfg) {
+      const el = document.getElementById(cfg.id);
+      if (!el) return;
+
+      const saved = loadData(cfg.id);
+      const reps = saved ? saved.reps : cfg.defaultReps;
+      const kgs  = saved ? saved.kg   : cfg.defaultKg;
+      const hist = loadHistory(cfg.id);
+
+      const avgReps = reps.reduce((a,b) => a + (parseInt(b, 10) || 0), 0) / cfg.sets;
+      const pct = Math.min(100, Math.round((avgReps / cfg.goalReps) * 100));
+
+      let html = '<div class="tracker-title">Fortschritt · ' + cfg.label + '</div>';
+      html += '<div class="tracker-sets">';
+
+      for (let i = 0; i < cfg.sets; i++) {
+        html += '<div class="tracker-set"><div class="tracker-set-label">Satz ' + (i + 1) + '</div><div class="tracker-inputs"><div class="tracker-field"><label>Wdh.</label><input type="number" min="0" max="99" id="' + cfg.id + '-reps-' + i + '" value="' + (reps[i] || '') + '" placeholder="-" data-input-kind="reps" data-tracker-id="' + cfg.id + '" data-set-idx="' + i + '"></div>';
+        if (cfg.showKg) {
+          html += '<div class="tracker-field"><label>' + (cfg.kgLabel || 'kg') + '</label><input type="number" min="0" max="200" step="0.5" id="' + cfg.id + '-kg-' + i + '" value="' + (kgs[i] || '') + '" placeholder="-" data-input-kind="kg" data-tracker-id="' + cfg.id + '" data-set-idx="' + i + '"></div>';
+        }
+        html += '</div></div>';
+      }
+
+      html += '</div>';
+
+      const savedNote = saved ? (saved.note || '') : '';
+      html += '<input class="tracker-note-input" type="text" id="' + cfg.id + '-note" placeholder="Notiz" value="' + savedNote.replace(/"/g, '&quot;') + '">';
+      html += '<div class="tracker-save"><button class="tracker-btn" type="button" data-save-tracker="' + cfg.id + '">Speichern</button><button class="tracker-btn secondary" type="button" data-clear-tracker="' + cfg.id + '">Loeschen</button><span class="tracker-saved-msg" id="' + cfg.id + '-msg" role="status" aria-live="polite">Gespeichert!</span><span style="font-size:11px;color:var(--muted);">Ziel: ' + cfg.goal + '</span></div>';
+      html += '<div class="tracker-progress-bar-wrap"><div class="tracker-progress-bar" style="width:' + pct + '%"></div></div>';
+      html += '<div class="tracker-progress-label"><span>Aktuell: Durchschnitt ' + Math.round(avgReps) + ' Wdh.</span><span>Ziel: ' + cfg.goalReps + ' Wdh. (' + pct + '%)</span></div>';
+
+      if (hist.length > 0) {
+        html += '<div class="tracker-history"><div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-top:8px;margin-bottom:4px;">Verlauf</div>';
+        [...hist].reverse().slice(0,4).forEach((h, reverseIdx) => {
+          const histIdx = hist.length - 1 - reverseIdx;
+          html += '<div class="tracker-hist-row"><span class="tracker-hist-date">' + h.date + '</span><span class="tracker-hist-vals">' + h.reps.map((r, i) => '<span>' + r + ((cfg.showKg && h.kg[i]) ? ' · ' + h.kg[i] + 'kg' : '') + '</span>').join('') + '</span>' + (h.note ? '<span style="font-style:italic;color:var(--muted);flex:1">' + h.note + '</span>' : '') + '<button class="tracker-hist-del" type="button" data-delete-history="' + cfg.id + '" data-history-index="' + histIdx + '" aria-label="Verlaufseintrag loeschen">×</button></div>';
+        });
+        html += '</div>';
+      }
+
+      el.innerHTML = html;
+
+      for (let i = 0; i < cfg.sets; i++) {
+        const inp = document.getElementById(cfg.id + '-reps-' + i);
+        if (inp && inp.value) inp.classList.add('filled');
+        if (cfg.showKg) {
+          const k = document.getElementById(cfg.id + '-kg-' + i);
+          if (k && k.value) k.classList.add('filled');
+        }
+      }
+    }
+
+    function onInput(id, setIdx, field) {
+      const inp = document.getElementById(id + '-' + field + '-' + setIdx);
+      if (inp) inp.classList.toggle('filled', inp.value !== '');
+    }
+
+    function saveTracker(id) {
+      const cfg = TRACKERS.find(t => t.id === id);
+      if (!cfg) return;
+
+      const reps = [];
+      const kg = [];
+
+      for (let i = 0; i < cfg.sets; i++) {
+        const r = document.getElementById(id + '-reps-' + i);
+        reps.push(r ? (parseInt(r.value, 10) || 0) : 0);
+        const k = document.getElementById(id + '-kg-' + i);
+        kg.push(k ? (parseFloat(k.value) || 0) : 0);
+      }
+
+      const noteEl = document.getElementById(id + '-note');
+      const note = noteEl ? noteEl.value.trim() : '';
+
+      saveData(id, { reps, kg, note });
+
+      const hist = loadHistory(id);
+      const today = new Date();
+      const dateStr = today.getDate() + '.' + (today.getMonth()+1) + '.' + String(today.getFullYear()).slice(2);
+      hist.push({ date:dateStr, reps, kg, note });
+      saveHistory(id, hist);
+
+      const msg = document.getElementById(id + '-msg');
+      if (msg) {
+        msg.classList.add('show');
+        setTimeout(() => msg.classList.remove('show'), 2000);
+      }
+
+      buildTracker(cfg);
+    }
+
+    function clearTracker(id) {
+      const cfg = TRACKERS.find(t => t.id === id);
+      if (!cfg) return;
+
+      const confirmed = window.confirm('Diesen Fortschritt und Verlauf wirklich loeschen?');
+      if (!confirmed) return;
+
+      clearData(id);
+      clearHistory(id);
+      buildTracker(cfg);
+    }
+
+    function deleteHistoryEntry(id, index) {
+      const cfg = TRACKERS.find(t => t.id === id);
+      if (!cfg) return;
+
+      const hist = loadHistory(id);
+      const histIndex = parseInt(index, 10);
+      if (Number.isNaN(histIndex) || histIndex < 0 || histIndex >= hist.length) return;
+
+      hist.splice(histIndex, 1);
+      saveHistory(id, hist);
+      buildTracker(cfg);
+    }
+
+    document.querySelectorAll('.wday').forEach(button => {
+      button.addEventListener('click', () => showDay(button.dataset.day));
+    });
+
+    document.querySelectorAll('.ex-header').forEach(button => {
+      button.addEventListener('click', () => toggleExercise(button));
+    });
+
+    document.addEventListener('input', event => {
+      const input = event.target.closest('input[data-input-kind]');
+      if (!input) return;
+      onInput(input.dataset.trackerId, input.dataset.setIdx, input.dataset.inputKind);
+    });
+
+    document.addEventListener('click', event => {
+      const saveButton = event.target.closest('[data-save-tracker]');
+      if (saveButton) {
+        saveTracker(saveButton.dataset.saveTracker);
+        return;
+      }
+
+      const clearButton = event.target.closest('[data-clear-tracker]');
+      if (clearButton) {
+        clearTracker(clearButton.dataset.clearTracker);
+        return;
+      }
+
+      const deleteHistoryButton = event.target.closest('[data-delete-history]');
+      if (!deleteHistoryButton) return;
+      deleteHistoryEntry(deleteHistoryButton.dataset.deleteHistory, deleteHistoryButton.dataset.historyIndex);
+    });
+
+    TRACKERS.forEach(cfg => buildTracker(cfg));
+    showDay('mo');
+  </script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('service-worker.js?v=7')
+          .then(function(reg) {
+            console.log('Service Worker registriert:', reg.scope);
+          })
+          .catch(function(err) {
+            console.error('Service Worker Fehler:', err);
+          });
+      });
+    }
+  </script>
+</body>
+</html>

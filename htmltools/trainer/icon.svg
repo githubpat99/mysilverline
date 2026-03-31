@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#0F1A14"/>
+  <rect x="48" y="48" width="416" height="416" rx="84" fill="#172010" stroke="#2A3D22" stroke-width="12"/>
+  <circle cx="256" cy="180" r="72" fill="#4A7C59"/>
+  <path d="M154 322c0-34 27-62 62-62h80c35 0 62 28 62 62v46H154z" fill="#8DB560"/>
+  <path d="M184 332h144v34H184z" fill="#D4A843"/>
+  <text x="256" y="394" text-anchor="middle" font-family="Arial, sans-serif" font-size="56" font-weight="700" fill="#F0EAD8">TR</text>
+</svg>

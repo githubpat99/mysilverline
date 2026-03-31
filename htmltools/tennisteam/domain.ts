@@ -22,6 +22,8 @@ export type ScheduleDefaults = {
 export type TeamPlayer = {
   id: number;
   name: string;
+  licenseNumber?: string | null;
+  classification?: string | null;
 };
 
 export type PlayerResponse = {

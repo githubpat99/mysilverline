@@ -435,6 +435,8 @@ function fetchResponsesForSession(PDO $pdo, int $teamId, int $sessionId): array
         "SELECT
             p.id AS player_id,
             p.name AS player_name,
+            p.license_number,
+            p.classification,
             p.sort_order,
             r.attendance_status,
             r.comment,
@@ -491,6 +493,12 @@ function serializePlayerRows(array $rows, ?int $currentPlayerId = null): array
         return [
             'id' => $playerId,
             'name' => $row['player_name'],
+            'license_number' => isset($row['license_number']) && $row['license_number'] !== '' && $row['license_number'] !== null
+                ? (string) $row['license_number']
+                : null,
+            'classification' => isset($row['classification']) && $row['classification'] !== '' && $row['classification'] !== null
+                ? (string) $row['classification']
+                : null,
             'sort_order' => (int) $row['sort_order'],
             'attendance_status' => $row['attendance_status'] ?: null,
             'comment' => $row['comment'] ?: null,
@@ -689,6 +697,45 @@ function trimName(string $value, int $maxLength = 120): string
     return substr($value, 0, $maxLength);
 }
 
+/** Schweizer Tennis: genau `999.99.999.9` oder leer. */
+function normalizePlayerLicenseNumber(?string $value): ?string
+{
+    if ($value === null) {
+        return null;
+    }
+
+    $v = trim($value);
+    if ($v === '') {
+        return null;
+    }
+
+    if (!preg_match('/^\d{3}\.\d{2}\.\d{3}\.\d{1}$/', $v)) {
+        throw new InvalidArgumentException('Lizenz-Nr. im Format 999.99.999.9 (z. B. 123.45.678.9).');
+    }
+
+    return $v;
+}
+
+/** N1–N4 oder R1–R9, oder leer. */
+function normalizePlayerClassification(?string $value): ?string
+{
+    if ($value === null) {
+        return null;
+    }
+
+    $v = strtoupper(trim($value));
+    if ($v === '') {
+        return null;
+    }
+
+    static $allowed = ['N1', 'N2', 'N3', 'N4', 'R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7', 'R8', 'R9'];
+    if (!in_array($v, $allowed, true)) {
+        throw new InvalidArgumentException('Klassierung: N1–N4 oder R1–R9.');
+    }
+
+    return $v;
+}
+
 function generateSecureToken(int $bytes = 32): string
 {
     return bin2hex(random_bytes($bytes));
@@ -699,7 +746,7 @@ function fetchPlayersForTeamRoster(PDO $pdo, int $teamId): array
     $playersTable = tnTable('players');
 
     $stmt = $pdo->prepare(
-        "SELECT id, team_id, name, sort_order, player_token, is_active
+        "SELECT id, team_id, name, license_number, classification, sort_order, player_token, is_active
         FROM {$playersTable}
         WHERE team_id = :team_id
         ORDER BY sort_order ASC, name ASC"
@@ -714,7 +761,7 @@ function fetchPlayerForTeam(PDO $pdo, int $teamId, int $playerId): ?array
     $playersTable = tnTable('players');
 
     $stmt = $pdo->prepare(
-        "SELECT id, team_id, name, sort_order, player_token, is_active
+        "SELECT id, team_id, name, license_number, classification, sort_order, player_token, is_active
         FROM {$playersTable}
         WHERE id = :player_id
           AND team_id = :team_id
@@ -736,6 +783,12 @@ function serializeAdminPlayers(array $rows): array
             'id' => (int) $row['id'],
             'team_id' => (int) $row['team_id'],
             'name' => $row['name'],
+            'license_number' => isset($row['license_number']) && $row['license_number'] !== '' && $row['license_number'] !== null
+                ? (string) $row['license_number']
+                : null,
+            'classification' => isset($row['classification']) && $row['classification'] !== '' && $row['classification'] !== null
+                ? (string) $row['classification']
+                : null,
             'sort_order' => (int) $row['sort_order'],
             'player_token' => $row['player_token'],
             'is_active' => (bool) $row['is_active'],
@@ -1179,19 +1232,25 @@ function savePlayer(
     string $name,
     int $sortOrder,
     bool $isActive,
-    bool $regenerateToken = false
+    bool $regenerateToken = false,
+    ?string $licenseNumber = null,
+    ?string $classification = null
 ): int {
     $playersTable = tnTable('players');
     $token = generateSecureToken();
+    $licenseNorm = normalizePlayerLicenseNumber($licenseNumber);
+    $classNorm = normalizePlayerClassification($classification);
 
     if ($playerId === null) {
         $stmt = $pdo->prepare(
-            "INSERT INTO {$playersTable} (team_id, name, sort_order, player_token, is_active)
-            VALUES (:team_id, :name, :sort_order, :player_token, :is_active)"
+            "INSERT INTO {$playersTable} (team_id, name, license_number, classification, sort_order, player_token, is_active)
+            VALUES (:team_id, :name, :license_number, :classification, :sort_order, :player_token, :is_active)"
         );
         $stmt->execute([
             'team_id' => $teamId,
             'name' => trimName($name, 120),
+            'license_number' => $licenseNorm,
+            'classification' => $classNorm,
             'sort_order' => $sortOrder,
             'player_token' => $token,
             'is_active' => $isActive ? 1 : 0,
@@ -1202,6 +1261,8 @@ function savePlayer(
 
     $sql = "UPDATE {$playersTable}
         SET name = :name,
+            license_number = :license_number,
+            classification = :classification,
             sort_order = :sort_order,
             is_active = :is_active";
 
@@ -1209,6 +1270,8 @@ function savePlayer(
         'player_id' => $playerId,
         'team_id' => $teamId,
         'name' => trimName($name, 120),
+        'license_number' => $licenseNorm,
+        'classification' => $classNorm,
         'sort_order' => $sortOrder,
         'is_active' => $isActive ? 1 : 0,
     ];
@@ -1245,6 +1308,30 @@ function deletePlayer(PDO $pdo, int $teamId, int $playerId): void
 
     if ($stmt->rowCount() < 1) {
         throw new RuntimeException('Player not found.');
+    }
+}
+
+function deleteSessionForTeam(PDO $pdo, int $teamId, int $sessionId): void
+{
+    $session = fetchSessionForTeam($pdo, $teamId, $sessionId);
+    if ($session === null) {
+        throw new RuntimeException('Session not found.');
+    }
+
+    $sessionsTable = tnTable('sessions');
+
+    $stmt = $pdo->prepare(
+        "DELETE FROM {$sessionsTable}
+        WHERE id = :session_id
+          AND team_id = :team_id"
+    );
+    $stmt->execute([
+        'session_id' => $sessionId,
+        'team_id' => $teamId,
+    ]);
+
+    if ($stmt->rowCount() < 1) {
+        throw new RuntimeException('Session not found.');
     }
 }
 

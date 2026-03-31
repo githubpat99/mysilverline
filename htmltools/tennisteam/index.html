@@ -399,6 +399,12 @@
       font-style: italic;
     }
 
+    .player-meta {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
     .pill {
       display: inline-flex;
       align-items: center;
@@ -711,6 +717,13 @@
       errorBoxEl.classList.add("hidden");
     }
 
+    function escapeHtml(str) {
+      return String(str ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/"/g, "&quot;");
+    }
+
     function updateScrollTopVisibility() {
       scrollTopBtnEl.classList.toggle("hidden", window.scrollY < 320);
     }
@@ -811,9 +824,14 @@
         const left = document.createElement("div");
         const commentText = player.comment || "Noch kein Kommentar";
         const commentClass = player.comment ? "player-comment" : "player-comment empty";
+        const metaBits = [];
+        if (player.license_number) metaBits.push("Liz. " + escapeHtml(player.license_number));
+        if (player.classification) metaBits.push(escapeHtml(player.classification));
+        const metaHtml = metaBits.length ? '<div class="player-meta">' + metaBits.join(" · ") + "</div>" : "";
         left.innerHTML =
-          '<div class="player-name">' + player.name + '</div>' +
-          '<div class="' + commentClass + '">' + commentText + '</div>';
+          '<div class="player-name">' + escapeHtml(player.name) + "</div>" +
+          metaHtml +
+          '<div class="' + commentClass + '">' + escapeHtml(commentText) + "</div>";
 
         const pill = document.createElement("div");
         const state = player.attendance_status || "none";

@@ -14,6 +14,8 @@ CREATE TABLE wp_1340630_tt_players (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     team_id INT UNSIGNED NOT NULL,
     name VARCHAR(120) NOT NULL,
+    license_number VARCHAR(12) DEFAULT NULL,
+    classification VARCHAR(2) DEFAULT NULL,
     sort_order SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     player_token CHAR(64) NOT NULL,
     is_active TINYINT(1) NOT NULL DEFAULT 1,

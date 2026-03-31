@@ -76,6 +76,7 @@ Technische Richtung:
 - `doc/anleitung/tools-silverline-snippet.html`: Tools-Uebersicht (Trainer + Tennisteam) fuer WordPress, Link zu `/tennisteam/`
 - `sql/schema.sql`: Datenbankschema fuer `MariaDB`
 - `sql/migrate_add_seasons.sql`: einmalige Migration fuer bestehende Live-Datenbank
+- `sql/migrate_add_player_license_classification.sql`: Lizenz-Nr. und Klassierung auf `players`
 - `sql/seed_example.sql`: Beispiel-Daten fuer lokalen Start
 - `sql/generate_season_sessions.sql`: erzeugt Wochen-Termine fuer aktive Saisons
 - `script/neuesteam/neuesteam.ps1`: erzeugt SQL + Mailtext fuer neue Teams

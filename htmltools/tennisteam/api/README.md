@@ -10,6 +10,7 @@ Diese API ist als leichtgewichtige `PHP`-JSON-API fuer klassisches Hosting gedac
 - `GET api/admin/dashboard.php?token=...`
 - `GET api/admin/session.php?token=...`
 - `POST api/admin/session-update.php`
+- `POST api/admin/session-delete.php`
 - `POST api/admin/team-save.php`
 - `POST api/admin/season-save.php`
 - `POST api/admin/player-save.php`

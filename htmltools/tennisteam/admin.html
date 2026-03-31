@@ -721,6 +721,7 @@
           </div>
           <div class="actions">
             <button id="session-save-btn" class="primary-btn" type="button">Termin speichern</button>
+            <button id="session-delete-btn" class="secondary-btn" type="button" disabled>Termin loeschen</button>
             <span id="session-save-msg" class="muted-text"></span>
           </div>
         </div>
@@ -738,6 +739,31 @@
             <input id="new-player-name" type="text" placeholder="Name">
             <input id="new-player-order" type="number" min="1" step="1" placeholder="Reihenfolge">
             <button id="new-player-btn" class="primary-btn" type="button">Spieler anlegen</button>
+          </div>
+          <div class="grid-2" style="margin-top:10px;">
+            <div>
+              <div class="field-label">Lizenz-Nr. (optional, 999.99.999.9)</div>
+              <input id="new-player-license" type="text" placeholder="999.99.999.9" autocomplete="off">
+            </div>
+            <div>
+              <div class="field-label">Klassierung</div>
+              <select id="new-player-classification">
+                <option value="">—</option>
+                <option value="N1">N1</option>
+                <option value="N2">N2</option>
+                <option value="N3">N3</option>
+                <option value="N4">N4</option>
+                <option value="R1">R1</option>
+                <option value="R2">R2</option>
+                <option value="R3">R3</option>
+                <option value="R4">R4</option>
+                <option value="R5">R5</option>
+                <option value="R6">R6</option>
+                <option value="R7">R7</option>
+                <option value="R8">R8</option>
+                <option value="R9">R9</option>
+              </select>
+            </div>
           </div>
           <span id="player-save-msg" class="muted-text"></span>
         </div>
@@ -838,6 +864,7 @@
     const sessionDurationOpenEndedInputEl = document.getElementById("session-duration-open-ended-input");
     const sessionDescriptionInputEl = document.getElementById("session-description-input");
     const sessionSaveBtnEl = document.getElementById("session-save-btn");
+    const sessionDeleteBtnEl = document.getElementById("session-delete-btn");
     const sessionSaveMsgEl = document.getElementById("session-save-msg");
     const seasonNameInputEl = document.getElementById("season-name-input");
     const seasonTypeInputEl = document.getElementById("season-type-input");
@@ -859,6 +886,8 @@
     const rosterListEl = document.getElementById("roster-list");
     const newPlayerNameEl = document.getElementById("new-player-name");
     const newPlayerOrderEl = document.getElementById("new-player-order");
+    const newPlayerLicenseEl = document.getElementById("new-player-license");
+    const newPlayerClassificationEl = document.getElementById("new-player-classification");
     const newPlayerBtnEl = document.getElementById("new-player-btn");
     const playerSaveMsgEl = document.getElementById("player-save-msg");
     const scrollTopBtnEl = document.getElementById("scroll-top-btn");
@@ -913,6 +942,15 @@
         .replaceAll(">", "&gt;")
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#39;");
+    }
+
+    const CLASSIFICATION_VALUES = ["", "N1", "N2", "N3", "N4", "R1", "R2", "R3", "R4", "R5", "R6", "R7", "R8", "R9"];
+
+    function classificationOptionsHtml(selected) {
+      return CLASSIFICATION_VALUES.map((v) => {
+        const label = v === "" ? "—" : v;
+        return '<option value="' + v + '"' + (v === selected ? " selected" : "") + ">" + label + "</option>";
+      }).join("");
     }
 
     function formatDate(value) {
@@ -1091,8 +1129,11 @@
         updateSessionDurationInputState();
         sessionDescriptionInputEl.value = "";
         setSelectedSessionStatus(null);
+        sessionDeleteBtnEl.disabled = true;
         return;
       }
+
+      sessionDeleteBtnEl.disabled = false;
 
       selectedSessionTitleEl.textContent = formatDate(session.session_date) + (session.start_time ? " · " + formatTimeValue(session.start_time) : "");
       sessionDateInputEl.value = formatDateForInput(session.session_date || "");
@@ -1147,8 +1188,10 @@
         const currentStatus = player.attendance_status || "none";
         const head = document.createElement("div");
         head.className = "response-row-head";
+        const lic = player.license_number ? ' · Liz. ' + escapeHtml(player.license_number) : '';
+        const cl = player.classification ? ' · ' + escapeHtml(player.classification) : '';
         head.innerHTML =
-          '<div><div class="list-title">' + escapeHtml(player.name) + '</div><div class="list-subtitle">Aktuell: ' + escapeHtml(playerStatusLabels[currentStatus] || playerStatusLabels.none) + '</div></div>' +
+          '<div><div class="list-title">' + escapeHtml(player.name) + '</div><div class="list-subtitle">Aktuell: ' + escapeHtml(playerStatusLabels[currentStatus] || playerStatusLabels.none) + lic + cl + '</div></div>' +
           '<div class="pill ' + currentStatus + '">' + escapeHtml(playerStatusLabels[currentStatus] || playerStatusLabels.none) + '</div>';
 
         const actions = document.createElement("div");
@@ -1244,6 +1287,10 @@
             '<div><div class="field-label">Name</div><input data-field="name" type="text" value="' + escapeHtml(player.name) + '"></div>' +
             '<div><div class="field-label">Reihenfolge</div><input data-field="sort_order" type="number" min="1" step="1" value="' + player.sort_order + '"></div>' +
           '</div>' +
+          '<div class="grid-2">' +
+            '<div><div class="field-label">Lizenz-Nr. (999.99.999.9)</div><input data-field="license_number" type="text" placeholder="999.99.999.9" value="' + escapeHtml(player.license_number || "") + '"></div>' +
+            '<div><div class="field-label">Klassierung</div><select data-field="classification">' + classificationOptionsHtml(player.classification || "") + '</select></div>' +
+          '</div>' +
           '<label class="inline-check"><input data-field="is_active" type="checkbox"' + (player.is_active ? " checked" : "") + '> Aktiv</label>' +
           '<div><div class="field-label">Spieler-Token</div><div class="copy-row"><input type="text" value="' + escapeHtml(player.player_token) + '" readonly><button data-action="copy-token" class="secondary-btn" type="button">Token kopieren</button></div></div>' +
           '<div><div class="field-label">Spieler-Link</div><div class="copy-row"><input type="text" value="' + escapeHtml(buildPlayerLink(player.player_token)) + '" readonly><button data-action="copy-link" class="secondary-btn" type="button">Link kopieren</button></div></div>' +
@@ -1255,7 +1302,23 @@
 
         const nameInput = wrapper.querySelector('[data-field="name"]');
         const orderInput = wrapper.querySelector('[data-field="sort_order"]');
+        const licenseInput = wrapper.querySelector('[data-field="license_number"]');
+        const classificationInput = wrapper.querySelector('[data-field="classification"]');
         const activeInput = wrapper.querySelector('[data-field="is_active"]');
+
+        function playerPayload(extra) {
+          return Object.assign(
+            {
+              player_id: player.id,
+              name: nameInput.value.trim(),
+              sort_order: Number(orderInput.value),
+              is_active: activeInput.checked,
+              license_number: licenseInput.value.trim(),
+              classification: classificationInput.value.trim()
+            },
+            extra || {}
+          );
+        }
 
         wrapper.querySelector('[data-action="copy-token"]').addEventListener("click", () => {
           copyText(player.player_token, "Token");
@@ -1264,22 +1327,10 @@
           copyText(buildPlayerLink(player.player_token), "Spieler-Link");
         });
         wrapper.querySelector('[data-action="save-player"]').addEventListener("click", () => {
-          savePlayer({
-            player_id: player.id,
-            name: nameInput.value.trim(),
-            sort_order: Number(orderInput.value),
-            is_active: activeInput.checked,
-            regenerate_token: false
-          });
+          savePlayer(playerPayload({ regenerate_token: false }));
         });
         wrapper.querySelector('[data-action="regen-token"]').addEventListener("click", () => {
-          savePlayer({
-            player_id: player.id,
-            name: nameInput.value.trim(),
-            sort_order: Number(orderInput.value),
-            is_active: activeInput.checked,
-            regenerate_token: true
-          });
+          savePlayer(playerPayload({ regenerate_token: true }));
         });
         wrapper.querySelector('[data-action="delete-player"]').addEventListener("click", () => {
           deletePlayerAction(player.id, player.name);
@@ -1475,6 +1526,53 @@
       }
     }
 
+    async function deleteSession() {
+      clearError();
+      if (!selectedSessionId) {
+        showError("Bitte zuerst einen Termin waehlen.");
+        return;
+      }
+
+      const confirmed = window.confirm(
+        "Diesen Termin inklusive aller Spielerantworten endgueltig loeschen?"
+      );
+      if (!confirmed) {
+        return;
+      }
+
+      sessionDeleteBtnEl.disabled = true;
+      sessionSaveBtnEl.disabled = true;
+      sessionSaveMsgEl.textContent = "Loesche...";
+
+      try {
+        const response = await fetch("api/admin/session-delete.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            token: adminToken,
+            session_id: selectedSessionId
+          })
+        });
+        const result = await response.json();
+        if (!response.ok || !result.success) {
+          throw new Error(result.error || "Termin konnte nicht geloescht werden.");
+        }
+
+        sessionSaveMsgEl.textContent = "Geloescht.";
+        showSuccess("Termin geloescht.");
+        selectedSessionId = null;
+        updateUrl();
+        await loadDashboard();
+        sessionSaveMsgEl.textContent = "Geloescht.";
+      } catch (error) {
+        sessionSaveMsgEl.textContent = "";
+        showError(error.message || "Termin konnte nicht geloescht werden.");
+      } finally {
+        sessionSaveBtnEl.disabled = false;
+        sessionDeleteBtnEl.disabled = !selectedSessionId;
+      }
+    }
+
     async function saveSelectedPlayerResponse(playerId, status) {
       clearError();
       if (!selectedSessionId) {
@@ -1651,6 +1749,8 @@
         showSuccess("Spieler gespeichert.");
         newPlayerNameEl.value = "";
         newPlayerOrderEl.value = "";
+        newPlayerLicenseEl.value = "";
+        newPlayerClassificationEl.value = "";
         await loadDashboard();
       } catch (error) {
         playerSaveMsgEl.textContent = "";
@@ -1693,6 +1793,7 @@
 
     teamSaveBtnEl.addEventListener("click", saveTeam);
     sessionSaveBtnEl.addEventListener("click", saveSession);
+    sessionDeleteBtnEl.addEventListener("click", deleteSession);
     seasonSaveBtnEl.addEventListener("click", saveSeason);
     seasonNewBtnEl.addEventListener("click", () => {
       selectedSeasonId = null;
@@ -1705,7 +1806,9 @@
         name: newPlayerNameEl.value.trim(),
         sort_order: Number(newPlayerOrderEl.value),
         is_active: true,
-        regenerate_token: false
+        regenerate_token: false,
+        license_number: newPlayerLicenseEl.value.trim(),
+        classification: newPlayerClassificationEl.value.trim()
       });
     });
     tokenBtnEl.addEventListener("click", () => {

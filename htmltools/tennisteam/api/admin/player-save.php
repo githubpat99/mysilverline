@@ -13,6 +13,8 @@ $name = isset($body['name']) ? trim((string) $body['name']) : '';
 $sortOrder = isset($body['sort_order']) ? (int) $body['sort_order'] : 0;
 $isActive = (bool) ($body['is_active'] ?? true);
 $regenerateToken = (bool) ($body['regenerate_token'] ?? false);
+$licenseNumber = isset($body['license_number']) && is_string($body['license_number']) ? $body['license_number'] : null;
+$classification = isset($body['classification']) && is_string($body['classification']) ? $body['classification'] : null;
 
 if ($token === '') {
     jsonResponse([
@@ -47,7 +49,9 @@ try {
         $name,
         $sortOrder,
         $isActive,
-        $regenerateToken
+        $regenerateToken,
+        $licenseNumber,
+        $classification
     );
 
     $roster = serializeAdminPlayers(fetchPlayersForTeamRoster($pdo, $teamId));
@@ -66,6 +70,11 @@ try {
             'roster' => $roster,
         ],
     ]);
+} catch (InvalidArgumentException $exception) {
+    jsonResponse([
+        'success' => false,
+        'error' => $exception->getMessage(),
+    ], 400);
 } catch (Throwable $exception) {
     jsonResponse(
         debugErrorPayload($exception, 'Unable to save player.'),

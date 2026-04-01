@@ -426,10 +426,235 @@ function fetchPublishedSessionsForSeason(PDO $pdo, int $teamId, int $seasonId): 
     return $stmt->fetchAll();
 }
 
+function seasonAccessDeniedForSeasonMessage(): string
+{
+    return 'Du hast fuer diese Saison keinen Zugang.';
+}
+
+function seasonAccessDeniedNoVisibleSeasonMessage(): string
+{
+    return 'Du hast fuer keine Saison Zugang.';
+}
+
+function isPlayerExcludedFromSeason(PDO $pdo, int $teamId, int $seasonId, int $playerId): bool
+{
+    if ($seasonId <= 0) {
+        return false;
+    }
+
+    $season = fetchSeasonForTeam($pdo, $teamId, $seasonId);
+    if ($season === null) {
+        return false;
+    }
+
+    $table = tnTable('season_player_exclusions');
+    $stmt = $pdo->prepare(
+        "SELECT 1 FROM {$table} WHERE season_id = :season_id AND player_id = :player_id LIMIT 1"
+    );
+    $stmt->execute([
+        'season_id' => $seasonId,
+        'player_id' => $playerId,
+    ]);
+
+    return $stmt->fetch() !== false;
+}
+
+function filterSeasonsForPlayer(PDO $pdo, int $teamId, int $playerId, array $seasons): array
+{
+    $visible = [];
+    foreach ($seasons as $season) {
+        if (!isPlayerExcludedFromSeason($pdo, $teamId, (int) $season['id'], $playerId)) {
+            $visible[] = $season;
+        }
+    }
+
+    return $visible;
+}
+
+function pickDefaultSeasonFromCandidates(array $seasons): ?array
+{
+    if ($seasons === []) {
+        return null;
+    }
+
+    $today = (new DateTimeImmutable('today'))->format('Y-m-d');
+
+    $activeInRange = null;
+    foreach ($seasons as $s) {
+        if (!(int) $s['is_active']) {
+            continue;
+        }
+        if ($today >= $s['start_date'] && $today <= $s['end_date']) {
+            if ($activeInRange === null || $s['start_date'] > $activeInRange['start_date']) {
+                $activeInRange = $s;
+            }
+        }
+    }
+    if ($activeInRange !== null) {
+        return $activeInRange;
+    }
+
+    $future = null;
+    foreach ($seasons as $s) {
+        if (!(int) $s['is_active']) {
+            continue;
+        }
+        if ($s['start_date'] > $today) {
+            if ($future === null || $s['start_date'] < $future['start_date']) {
+                $future = $s;
+            }
+        }
+    }
+    if ($future !== null) {
+        return $future;
+    }
+
+    $past = null;
+    foreach ($seasons as $s) {
+        if ($past === null || $s['end_date'] > $past['end_date']) {
+            $past = $s;
+        }
+    }
+
+    return $past;
+}
+
+function fetchSeasonExcludedPlayerIds(PDO $pdo, int $teamId, int $seasonId): array
+{
+    $season = fetchSeasonForTeam($pdo, $teamId, $seasonId);
+    if ($season === null) {
+        return [];
+    }
+
+    $table = tnTable('season_player_exclusions');
+    $playersTable = tnTable('players');
+    $stmt = $pdo->prepare(
+        "SELECT e.player_id
+        FROM {$table} e
+        INNER JOIN {$playersTable} p ON p.id = e.player_id AND p.team_id = :team_id
+        WHERE e.season_id = :season_id
+        ORDER BY e.player_id ASC"
+    );
+    $stmt->execute(['team_id' => $teamId, 'season_id' => $seasonId]);
+
+    return array_map(static function (array $row): int {
+        return (int) $row['player_id'];
+    }, $stmt->fetchAll());
+}
+
+function validatePlayerIdsBelongToTeam(PDO $pdo, int $teamId, array $playerIds): void
+{
+    $clean = [];
+    foreach ($playerIds as $id) {
+        $i = (int) $id;
+        if ($i > 0) {
+            $clean[] = $i;
+        }
+    }
+    $clean = array_values(array_unique($clean));
+
+    if ($clean === []) {
+        return;
+    }
+
+    $playersTable = tnTable('players');
+    $placeholders = implode(',', array_fill(0, count($clean), '?'));
+    $stmt = $pdo->prepare(
+        "SELECT COUNT(*) FROM {$playersTable} WHERE team_id = ? AND id IN ({$placeholders})"
+    );
+    $stmt->execute(array_merge([$teamId], $clean));
+    if ((int) $stmt->fetchColumn() !== count($clean)) {
+        throw new InvalidArgumentException('Invalid player selection for this team.');
+    }
+}
+
+function setSeasonExcludedPlayerIds(PDO $pdo, int $teamId, int $seasonId, array $playerIds): void
+{
+    $season = fetchSeasonForTeam($pdo, $teamId, $seasonId);
+    if ($season === null) {
+        throw new InvalidArgumentException('Season not found.');
+    }
+
+    $normalized = [];
+    foreach ($playerIds as $id) {
+        $i = (int) $id;
+        if ($i > 0) {
+            $normalized[] = $i;
+        }
+    }
+    $normalized = array_values(array_unique($normalized));
+
+    validatePlayerIdsBelongToTeam($pdo, $teamId, $normalized);
+
+    $table = tnTable('season_player_exclusions');
+    $del = $pdo->prepare("DELETE FROM {$table} WHERE season_id = :season_id");
+    $del->execute(['season_id' => $seasonId]);
+
+    if ($normalized === []) {
+        return;
+    }
+
+    $ins = $pdo->prepare(
+        "INSERT INTO {$table} (season_id, player_id) VALUES (:season_id, :player_id)"
+    );
+    foreach ($normalized as $pid) {
+        $ins->execute(['season_id' => $seasonId, 'player_id' => $pid]);
+    }
+}
+
+function fetchPublishedNextSessionForPlayer(PDO $pdo, int $teamId, int $playerId): ?array
+{
+    $sessionsTable = tnTable('sessions');
+    $exclusionsTable = tnTable('season_player_exclusions');
+
+    $stmt = $pdo->prepare(
+        "SELECT s.id, s.team_id, s.season_id, s.session_date, s.location, s.start_time, s.duration_minutes, s.description, s.status, s.admin_note
+        FROM {$sessionsTable} s
+        LEFT JOIN {$exclusionsTable} ex
+            ON ex.season_id = s.season_id
+           AND ex.player_id = :player_id
+        WHERE s.team_id = :team_id
+          AND s.session_date >= CURDATE()
+          AND (s.season_id IS NULL OR ex.player_id IS NULL)
+        ORDER BY s.session_date ASC
+        LIMIT 1"
+    );
+    $stmt->execute([
+        'team_id' => $teamId,
+        'player_id' => $playerId,
+    ]);
+    $session = $stmt->fetch();
+
+    if ($session !== false) {
+        return $session;
+    }
+
+    $fallbackStmt = $pdo->prepare(
+        "SELECT s.id, s.team_id, s.season_id, s.session_date, s.location, s.start_time, s.duration_minutes, s.description, s.status, s.admin_note
+        FROM {$sessionsTable} s
+        LEFT JOIN {$exclusionsTable} ex
+            ON ex.season_id = s.season_id
+           AND ex.player_id = :player_id
+        WHERE s.team_id = :team_id
+          AND (s.season_id IS NULL OR ex.player_id IS NULL)
+        ORDER BY s.session_date DESC
+        LIMIT 1"
+    );
+    $fallbackStmt->execute([
+        'team_id' => $teamId,
+        'player_id' => $playerId,
+    ]);
+    $fallback = $fallbackStmt->fetch();
+
+    return $fallback === false ? null : $fallback;
+}
+
 function fetchResponsesForSession(PDO $pdo, int $teamId, int $sessionId): array
 {
     $playersTable = tnTable('players');
     $responsesTable = tnTable('responses');
+    $sessionsTable = tnTable('sessions');
+    $exclusionsTable = tnTable('season_player_exclusions');
 
     $stmt = $pdo->prepare(
         "SELECT
@@ -442,11 +667,18 @@ function fetchResponsesForSession(PDO $pdo, int $teamId, int $sessionId): array
             r.comment,
             r.updated_at
         FROM {$playersTable} p
+        INNER JOIN {$sessionsTable} s
+            ON s.id = :session_id
+           AND s.team_id = p.team_id
         LEFT JOIN {$responsesTable} r
             ON r.player_id = p.id
-           AND r.session_id = :session_id
+           AND r.session_id = s.id
+        LEFT JOIN {$exclusionsTable} ex
+            ON ex.season_id = s.season_id
+           AND ex.player_id = p.id
         WHERE p.team_id = :team_id
           AND p.is_active = 1
+          AND (s.season_id IS NULL OR ex.player_id IS NULL)
         ORDER BY p.sort_order ASC, p.name ASC"
     );
     $stmt->execute([

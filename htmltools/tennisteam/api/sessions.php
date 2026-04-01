@@ -27,25 +27,42 @@ try {
         ], 403);
     }
 
-    $seasons = fetchSeasonsForTeam($pdo, (int) $context['team_id']);
-    if ($seasons === []) {
+    $teamId = (int) $context['team_id'];
+    $playerId = (int) $context['player_id'];
+
+    $allSeasons = fetchSeasonsForTeam($pdo, $teamId);
+    if ($allSeasons === []) {
         jsonResponse([
             'success' => false,
             'error' => 'No seasons available for this team.',
         ], 404);
     }
 
+    $visibleSeasons = filterSeasonsForPlayer($pdo, $teamId, $playerId, $allSeasons);
+    if ($visibleSeasons === []) {
+        jsonResponse([
+            'success' => false,
+            'error' => seasonAccessDeniedNoVisibleSeasonMessage(),
+        ], 403);
+    }
+
     $season = null;
     if ($seasonId > 0) {
-        $season = fetchSeasonForTeam($pdo, (int) $context['team_id'], $seasonId);
-    }
-
-    if ($season === null) {
-        $season = fetchCurrentSeasonForTeam($pdo, (int) $context['team_id']);
-    }
-
-    if ($season === null && $seasons !== []) {
-        $season = $seasons[0];
+        $season = fetchSeasonForTeam($pdo, $teamId, $seasonId);
+        if ($season === null) {
+            jsonResponse([
+                'success' => false,
+                'error' => 'Season not found.',
+            ], 404);
+        }
+        if (isPlayerExcludedFromSeason($pdo, $teamId, $seasonId, $playerId)) {
+            jsonResponse([
+                'success' => false,
+                'error' => seasonAccessDeniedForSeasonMessage(),
+            ], 403);
+        }
+    } else {
+        $season = pickDefaultSeasonFromCandidates($visibleSeasons);
     }
 
     if ($season === null) {
@@ -55,16 +72,16 @@ try {
         ], 404);
     }
 
-    $sessions = fetchPublishedSessionsForSeason($pdo, (int) $context['team_id'], (int) $season['id']);
+    $sessions = fetchPublishedSessionsForSeason($pdo, $teamId, (int) $season['id']);
 
     jsonResponse([
         'success' => true,
         'data' => buildSeasonSessionsPayload(
             $context,
             $season,
-            $seasons,
+            $visibleSeasons,
             $sessions,
-            (int) $context['player_id'],
+            $playerId,
             $pdo
         ),
     ]);

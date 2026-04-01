@@ -717,6 +717,28 @@
       errorBoxEl.classList.add("hidden");
     }
 
+    async function parseApiJson(response) {
+      const text = await response.text();
+      let trimmed = text.trim();
+      if (trimmed.charCodeAt(0) === 0xfeff) {
+        trimmed = trimmed.slice(1);
+      }
+      if (trimmed === "") {
+        throw new Error("Leere Server-Antwort (API).");
+      }
+      const first = trimmed[0];
+      if (first !== "{" && first !== "[") {
+        throw new Error(
+          "Server liefert kein JSON (PHP-Fehler oder HTML statt API). api/health.php und api/session.php im Browser pruefen; PHP-Log und vollstaendiges Deploy der api/*.php pruefen.",
+        );
+      }
+      try {
+        return JSON.parse(trimmed);
+      } catch (e) {
+        throw new Error("Ungueltige JSON-Antwort vom Server.");
+      }
+    }
+
     function escapeHtml(str) {
       return String(str ?? "")
         .replace(/&/g, "&amp;")
@@ -1052,7 +1074,7 @@
 
       try {
         const response = await fetch(url);
-        const result = await response.json();
+        const result = await parseApiJson(response);
 
         if (!response.ok || !result.success) {
           throw new Error(result.error || "Saisondaten konnten nicht geladen werden.");
@@ -1085,6 +1107,12 @@
           jumpToRelevantSession("auto");
         }
       } catch (error) {
+        if (allowRetry && /keinen zugang|keine saison zugang/i.test(String(error?.message || ""))) {
+          selectedSeasonId = null;
+          selectedSessionId = null;
+          updateUrl();
+          return loadSeasonSessions({ allowRetry: false });
+        }
         if (allowRetry && /season not found/i.test(String(error?.message || ""))) {
           selectedSeasonId = null;
           selectedSessionId = null;
@@ -1106,7 +1134,7 @@
         const response = await fetch(
           "api/session.php?token=" + encodeURIComponent(playerToken) + "&session_id=" + encodeURIComponent(selectedSessionId)
         );
-        const result = await response.json();
+        const result = await parseApiJson(response);
 
         if (!response.ok || !result.success) {
           throw new Error(result.error || "Termin konnte nicht geladen werden.");
@@ -1120,6 +1148,11 @@
           scrollToSessionDetail("smooth");
         }
       } catch (error) {
+        if (allowRetry && /keinen zugang|keine saison zugang/i.test(String(error?.message || ""))) {
+          selectedSessionId = null;
+          updateUrl();
+          return loadSeasonSessions({ allowRetry: false });
+        }
         if (allowRetry && /session not found/i.test(String(error?.message || ""))) {
           const fallbackSessionId = getNextRelevantSessionId(seasonPayload?.sessions || []);
           if (fallbackSessionId && fallbackSessionId !== selectedSessionId) {
@@ -1161,7 +1194,7 @@
           })
         });
 
-        const result = await response.json();
+        const result = await parseApiJson(response);
         if (!response.ok || !result.success) {
           throw new Error(result.error || "Antwort konnte nicht gespeichert werden.");
         }

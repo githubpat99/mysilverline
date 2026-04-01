@@ -87,6 +87,7 @@ try {
             'selected_players' => $selectedPlayers,
             'selected_summary' => $selectedSummary,
             'roster' => $roster,
+            'season_excluded_player_ids' => $season === null ? [] : fetchSeasonExcludedPlayerIds($pdo, $teamId, (int) $season['id']),
         ],
     ]);
 } catch (Throwable $exception) {

@@ -38,9 +38,12 @@ try {
         ], 403);
     }
 
+    $teamId = (int) $context['team_id'];
+    $playerId = (int) $context['player_id'];
+
     $session = $sessionId > 0
-        ? fetchPublishedSessionForTeam($pdo, (int) $context['team_id'], $sessionId)
-        : fetchPublishedNextSessionForTeam($pdo, (int) $context['team_id']);
+        ? fetchPublishedSessionForTeam($pdo, $teamId, $sessionId)
+        : fetchPublishedNextSessionForPlayer($pdo, $teamId, $playerId);
 
     if ($sessionId > 0 && $session === null) {
         jsonResponse([
@@ -56,17 +59,25 @@ try {
         ], 404);
     }
 
+    $sid = isset($session['season_id']) ? (int) $session['season_id'] : 0;
+    if ($sid > 0 && isPlayerExcludedFromSeason($pdo, $teamId, $sid, $playerId)) {
+        jsonResponse([
+            'success' => false,
+            'error' => seasonAccessDeniedForSeasonMessage(),
+        ], 403);
+    }
+
     upsertResponse(
         $pdo,
         (int) $session['id'],
-        (int) $context['player_id'],
+        $playerId,
         $status,
         $comment
     );
 
-    $playerRows = fetchResponsesForSession($pdo, (int) $context['team_id'], (int) $session['id']);
-    $season = (isset($session['season_id']) && (int) $session['season_id'] > 0)
-        ? fetchSeasonForTeam($pdo, (int) $context['team_id'], (int) $session['season_id'])
+    $playerRows = fetchResponsesForSession($pdo, $teamId, (int) $session['id']);
+    $season = ($sid > 0)
+        ? fetchSeasonForTeam($pdo, $teamId, $sid)
         : null;
 
     jsonResponse([
@@ -76,7 +87,7 @@ try {
             $season,
             $session,
             $playerRows,
-            (int) $context['player_id']
+            $playerId
         ),
     ]);
 } catch (Throwable $exception) {

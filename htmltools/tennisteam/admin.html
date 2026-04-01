@@ -660,6 +660,11 @@
           <div class="field-label">Saison-Beschreibung</div>
           <textarea id="season-description-input" placeholder="z.B. Mittwochstraining Sommer oder IC-Heimspiele als Grundkontext"></textarea>
         </div>
+        <div style="margin-top:12px;">
+          <div class="field-label">Ohne diese Spieler (kein Saison-Zugang)</div>
+          <p class="helper-text">Persoenlicher Spieler-Link zeigt diese Saison dann nicht.</p>
+          <div id="season-exclusions" class="stack" style="gap:8px;"></div>
+        </div>
         <p class="helper-text">Saisons definieren Zeitraum und Standardwerte. Automatisch erzeugte Termine uebernehmen Wochentag, Zeit, Dauer und Ort aus der Saison. Datum bleibt im Format `tt.mm.jjjj`, Zeit im 24h-Format `hh:mm`, jeweils mit Picker.</p>
         <div class="actions">
           <label class="inline-check"><input id="season-active-input" type="checkbox"> Aktiv setzen</label>
@@ -883,6 +888,7 @@
     const seasonNewBtnEl = document.getElementById("season-new-btn");
     const seasonDeleteBtnEl = document.getElementById("season-delete-btn");
     const seasonSaveMsgEl = document.getElementById("season-save-msg");
+    const seasonExclusionsEl = document.getElementById("season-exclusions");
     const rosterListEl = document.getElementById("roster-list");
     const newPlayerNameEl = document.getElementById("new-player-name");
     const newPlayerOrderEl = document.getElementById("new-player-order");
@@ -1361,6 +1367,7 @@
         seasonActiveInputEl.checked = true;
         seasonGenerateInputEl.checked = true;
         seasonDeleteBtnEl.disabled = true;
+        renderSeasonExclusions(dashboardPayload?.roster || [], []);
         return;
       }
 
@@ -1377,6 +1384,41 @@
       seasonDescriptionInputEl.value = season.description || "";
       seasonActiveInputEl.checked = !!season.is_active;
       seasonDeleteBtnEl.disabled = false;
+    }
+
+    function collectSeasonExcludedPlayerIds() {
+      if (!seasonExclusionsEl) return [];
+      const out = [];
+      seasonExclusionsEl.querySelectorAll("input[type=\"checkbox\"][data-player-id]").forEach((input) => {
+        if (input.checked) out.push(Number(input.dataset.playerId));
+      });
+      return out;
+    }
+
+    function renderSeasonExclusions(roster, excludedIds) {
+      if (!seasonExclusionsEl) return;
+      seasonExclusionsEl.innerHTML = "";
+      const excludedSet = new Set(excludedIds || []);
+      if (!roster || !roster.length) {
+        seasonExclusionsEl.innerHTML = '<div class="note">Noch keine Spieler im Kader.</div>';
+        return;
+      }
+      roster.forEach((player) => {
+        const label = document.createElement("label");
+        label.className = "inline-check";
+        label.style.display = "flex";
+        label.style.alignItems = "flex-start";
+        label.style.gap = "8px";
+        const input = document.createElement("input");
+        input.type = "checkbox";
+        input.dataset.playerId = String(player.id);
+        if (excludedSet.has(player.id)) input.checked = true;
+        label.appendChild(input);
+        const span = document.createElement("span");
+        span.textContent = (player.name || "Spieler") + (player.is_active ? "" : " (inaktiv)");
+        label.appendChild(span);
+        seasonExclusionsEl.appendChild(label);
+      });
     }
 
     async function loadDashboard(options = {}) {
@@ -1434,6 +1476,7 @@
 
       fillTeamForm(result.data.team);
       fillSeasonForm(result.data.season);
+      renderSeasonExclusions(result.data.roster || [], result.data.season_excluded_player_ids || []);
       renderSeasonSelector();
       renderSessionsList();
       renderSelectedSessionEditor();
@@ -1648,7 +1691,8 @@
             default_location: seasonLocationInputEl.value,
             description: seasonDescriptionInputEl.value,
             is_active: seasonActiveInputEl.checked,
-            generate_sessions: seasonGenerateInputEl.checked
+            generate_sessions: seasonGenerateInputEl.checked,
+            excluded_player_ids: collectSeasonExcludedPlayerIds()
           })
         });
         const result = await response.json();
@@ -1798,6 +1842,7 @@
     seasonNewBtnEl.addEventListener("click", () => {
       selectedSeasonId = null;
       fillSeasonForm(null);
+      renderSeasonExclusions(dashboardPayload?.roster || [], []);
       seasonSaveMsgEl.textContent = "Neue Saison vorbereitet.";
     });
     seasonDeleteBtnEl.addEventListener("click", deleteSeason);

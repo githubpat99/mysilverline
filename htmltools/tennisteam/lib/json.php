@@ -4,9 +4,23 @@ declare(strict_types=1);
 
 function jsonResponse(array $payload, int $statusCode = 200): void
 {
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+
     http_response_code($statusCode);
     header('Content-Type: application/json; charset=utf-8');
-    echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    $json = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    if ($json === false) {
+        $json = json_encode(
+            [
+                'success' => false,
+                'error' => 'Server could not encode JSON response.',
+            ],
+            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+        );
+    }
+    echo $json;
     exit;
 }
 

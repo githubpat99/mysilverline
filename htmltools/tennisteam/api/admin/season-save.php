@@ -25,6 +25,21 @@ $description = isset($body['description']) ? (string) $body['description'] : nul
 $isActive = (bool) ($body['is_active'] ?? false);
 $generateSessions = (bool) ($body['generate_sessions'] ?? false);
 
+$excludedPlayerIdsPayload = null;
+if (array_key_exists('excluded_player_ids', $body)) {
+    if (!is_array($body['excluded_player_ids'])) {
+        jsonResponse([
+            'success' => false,
+            'error' => 'excluded_player_ids must be an array.',
+        ], 400);
+    }
+
+    $excludedPlayerIdsPayload = [];
+    foreach ($body['excluded_player_ids'] as $pid) {
+        $excludedPlayerIdsPayload[] = (int) $pid;
+    }
+}
+
 if ($token === '') {
     jsonResponse([
         'success' => false,
@@ -156,6 +171,10 @@ try {
         $generatedCount = generateSessionsForSeason($pdo, $teamId, $seasonId);
     }
 
+    if ($excludedPlayerIdsPayload !== null) {
+        setSeasonExcludedPlayerIds($pdo, $teamId, $seasonId, $excludedPlayerIdsPayload);
+    }
+
     $pdo->commit();
 
     $season = fetchSeasonForTeam($pdo, $teamId, $seasonId);
@@ -168,6 +187,15 @@ try {
             'future_sessions' => $syncResult,
         ],
     ]);
+} catch (InvalidArgumentException $exception) {
+    if (isset($pdo) && $pdo instanceof PDO && $pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
+
+    jsonResponse([
+        'success' => false,
+        'error' => $exception->getMessage(),
+    ], 400);
 } catch (Throwable $exception) {
     if (isset($pdo) && $pdo instanceof PDO && $pdo->inTransaction()) {
         $pdo->rollBack();

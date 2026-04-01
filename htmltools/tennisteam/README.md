@@ -108,6 +108,7 @@ Zielpfad:
 
 Hinweise:
 
+- einmalig auf der Datenbank `sql/migrate_season_player_exclusions.sql` ausfuehren, wenn Saison-Ausschluesse (Spieler ohne Saison-Zugang) genutzt werden sollen
 - `config/database.php` wird mit deployed
 - `README.md`, `V1_SPEC.md`, `sql/` und Testdateien werden nicht deployed
 - Deploy nutzt bevorzugt vorhandene SSH-Keys wie `~/.ssh/id_ed25519_infomaniak` oder `~/.ssh/id_rsa_infomaniak`

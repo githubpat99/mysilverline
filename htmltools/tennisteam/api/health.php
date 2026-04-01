@@ -11,15 +11,22 @@ try {
         tnTable('teams'),
         tnTable('players'),
         tnTable('admin_tokens'),
+        tnTable('seasons'),
         tnTable('sessions'),
         tnTable('responses'),
+        tnTable('season_player_exclusions'),
     ];
 
     $found = [];
     foreach ($requiredTables as $tableName) {
-        $stmt = $pdo->prepare('SHOW TABLES LIKE :table_name');
-        $stmt->execute(['table_name' => $tableName]);
-        $found[$tableName] = $stmt->fetchColumn() !== false;
+        // Native prepared statements (PDO::ATTR_EMULATE_PREPARES => false) do not support
+        // placeholders in SHOW TABLES LIKE on many MariaDB/MySQL builds (syntax error near '?').
+        if (!preg_match('/^[A-Za-z0-9_]+$/', $tableName)) {
+            throw new RuntimeException('Invalid table name in health check.');
+        }
+        $sql = 'SHOW TABLES LIKE ' . $pdo->quote($tableName);
+        $stmt = $pdo->query($sql);
+        $found[$tableName] = $stmt !== false && $stmt->fetchColumn() !== false;
     }
 
     jsonResponse([

@@ -1,3 +1,12 @@
+/**
+ * Tennisteam domain rules — Single Source of Truth for new business logic.
+ *
+ * Workflow (see AGENTS.md and doc/ARCHITECTURE.md):
+ * 1. Add or change rules here (pure functions).
+ * 2. Cover with domain.test.ts and run: npm run test:run -- htmltools/tennisteam/domain.test.ts
+ * 3. Mirror equivalent logic in lib/team_data.php (PHP runtime).
+ * 4. UI calls API only — do not duplicate rules in index.html / admin.html.
+ */
 export const attendanceStatuses = ["yes", "no", "maybe", "replacement"] as const;
 export const seasonTypes = ["summer", "winter", "interclub", "custom"] as const;
 export const sessionStatuses = ["scheduled", "provisional", "completed", "cancelled"] as const;
@@ -95,15 +104,20 @@ export function pickRelevantSession(
     return null;
   }
 
-  const futureOrToday = sessions
-    .filter((session) => session.sessionDate >= todayIsoDate)
-    .sort((a, b) => a.sessionDate.localeCompare(b.sessionDate));
+  const isSelectable = (session: SessionRecord) =>
+    session.status !== "cancelled" && session.status !== "completed";
+
+  const sorted = [...sessions].sort((a, b) => a.sessionDate.localeCompare(b.sessionDate));
+  const selectable = sorted.filter(isSelectable);
+  const pool = selectable.length > 0 ? selectable : sorted;
+
+  const futureOrToday = pool.filter((session) => session.sessionDate >= todayIsoDate);
 
   if (futureOrToday.length > 0) {
     return futureOrToday[0];
   }
 
-  return [...sessions].sort((a, b) => b.sessionDate.localeCompare(a.sessionDate))[0];
+  return pool[pool.length - 1] ?? null;
 }
 
 export function filterSessionsForSeason(

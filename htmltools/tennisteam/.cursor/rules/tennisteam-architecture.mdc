@@ -1,0 +1,52 @@
+---
+description: Tennisteam Architektur — Schichten, Auth, API-Konventionen
+globs: "**/*"
+alwaysApply: false
+---
+
+# Tennisteam Architektur
+
+Lies vor Änderungen: `AGENTS.md` und `doc/ARCHITECTURE.md`.
+
+Dieser Workspace ist **nur Tennisteam** — kein Silverline/Next.js in Scope.
+
+## Schichten
+
+```
+index.html / admin.html  →  api/*.php  →  lib/team_data.php  →  MariaDB
+domain.ts (+ Tests)      →  (Spezifikation, noch nicht Runtime)
+```
+
+| Schicht | Pfad | Verantwortung |
+|---------|------|---------------|
+| HTTP-Adapter | `api/`, `api/admin/` | Token, HTTP-Status, dünne Orchestrierung |
+| Auth-Helper | `lib/auth.php` | `requirePlayerContext*`, `requireAdminContext*` |
+| Domain + DB | `lib/team_data.php` | SQL, Validierung, Serialisierung, CRUD |
+| Infrastruktur | `lib/bootstrap.php`, `lib/json.php` | PDO, Tabellenprefix, JSON-I/O |
+
+## Auth
+
+- Kein Passwort-Login — Identifikation über **Token-Links**.
+- Spieler: `requirePlayerContextFromQuery()` / `requirePlayerContextFromJsonBody()`.
+- Admin: `requireAdminContextFromQuery()` / `requireAdminContextFromJsonBody()`.
+- Alle DB-Operationen an `team_id` aus dem Auth-Kontext binden.
+
+## JSON-Envelope (invariant)
+
+```json
+{ "success": true, "data": { ... } }
+{ "success": false, "error": "..." }
+```
+
+## Einstiegspunkte (UI)
+
+- Spieler: `GET api/sessions.php?token=...`
+- Admin: `GET api/admin/dashboard.php?token=...`
+
+## Schema
+
+Tabellen: `sql/schema.sql` (Prefix via `tnTable()`).
+
+## SQL-Regel
+
+Keine direkten SQL-Queries außerhalb `lib/team_data.php`.

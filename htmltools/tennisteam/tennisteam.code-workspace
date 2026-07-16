@@ -1,0 +1,13 @@
+{
+  "folders": [
+    {
+      "name": "Tennisteam",
+      "path": "."
+    }
+  ],
+  "settings": {
+    "files.exclude": {
+      "**/script/neuesteam/out/**": true
+    }
+  }
+}

@@ -2,12 +2,9 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../../lib/bootstrap.php';
-require_once __DIR__ . '/../../lib/json.php';
-require_once __DIR__ . '/../../lib/team_data.php';
+require_once __DIR__ . '/../../lib/auth.php';
 
 $body = readJsonBody();
-$token = isset($body['token']) ? trim((string) $body['token']) : '';
 $playerId = isset($body['player_id']) ? (int) $body['player_id'] : 0;
 $name = isset($body['name']) ? trim((string) $body['name']) : '';
 $sortOrder = isset($body['sort_order']) ? (int) $body['sort_order'] : 0;
@@ -16,32 +13,34 @@ $regenerateToken = (bool) ($body['regenerate_token'] ?? false);
 $licenseNumber = isset($body['license_number']) && is_string($body['license_number']) ? $body['license_number'] : null;
 $classification = isset($body['classification']) && is_string($body['classification']) ? $body['classification'] : null;
 
-if ($token === '') {
+if ($name === '') {
     jsonResponse([
         'success' => false,
-        'error' => 'Missing admin token.',
-    ], 400);
-}
-
-if ($name === '' || $sortOrder <= 0) {
-    jsonResponse([
-        'success' => false,
-        'error' => 'name and a positive sort_order are required.',
+        'error' => 'name is required.',
     ], 400);
 }
 
 try {
     $pdo = db();
-    $context = fetchAdminContextByToken($pdo, $token);
-
-    if ($context === null) {
-        jsonResponse([
-            'success' => false,
-            'error' => 'Invalid admin token.',
-        ], 403);
-    }
+    $context = requireAdminContextFromJsonBody($pdo, $body);
 
     $teamId = (int) $context['team_id'];
+
+    if ($playerId <= 0) {
+        if ($sortOrder <= 0) {
+            $sortOrder = fetchNextPlayerSortOrderForTeam($pdo, $teamId);
+        }
+    } elseif ($sortOrder <= 0) {
+        $existingOrder = fetchPlayerSortOrderForTeam($pdo, $teamId, $playerId);
+        if ($existingOrder === null) {
+            jsonResponse([
+                'success' => false,
+                'error' => 'Unknown player_id for this team.',
+            ], 400);
+        }
+        $sortOrder = $existingOrder;
+    }
+
     $resolvedPlayerId = savePlayer(
         $pdo,
         $teamId,

@@ -65,7 +65,7 @@ describe("tennisteam domain rules", () => {
       "2026-04-06",
     );
 
-    expect(session?.id).toBe(21);
+    expect(session?.id).toBe(20);
   });
 
   it("detects summer and winter season types from dates", () => {

@@ -2,9 +2,7 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../../lib/bootstrap.php';
-require_once __DIR__ . '/../../lib/json.php';
-require_once __DIR__ . '/../../lib/team_data.php';
+require_once __DIR__ . '/../../lib/auth.php';
 
 $body = readJsonBody();
 
@@ -72,14 +70,7 @@ if ($dateProvided && ($sessionDate === null || !isValidIsoDate($sessionDate))) {
 
 try {
     $pdo = db();
-    $context = fetchAdminContextByToken($pdo, $token);
-
-    if ($context === null) {
-        jsonResponse([
-            'success' => false,
-            'error' => 'Invalid admin token.',
-        ], 403);
-    }
+    $context = requireAdminContextFromJsonBody($pdo, $body);
 
     $session = $sessionId === null
         ? fetchNextSessionForTeam($pdo, (int) $context['team_id'])

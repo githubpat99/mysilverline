@@ -2,29 +2,11 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../../lib/bootstrap.php';
-require_once __DIR__ . '/../../lib/json.php';
-require_once __DIR__ . '/../../lib/team_data.php';
-
-$token = isset($_GET['token']) ? trim((string) $_GET['token']) : '';
-
-if ($token === '') {
-    jsonResponse([
-        'success' => false,
-        'error' => 'Missing admin token.',
-    ], 400);
-}
+require_once __DIR__ . '/../../lib/auth.php';
 
 try {
     $pdo = db();
-    $context = fetchAdminContextByToken($pdo, $token);
-
-    if ($context === null) {
-        jsonResponse([
-            'success' => false,
-            'error' => 'Invalid admin token.',
-        ], 403);
-    }
+    $context = requireAdminContextFromQuery($pdo);
 
     $session = fetchNextSessionForTeam($pdo, (int) $context['team_id']);
     $playerRows = $session === null

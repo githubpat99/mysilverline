@@ -3,10 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tennisteam</title>
+  <title>TeamReady | Silverline</title>
   <meta name="theme-color" content="#0f172a">
+  <!-- Umami: In Umami Website anlegen mit Domain mysilverline.it-pin.ch → Website-ID hier eintragen (statt Platzhalter). Cloud: script-URL ggf. an deine Region anpassen (siehe Umami → Einstellungen → Tracking-Code). Self-hosted: src auf deine Script-URL ändern. -->
+  <script defer src="https://cloud.umami.is/script.js" data-website-id="d239bee1-4d65-4d54-8f06-73ae6b76fb3e"></script>
   <style>
     :root {
+      --landing-bg: #f4f7f6;
+      --landing-panel: #ffffff;
+      --landing-border: #d7e0dc;
+      --landing-text: #11231b;
+      --landing-muted: #4f6258;
+      --landing-accent: #1f8f57;
+      --landing-accent-dark: #167247;
       --bg: #0b1220;
       --panel: #111a2b;
       --card: #162238;
@@ -24,29 +33,219 @@
 
     body {
       margin: 0;
+      background: var(--landing-bg);
+      color: var(--landing-text);
+      font-family: Arial, sans-serif;
+      min-height: 100vh;
+    }
+
+    .landing-page {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 16px 14px 40px;
+    }
+
+    .landing-section {
+      background: var(--landing-panel);
+      border: 1px solid var(--landing-border);
+      border-radius: 14px;
+      padding: 20px 16px;
+      margin-bottom: 12px;
+    }
+
+    .brand-row {
+      font-size: 12px;
+      color: var(--landing-muted);
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .hero-headline {
+      font-size: clamp(30px, 9vw, 52px);
+      line-height: 1.08;
+      margin-bottom: 12px;
+      color: var(--landing-text);
+    }
+
+    .landing-subline {
+      font-size: clamp(17px, 4.4vw, 22px);
+      line-height: 1.35;
+      color: var(--landing-muted);
+      margin-bottom: 18px;
+      max-width: 760px;
+    }
+
+    .cta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .landing-btn {
+      min-height: 46px;
+      border-radius: 12px;
+      padding: 0 16px;
+      border: 1px solid var(--landing-border);
+      font-size: 15px;
+      font-weight: 700;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .landing-btn.primary {
+      background: var(--landing-accent);
+      border-color: var(--landing-accent);
+      color: #ffffff;
+    }
+
+    .landing-btn.primary:hover {
+      background: var(--landing-accent-dark);
+      border-color: var(--landing-accent-dark);
+    }
+
+    .landing-btn.secondary {
+      background: #ffffff;
+      color: var(--landing-text);
+    }
+
+    .trust-line {
+      color: var(--landing-muted);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .compare-grid {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .compare-card {
+      border-radius: 12px;
+      border: 1px solid var(--landing-border);
+      padding: 12px;
+      background: #f8fbfa;
+    }
+
+    .compare-card h3 {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 8px;
+    }
+
+    .compare-card ul {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--landing-muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .compare-card.chaos h3 { color: #9b1c1c; }
+    .compare-card.clear h3 { color: var(--landing-accent-dark); }
+
+    .landing-title {
+      font-size: clamp(24px, 6.4vw, 34px);
+      line-height: 1.15;
+      margin-bottom: 10px;
+    }
+
+    .short-list {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--landing-muted);
+      line-height: 1.5;
+      font-size: 16px;
+    }
+
+    .short-list li + li {
+      margin-top: 6px;
+    }
+
+    .stress-line {
+      margin-top: 12px;
+      color: var(--landing-text);
+      font-weight: 600;
+    }
+
+    .steps-grid,
+    .result-grid {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: 1fr;
+      margin-top: 10px;
+    }
+
+    .step-card,
+    .result-card,
+    .demo-placeholder {
+      border-radius: 12px;
+      border: 1px solid var(--landing-border);
+      background: #f8fbfa;
+      padding: 12px;
+    }
+
+    .step-no {
+      color: var(--landing-accent-dark);
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .demo-placeholder {
+      margin-top: 10px;
+      color: var(--landing-muted);
+      font-size: 14px;
+    }
+
+    .small-note {
+      margin-top: 8px;
+      color: var(--landing-muted);
+      font-size: 13px;
+    }
+
+    .footer-cta {
+      text-align: center;
+      padding: 24px 16px;
+    }
+
+    .footer-cta .landing-subline {
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    #player-app {
       background: linear-gradient(180deg, #09111e 0%, #0b1220 100%);
       color: var(--text);
-      font-family: Arial, sans-serif;
       min-height: 100vh;
     }
 
     .app {
       max-width: 760px;
       margin: 0 auto;
-      padding: 24px 16px 48px;
+      padding: 14px 12px 36px;
     }
 
     .hero,
     .card {
       background: rgba(17, 26, 43, 0.95);
       border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 18px;
+      border-radius: 12px;
+      padding: 12px 14px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
     }
 
     .hero {
-      margin-bottom: 14px;
+      margin-bottom: 10px;
     }
 
     .eyebrow {
@@ -60,16 +259,17 @@
 
     .compact-title {
       color: var(--accent);
-      font-size: 18px;
+      font-size: 17px;
       font-weight: 800;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
 
     .compact-subtitle {
       color: var(--accent);
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 800;
       margin: 0;
+      line-height: 1.25;
     }
 
     .section-row {
@@ -125,8 +325,8 @@
 
     .stack {
       display: grid;
-      gap: 14px;
-      margin-top: 14px;
+      gap: 10px;
+      margin-top: 10px;
     }
 
     .meta-grid,
@@ -157,8 +357,8 @@
     .summary-item {
       background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 12px;
+      border-radius: 10px;
+      padding: 8px 10px;
     }
 
     .meta-label,
@@ -222,49 +422,45 @@
     }
 
     .status-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 8px;
     }
 
-    .status-hint {
-      margin-bottom: 12px;
+    .status-grid.player-response-grid {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 2fr);
     }
 
-    .current-status {
-      margin-bottom: 12px;
-      background: rgba(56, 189, 248, 0.08);
-      border: 1px solid rgba(56, 189, 248, 0.25);
-      border-radius: 12px;
-      padding: 12px 14px;
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
+    .status-grid.player-response-grid .response-status-btn-open {
+      letter-spacing: 0.6px;
     }
 
-    .current-status-label {
-      color: var(--muted);
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 4px;
-    }
-
-    .current-status-value {
-      font-weight: 800;
-      font-size: 16px;
+    .response-status-btn:disabled {
+      opacity: 0.55;
+      cursor: wait;
     }
 
     .status-btn {
       border: 1px solid var(--border);
       background: var(--card);
       color: var(--text);
-      border-radius: 12px;
-      padding: 14px 12px;
-      font-size: 14px;
+      border-radius: 10px;
+      padding: 10px 6px;
+      font-size: 12px;
       font-weight: 700;
       cursor: pointer;
       transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .season-btn {
+      font-size: 13px;
+      padding: 10px 12px;
+      letter-spacing: 0.2px;
     }
 
     .status-btn:hover,
@@ -282,6 +478,7 @@
     .status-btn[data-status="no"].active { background: rgba(220, 38, 38, 0.9); border-color: rgba(220, 38, 38, 1); }
     .status-btn[data-status="maybe"].active { background: rgba(217, 119, 6, 0.9); border-color: rgba(217, 119, 6, 1); }
     .status-btn[data-status="replacement"].active { background: rgba(124, 58, 237, 0.9); border-color: rgba(124, 58, 237, 1); }
+    .status-btn[data-status="none"].active { background: rgba(30, 64, 175, 0.9); border-color: rgba(30, 64, 175, 1); }
 
     textarea,
     input {
@@ -295,9 +492,281 @@
     }
 
     textarea {
-      min-height: 92px;
+      min-height: 56px;
       resize: vertical;
-      margin-top: 12px;
+      margin-top: 8px;
+    }
+
+    .compact-actions {
+      margin-top: 8px;
+    }
+
+    .season-actions-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: -4px;
+      margin-bottom: 0;
+    }
+
+    .season-actions-row .actions {
+      margin: 0;
+    }
+
+    .season-actions-row .info-btn {
+      margin-left: auto;
+      flex: 0 0 auto;
+    }
+
+    .season-card {
+      position: relative;
+      padding-top: 14px;
+    }
+
+    .season-info-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 2;
+    }
+
+    .comment-details {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 6px 10px;
+      background: rgba(13, 21, 37, 0.45);
+    }
+
+    .comment-details summary {
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      list-style: none;
+    }
+
+    .comment-details summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .comment-details summary::before {
+      content: "▸ ";
+      color: var(--accent);
+      font-weight: 800;
+    }
+
+    .comment-details[open] summary::before {
+      content: "▾ ";
+    }
+
+    .response-header-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .save-top-btn {
+      border: none;
+      border-radius: 999px;
+      background: var(--accent);
+      color: #042036;
+      font-weight: 800;
+      font-size: 12px;
+      width: 32px;
+      height: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .response-footer-row {
+      margin-top: 8px;
+    }
+
+    .comment-inline {
+      margin-top: 0;
+      flex: 1 1 auto;
+    }
+
+    .save-inline-btn {
+      flex: 0 0 auto;
+      white-space: nowrap;
+    }
+
+    .save-feedback {
+      min-height: 22px;
+      margin-top: 10px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      transition: opacity 0.2s ease;
+    }
+
+    .save-feedback.is-saving {
+      color: var(--muted);
+    }
+
+    .save-feedback.is-success {
+      color: #86efac;
+    }
+
+    .group-list {
+      display: grid;
+      gap: 6px;
+    }
+
+    .group-row {
+      display: grid;
+      gap: 6px;
+    }
+
+    .group-row-primary {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .group-row-secondary {
+      grid-template-columns: 1fr;
+    }
+
+    .group-item.group-item-open {
+      width: 100%;
+    }
+
+    .group-item.group-item-open > summary {
+      padding: 8px 10px;
+    }
+
+    .group-item {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: rgba(13, 21, 37, 0.55);
+      padding: 2px 4px;
+    }
+
+    .group-item.group-item-yes {
+      background: rgba(22, 163, 74, 0.14);
+      border-color: rgba(22, 163, 74, 0.42);
+    }
+
+    .group-item.group-item-no {
+      background: rgba(220, 38, 38, 0.14);
+      border-color: rgba(220, 38, 38, 0.42);
+    }
+
+    .group-item > summary {
+      cursor: pointer;
+      list-style: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 7px;
+    }
+
+    .group-item > summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .group-label {
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .group-label.group-label-yes {
+      color: #22c55e;
+    }
+
+    .group-label.group-label-no {
+      color: #ef4444;
+    }
+
+    .thumb-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      font-size: 10px;
+      line-height: 1;
+      margin-right: 4px;
+      vertical-align: middle;
+    }
+
+    .thumb-badge-yes {
+      color: #22c55e;
+    }
+
+    .thumb-badge-no {
+      color: #ef4444;
+    }
+
+    .group-count {
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .group-content {
+      display: grid;
+      gap: 4px;
+      padding: 0 2px 4px;
+    }
+
+    .comments-summary-wrap {
+      margin-top: 10px;
+      border-top: 1px dashed rgba(148, 163, 184, 0.3);
+      padding-top: 10px;
+    }
+
+    .mobile-rotate-hint {
+      display: none;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.3;
+      text-align: center;
+    }
+
+    .comments-summary-btn {
+      width: 100%;
+      text-align: left;
+      font-size: 12px;
+      padding: 8px 10px;
+    }
+
+    #sessions-completed-btn {
+      font-size: 11px;
+      color: #94a3b8;
+      border-color: rgba(148, 163, 184, 0.35);
+      background: rgba(15, 23, 42, 0.35);
+      font-weight: 600;
+      padding: 9px 11px;
+    }
+
+    .comment-summary-list {
+      display: grid;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .comment-summary-item {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: rgba(13, 21, 37, 0.5);
+      padding: 7px 9px;
+      font-size: 12px;
+      line-height: 1.35;
     }
 
     .actions {
@@ -310,12 +779,12 @@
 
     .primary-btn {
       border: none;
-      border-radius: 12px;
+      border-radius: 10px;
       background: var(--accent);
       color: #042036;
       font-weight: 800;
-      font-size: 14px;
-      padding: 13px 16px;
+      font-size: 13px;
+      padding: 10px 14px;
       cursor: pointer;
     }
 
@@ -346,10 +815,14 @@
       gap: 10px;
     }
 
+    .players-dense {
+      gap: 4px;
+    }
+
     .player-row {
       display: flex;
       justify-content: space-between;
-      gap: 14px;
+      gap: 10px;
       align-items: center;
       background: var(--card);
       border: 1px solid var(--border);
@@ -357,12 +830,82 @@
       padding: 12px 14px;
     }
 
+    .players-dense .player-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 6px 10px;
+      align-items: center;
+      padding: 5px 10px;
+      border-radius: 8px;
+    }
+
+    .players-dense .player-row-main {
+      min-width: 0;
+    }
+
+    .players-dense .player-name {
+      margin-bottom: 0;
+      font-size: 14px;
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .players-dense .player-meta {
+      display: inline;
+      margin-left: 6px;
+    }
+
+    .players-dense .player-classification {
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .players-dense .player-license {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .players-dense .player-comment-line {
+      grid-column: 1 / -1;
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.25;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      margin: 0;
+    }
+
+    .players-dense .pill {
+      min-width: 0;
+      padding: 4px 8px;
+      font-size: 10px;
+      letter-spacing: 0.4px;
+    }
+
+    .session-item .session-line-meta {
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.3;
+      margin-top: 2px;
+    }
+
+    .players-dense .session-item .player-name {
+      font-size: 13px;
+    }
+
     .player-row.current {
       border-color: rgba(56, 189, 248, 0.65);
     }
 
     .session-item {
-      scroll-margin-top: 18px;
+      scroll-margin-top: 12px;
       color: var(--text);
       border: 1px solid var(--border);
       appearance: none;
@@ -373,9 +916,132 @@
       color: var(--text);
     }
 
+    .completed-sessions-wrap {
+      margin-top: 8px;
+      border: 1px dashed rgba(148, 163, 184, 0.35);
+      border-radius: 10px;
+      padding: 6px;
+      background: rgba(13, 21, 37, 0.45);
+    }
+
+    .completed-sessions-toggle {
+      cursor: pointer;
+      list-style: none;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      padding: 6px 8px;
+      border-radius: 8px;
+    }
+
+    .completed-sessions-toggle::-webkit-details-marker {
+      display: none;
+    }
+
+    .completed-sessions-toggle::before {
+      content: "▸ ";
+      color: var(--accent);
+      font-weight: 800;
+    }
+
+    .completed-sessions-wrap[open] .completed-sessions-toggle::before {
+      content: "▾ ";
+    }
+
+    .completed-sessions-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .roster-legend-panel {
+      margin-top: 8px;
+      margin-bottom: 4px;
+    }
+
+    .roster-legend {
+      font-size: 11px;
+      color: var(--muted);
+      margin: 0;
+      line-height: 1.35;
+    }
+
     .season-btn.active {
       background: rgba(56, 189, 248, 0.18);
       border-color: rgba(56, 189, 248, 0.9);
+      color: #d8f4ff;
+    }
+
+    .season-menu-wrap {
+      position: relative;
+      flex: 0 0 auto;
+    }
+
+    .season-menu-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+
+    .season-menu-btn[aria-expanded="true"] {
+      border-color: rgba(56, 189, 248, 0.9);
+      background: rgba(56, 189, 248, 0.12);
+    }
+
+    .season-menu-icon {
+      display: block;
+      width: 18px;
+      height: 2px;
+      background: currentColor;
+      box-shadow: 0 -6px 0 currentColor, 0 6px 0 currentColor;
+    }
+
+    .season-menu-panel {
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      min-width: 220px;
+      max-width: min(320px, 90vw);
+      background: #0d1525;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 6px;
+      z-index: 20;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+    }
+
+    .season-menu-item {
+      display: block;
+      width: 100%;
+      text-align: left;
+      border: 1px solid transparent;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 10px 12px;
+      cursor: pointer;
+    }
+
+    .season-menu-item:hover,
+    .season-menu-item:focus-visible {
+      border-color: var(--accent);
+      outline: none;
+    }
+
+    .season-menu-item.active {
+      background: rgba(56, 189, 248, 0.18);
+      border-color: rgba(56, 189, 248, 0.5);
       color: #d8f4ff;
     }
 
@@ -472,15 +1138,37 @@
     .hidden { display: none; }
 
     @media (max-width: 640px) {
-      h1 { font-size: 20px; }
+      .landing-page {
+        padding-top: 12px;
+      }
+      .landing-section {
+        padding: 18px 14px;
+      }
+      .compare-grid {
+        grid-template-columns: 1fr;
+      }
+      h1 { font-size: 19px; }
+      .app {
+        padding-top: 8px;
+      }
+      .hero {
+        padding: 10px;
+      }
+      .compact-title {
+        font-size: 17px;
+      }
       .meta-grid,
       .summary-grid,
       .status-grid {
         grid-template-columns: 1fr;
       }
-      .player-row {
+      .player-row:not(.session-item) {
         flex-direction: column;
         align-items: flex-start;
+      }
+      .players-dense .player-row {
+        grid-template-columns: 1fr auto;
+        align-items: center;
       }
       .top-card-header {
         flex-direction: column;
@@ -489,19 +1177,119 @@
       .pill {
         min-width: 0;
       }
+      .status-grid {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+      }
+      .status-grid.player-response-grid {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 2fr);
+      }
+      .status-grid .status-btn {
+        padding: 8px 2px;
+        font-size: 10px;
+        letter-spacing: 0.1px;
+      }
+      .mobile-rotate-hint {
+        display: block;
+      }
     }
   </style>
 </head>
 <body>
+  <div id="landing-page" class="landing-page hidden">
+    <section class="landing-section">
+      <div class="brand-row">Silverline | TeamReady</div>
+      <h1 class="hero-headline">5 Chats. Und trotzdem fehlt am Ende jemand.</h1>
+      <p class="landing-subline">Mit TeamReady tippen Spieler nur Zu oder Ab - und du siehst sofort, ob dein Team steht.</p>
+      <div class="cta-row">
+        <a id="hero-primary-cta" class="landing-btn primary" href="#" rel="noopener">30-Sekunden-Demo ansehen</a>
+        <a id="hero-secondary-cta" class="landing-btn secondary" href="#" rel="noopener">Demo starten</a>
+      </div>
+      <div class="trust-line">Keine Werbung. Kein Abo. Einfach klar.</div>
+      <div class="compare-grid">
+        <div class="compare-card chaos">
+          <h3>Vorher: Chat-Chaos</h3>
+          <ul>
+            <li>Mehrere Gruppen und keine klare Liste</li>
+            <li>Kurz vor Termin: Wer kommt wirklich?</li>
+            <li>Der Captain fragt allen einzeln nach</li>
+          </ul>
+        </div>
+        <div class="compare-card clear">
+          <h3>Nachher: TeamReady</h3>
+          <ul>
+            <li>Ein Termin, ein klarer Status</li>
+            <li>Jeder tippt nur Zu oder Ab</li>
+            <li>Der Stand ist sofort sichtbar</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="landing-section">
+      <h2 class="landing-title">Kommt dir das bekannt vor?</h2>
+      <ul class="short-list">
+        <li>Mehrere Chats, aber keine Uebersicht</li>
+        <li>Kurz vor dem Termin ist unklar, wer wirklich kommt</li>
+        <li>Der Captain muss allen nachlaufen</li>
+      </ul>
+      <p class="stress-line">Und genau dann wird aus etwas Einfachem unnoetiger Stress.</p>
+    </section>
+
+    <section class="landing-section">
+      <h2 class="landing-title">So einfach ist TeamReady</h2>
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-no">Schritt 1</div>
+          <div>Termin erstellen oder oeffnen</div>
+        </div>
+        <div class="step-card">
+          <div class="step-no">Schritt 2</div>
+          <div>Spieler tippen Zu oder Ab</div>
+        </div>
+        <div class="step-card">
+          <div class="step-no">Schritt 3</div>
+          <div>Du siehst sofort den Stand im Team</div>
+        </div>
+      </div>
+      <p class="stress-line">Keine Rueckfragen. Kein Screenshot-Chaos. Keine Excel-Liste.</p>
+    </section>
+
+    <section id="demo" class="landing-section">
+      <h2 class="landing-title">Sieh es dir in 30 Sekunden an</h2>
+      <div class="demo-placeholder">Demo-Vorschau: Hier kann jederzeit ein kurzes Video eingebunden werden.</div>
+      <div class="cta-row" style="margin-top:12px; margin-bottom:0;">
+        <a id="demo-cta" class="landing-btn primary" href="#" rel="noopener">Jetzt Demo starten</a>
+      </div>
+      <div class="small-note">Oeffentliche Demo mit Beispieldaten.</div>
+    </section>
+
+    <section class="landing-section">
+      <h2 class="landing-title">Am Ende zaehlt nur das: Dein Team steht.</h2>
+      <div class="result-grid">
+        <div class="result-card">Sofort sehen, wer dabei ist</div>
+        <div class="result-card">Weniger Nachfragen im Chat</div>
+        <div class="result-card">Mehr Ruhe vor Training und Spiel</div>
+      </div>
+    </section>
+
+    <section class="landing-section footer-cta">
+      <h2 class="landing-title">Teste TeamReady in 2 Minuten</h2>
+      <p class="landing-subline">Oeffne die Demo direkt im Browser und sieh sofort, wie einfach Teamorganisation sein kann.</p>
+      <a id="footer-demo-cta" class="landing-btn primary" href="#" rel="noopener">Demo starten</a>
+    </section>
+  </div>
+
+  <div id="player-app" class="hidden">
   <div class="app">
     <section class="hero">
       <div class="section-row" style="margin-bottom:6px;">
         <h1 id="team-name" class="compact-title">Lade Teamdaten...</h1>
         <button id="app-help-toggle-btn" class="info-btn" type="button" aria-expanded="false" aria-label="Hinweise anzeigen" title="Hinweise anzeigen">i</button>
       </div>
-      <p class="sub">Trainings, Turniere und mehr...</p>
+      <p id="app-subtitle" class="sub hidden">Trainings, Turniere und mehr...</p>
       <div id="app-help-panel" class="details-panel hidden">
         <div class="note">
+          <p id="hero-player-line" class="muted-text hidden" style="margin:0 0 10px;"></p>
           <div style="font-weight:700; margin-bottom:8px;">Hinweise zu Link, Installation und Updates</div>
           <ul class="helper-list">
             <li>Dein persoenlicher Link mit Token bleibt in der Regel gleich, solange ihn der Admin nicht erneuert.</li>
@@ -525,12 +1313,17 @@
     </section>
 
     <div id="app-content" class="stack hidden">
-      <section class="card">
-        <div class="section-row">
-          <div class="eyebrow" style="margin-bottom:0;">Event</div>
-          <button id="season-toggle-btn" class="info-btn" type="button" aria-expanded="false" aria-label="Saisoninfo anzeigen" title="Saisoninfo anzeigen">i</button>
+      <section class="card season-card">
+        <button id="season-toggle-btn" class="info-btn season-info-btn" type="button" aria-expanded="false" aria-label="Saisoninfo anzeigen" title="Saisoninfo anzeigen">i</button>
+        <div class="season-actions-row">
+          <div id="season-selector" class="actions" style="margin-top:0; margin-bottom:0;"></div>
+          <div id="season-menu-wrap" class="season-menu-wrap hidden">
+            <button id="season-menu-btn" class="season-menu-btn" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Weitere Saisons" title="Weitere Saisons">
+              <span class="season-menu-icon" aria-hidden="true"></span>
+            </button>
+            <div id="season-menu-panel" class="season-menu-panel hidden" role="menu" aria-label="Weitere Saisons"></div>
+          </div>
         </div>
-        <div id="season-selector" class="actions" style="margin-top:0; margin-bottom:0;"></div>
         <div id="season-details" class="details-panel hidden">
           <div class="meta-grid">
             <div class="meta-item">
@@ -559,13 +1352,19 @@
 
       <section class="card">
         <div id="overview-season-label" class="eyebrow">Saison</div>
-        <div id="sessions-list" class="players"></div>
+        <div id="sessions-list" class="players players-dense"></div>
+        <div class="actions compact-actions">
+          <button id="sessions-more-btn" class="secondary-btn hidden" type="button">Weitere Termine</button>
+          <button id="sessions-completed-btn" class="secondary-btn sessions-completed-btn hidden" type="button">Durchgefuehrte</button>
+        </div>
       </section>
 
       <section id="response-card" class="card selected-card">
         <div class="section-row">
           <h2 id="highlight-title" class="compact-subtitle">Noch kein Termin gewaehlt</h2>
-          <button id="selected-session-toggle-btn" class="info-btn" type="button" aria-expanded="false" aria-label="Termininfo anzeigen" title="Termininfo anzeigen">i</button>
+          <div class="response-header-actions">
+            <button id="selected-session-toggle-btn" class="info-btn" type="button" aria-expanded="false" aria-label="Termininfo anzeigen" title="Termininfo anzeigen">i</button>
+          </div>
         </div>
         <div id="selected-session-meta" class="meta-grid hidden" style="margin-bottom:12px;">
           <div class="meta-item">
@@ -582,32 +1381,27 @@
           </div>
         </div>
         <div id="session-note" class="note hidden"></div>
-        <p id="own-player-name" class="muted-text" style="margin-bottom:12px;"></p>
-        <div class="current-status">
-          <div>
-            <div class="current-status-label">Aktueller Eintrag</div>
-            <div id="current-status-value" class="current-status-value">Noch offen</div>
-          </div>
-          <div id="current-status-pill" class="pill none">Offen</div>
+        <div class="status-grid player-response-grid">
+          <button class="status-btn response-status-btn" data-status="yes" type="button"><span class="thumb-badge thumb-badge-yes">👍</span>JA</button>
+          <button class="status-btn response-status-btn" data-status="no" type="button">👎 NEIN</button>
+          <button class="status-btn response-status-btn response-status-btn-open" data-status="none" type="button">OFFEN</button>
         </div>
-        <p class="muted-text status-hint">Waehle deinen Status fuer den markierten Termin und speichere ihn anschliessend.</p>
-        <div class="status-grid">
-          <button class="status-btn" data-status="yes" type="button">Dabei</button>
-          <button class="status-btn" data-status="no" type="button">Abwesend</button>
-          <button class="status-btn" data-status="maybe" type="button">Ersatz org.</button>
-          <button class="status-btn" data-status="replacement" type="button">Bei Bedarf</button>
-        </div>
-        <textarea id="comment-input" placeholder="Optionaler Kommentar, z.B. komme 10 Minuten spaeter"></textarea>
-        <div class="actions">
-          <button id="save-btn" class="primary-btn" type="button">Status speichern</button>
-          <span id="save-msg" class="muted-text"></span>
+        <div id="save-msg" class="save-feedback" role="status" aria-live="polite"></div>
+        <div class="response-footer-row">
+          <details id="comment-details" class="comment-details comment-inline">
+            <summary>Kommentar</summary>
+            <textarea id="comment-input" placeholder="Optionaler Kommentar, z.B. komme 10 Minuten spaeter"></textarea>
+          </details>
         </div>
       </section>
 
       <section class="card">
-        <div class="eyebrow">Alle Spieler</div>
-        <h2 style="margin-bottom:12px;">Statusliste</h2>
-        <div id="players-list" class="players"></div>
+        <div id="players-list" class="players players-dense" style="margin-top:8px;"></div>
+        <p class="mobile-rotate-hint">Für Spielerdetails - Handy kurz drehen. 😉</p>
+        <div id="comments-summary-wrap" class="comments-summary-wrap hidden">
+          <button id="comments-summary-btn" class="secondary-btn comments-summary-btn" type="button">Kommentare</button>
+          <div id="comments-summary-panel" class="details-panel hidden"></div>
+        </div>
       </section>
     </div>
   </div>
@@ -619,19 +1413,35 @@
       ></path>
     </svg>
   </button>
+  </div>
 
   <script>
+    const DEMO_URL = "https://mysilverline.it-pin.ch/htmltools/tennisteam/index.html?token=706099c292e6115e20c83833814bc1b52f68b2b9685501f3dc8f00a2204ef02b";
     const params = new URLSearchParams(window.location.search);
     let playerToken = params.get("token") || "";
     let seasonPayload = null;
-    let selectedSeasonId = params.get("season_id") ? Number(params.get("season_id")) : null;
-    let selectedSessionId = params.get("session_id") ? Number(params.get("session_id")) : null;
+    let selectedSeasonId = null;
+    let selectedSessionId = null;
     let selectedStatus = null;
     let currentDetailPayload = null;
     let seasonDetailsOpen = false;
     let selectedSessionDetailsOpen = false;
     let appHelpOpen = false;
+    let seasonMenuOpen = false;
+    let showAllSessions = false;
+    let showCompletedSessions = false;
+    let commentsPanelOpen = false;
+    let initialSeasonResolved = false;
+    let sessionSelectionTouched = false;
+    let isSavingResponse = false;
+    let saveFeedbackTimer = null;
 
+    const landingPageEl = document.getElementById("landing-page");
+    const playerAppEl = document.getElementById("player-app");
+    const heroPrimaryCtaEl = document.getElementById("hero-primary-cta");
+    const heroSecondaryCtaEl = document.getElementById("hero-secondary-cta");
+    const demoCtaEl = document.getElementById("demo-cta");
+    const footerDemoCtaEl = document.getElementById("footer-demo-cta");
     const teamNameEl = document.getElementById("team-name");
     const errorBoxEl = document.getElementById("error-box");
     const tokenCardEl = document.getElementById("token-card");
@@ -639,10 +1449,15 @@
     const tokenBtnEl = document.getElementById("token-btn");
     const appContentEl = document.getElementById("app-content");
     const appHelpToggleBtnEl = document.getElementById("app-help-toggle-btn");
+    const appSubtitleEl = document.getElementById("app-subtitle");
     const appHelpPanelEl = document.getElementById("app-help-panel");
+    const heroPlayerLineEl = document.getElementById("hero-player-line");
     const overviewSeasonLabelEl = document.getElementById("overview-season-label");
     const seasonRangeEl = document.getElementById("season-range");
     const seasonSelectorEl = document.getElementById("season-selector");
+    const seasonMenuWrapEl = document.getElementById("season-menu-wrap");
+    const seasonMenuBtnEl = document.getElementById("season-menu-btn");
+    const seasonMenuPanelEl = document.getElementById("season-menu-panel");
     const seasonToggleBtnEl = document.getElementById("season-toggle-btn");
     const seasonDetailsEl = document.getElementById("season-details");
     const highlightTitleEl = document.getElementById("highlight-title");
@@ -657,30 +1472,63 @@
     const selectedSessionLocationEl = document.getElementById("selected-session-location");
     const sessionNoteEl = document.getElementById("session-note");
     const sessionsListEl = document.getElementById("sessions-list");
+    const sessionsMoreBtnEl = document.getElementById("sessions-more-btn");
+    const sessionsCompletedBtnEl = document.getElementById("sessions-completed-btn");
     const responseCardEl = document.getElementById("response-card");
-    const ownPlayerNameEl = document.getElementById("own-player-name");
-    const currentStatusValueEl = document.getElementById("current-status-value");
-    const currentStatusPillEl = document.getElementById("current-status-pill");
+    const commentDetailsEl = document.getElementById("comment-details");
     const commentInputEl = document.getElementById("comment-input");
-    const saveBtnEl = document.getElementById("save-btn");
     const saveMsgEl = document.getElementById("save-msg");
     const playersListEl = document.getElementById("players-list");
+    const commentsSummaryWrapEl = document.getElementById("comments-summary-wrap");
+    const commentsSummaryBtnEl = document.getElementById("comments-summary-btn");
+    const commentsSummaryPanelEl = document.getElementById("comments-summary-panel");
     const scrollTopBtnEl = document.getElementById("scroll-top-btn");
-    const statusButtons = Array.from(document.querySelectorAll(".status-btn"));
+    const responseStatusButtons = Array.from(document.querySelectorAll(".response-status-btn"));
+
+    [heroPrimaryCtaEl, heroSecondaryCtaEl, demoCtaEl, footerDemoCtaEl]
+      .filter(Boolean)
+      .forEach((ctaEl) => {
+        ctaEl.href = DEMO_URL;
+      });
 
     const statusLabels = {
-      yes: "Dabei",
-      no: "Abwesend",
-      maybe: "Ersatz org.",
-      replacement: "Bei Bedarf",
-      none: "Offen"
+      yes: "JA",
+      no: "NEIN",
+      maybe: "ERS",
+      replacement: "OPT",
+      none: "OFFEN"
     };
+
+    const statusPillShort = {
+      yes: "JA",
+      no: "NEIN",
+      maybe: "ERS",
+      replacement: "OPT",
+      none: "OFFEN"
+    };
+
+    function getStatusBadgeHtml(status) {
+      if (status === "yes") return '<span class="thumb-badge thumb-badge-yes">👍</span>';
+      if (status === "no") return '<span class="thumb-badge thumb-badge-no">👎</span>';
+      return "";
+    }
+
+    function getStatusTextWithBadge(status, label) {
+      const badge = getStatusBadgeHtml(status);
+      return badge ? badge + label : label;
+    }
 
     const sessionStatusLabels = {
       scheduled: "Geplant",
       provisional: "Provisorisch",
       completed: "Durchgefuehrt",
       cancelled: "Abgesagt"
+    };
+
+    const sessionStatusShort = {
+      provisional: "prov.",
+      completed: "OK",
+      cancelled: "Aus"
     };
 
     const weekdayLabels = {
@@ -746,13 +1594,78 @@
         .replace(/"/g, "&quot;");
     }
 
+    function truncateLabel(value, maxLength) {
+      const text = String(value || "").trim();
+      if (text.length <= maxLength) return text;
+      return text.slice(0, maxLength) + "…";
+    }
+
     function updateScrollTopVisibility() {
       scrollTopBtnEl.classList.toggle("hidden", window.scrollY < 320);
     }
 
+    function clearSaveFeedback() {
+      if (saveFeedbackTimer) {
+        clearTimeout(saveFeedbackTimer);
+        saveFeedbackTimer = null;
+      }
+      if (!saveMsgEl) {
+        return;
+      }
+      saveMsgEl.textContent = "";
+      saveMsgEl.classList.remove("is-saving", "is-success");
+    }
+
+    function showSaveFeedback(text, type, durationMs) {
+      if (!saveMsgEl) {
+        return;
+      }
+      if (saveFeedbackTimer) {
+        clearTimeout(saveFeedbackTimer);
+        saveFeedbackTimer = null;
+      }
+      saveMsgEl.textContent = text;
+      saveMsgEl.classList.remove("is-saving", "is-success");
+      saveMsgEl.classList.add(type === "success" ? "is-success" : "is-saving");
+      if (type === "success" && durationMs > 0) {
+        saveFeedbackTimer = setTimeout(() => {
+          clearSaveFeedback();
+        }, durationMs);
+      }
+    }
+    function setResponseControlsDisabled(disabled) {
+      responseStatusButtons.forEach((button) => {
+        button.disabled = disabled;
+      });
+      if (commentInputEl) {
+        commentInputEl.disabled = disabled;
+      }
+    }
+
+    function getSavedResponseState() {
+      const savedStatus = normalizePlayerStatus(currentDetailPayload?.own_response?.attendance_status || "none");
+      const savedComment = String(currentDetailPayload?.own_response?.comment || "");
+      return { savedStatus, savedComment };
+    }
+
+    function responseStateUnchanged(status, comment) {
+      const { savedStatus, savedComment } = getSavedResponseState();
+      return normalizePlayerStatus(status) === savedStatus && String(comment || "") === savedComment;
+    }
+
+    function normalizePlayerStatus(status) {
+      if (status === "yes" || status === "no") {
+        return status;
+      }
+      return "none";
+    }
+
     function setSelectedStatus(status) {
-      selectedStatus = status || null;
-      statusButtons.forEach((button) => {
+      if (status === "maybe" || status === "replacement") {
+        status = "none";
+      }
+      selectedStatus = status || "none";
+      responseStatusButtons.forEach((button) => {
         button.classList.toggle("active", button.dataset.status === selectedStatus);
       });
     }
@@ -784,7 +1697,7 @@
       if (!value) return "-";
       const date = new Date(value + "T00:00:00");
       return new Intl.DateTimeFormat("de-CH", {
-        weekday: "short",
+        weekday: "long",
         day: "2-digit",
         month: "2-digit"
       }).format(date);
@@ -816,72 +1729,177 @@
       return timeValue ? dateLabel + ", " + formatTimeValue(timeValue) : dateLabel;
     }
 
-    function updateCurrentStatus(status) {
-      const state = status || "none";
-      currentStatusValueEl.textContent = statusLabels[state] || "Offen";
-      currentStatusPillEl.className = "pill " + state;
-      currentStatusPillEl.textContent = statusLabels[state] || "Offen";
-    }
-
     function getSessionPillData(session, ownStatus) {
       if (session.status === "cancelled" || session.status === "provisional" || session.status === "completed") {
+        const full = sessionStatusLabels[session.status] || "Geplant";
         return {
           className: session.status,
-          label: sessionStatusLabels[session.status] || "Geplant"
+          label: full,
+          shortLabel: sessionStatusShort[session.status] || full
         };
       }
 
+      const full = statusLabels[ownStatus] || "OFFEN";
       return {
         className: ownStatus,
-        label: statusLabels[ownStatus] || "Offen"
+        label: full,
+        shortLabel: statusPillShort[ownStatus] || full
       };
     }
 
     function renderPlayers(players) {
       playersListEl.innerHTML = "";
+      const groups = [
+        { key: "yes", label: "👍", row: "primary" },
+        { key: "no", label: "👎", row: "primary" },
+        { key: "none", label: "OFFEN", row: "secondary" }
+      ];
+      const groupedMap = new Map(groups.map((group) => [group.key, []]));
+      const commentEntries = [];
+
       players.forEach((player) => {
-        const row = document.createElement("div");
-        row.className = "player-row" + (player.is_current_player ? " current" : "");
+        const state = normalizePlayerStatus(player.attendance_status || "none");
+        groupedMap.get(state).push(player);
 
-        const left = document.createElement("div");
-        const commentText = player.comment || "Noch kein Kommentar";
-        const commentClass = player.comment ? "player-comment" : "player-comment empty";
-        const metaBits = [];
-        if (player.license_number) metaBits.push("Liz. " + escapeHtml(player.license_number));
-        if (player.classification) metaBits.push(escapeHtml(player.classification));
-        const metaHtml = metaBits.length ? '<div class="player-meta">' + metaBits.join(" · ") + "</div>" : "";
-        left.innerHTML =
-          '<div class="player-name">' + escapeHtml(player.name) + "</div>" +
-          metaHtml +
-          '<div class="' + commentClass + '">' + escapeHtml(commentText) + "</div>";
-
-        const pill = document.createElement("div");
-        const state = player.attendance_status || "none";
-        pill.className = "pill " + state;
-        pill.textContent = statusLabels[state] || state;
-
-        row.appendChild(left);
-        row.appendChild(pill);
-        playersListEl.appendChild(row);
+        const commentRaw = String(player.comment || "").trim();
+        if (commentRaw) {
+          commentEntries.push({ name: player.name, comment: commentRaw });
+        }
       });
+
+      const groupList = document.createElement("div");
+      groupList.className = "group-list";
+      const primaryRow = document.createElement("div");
+      primaryRow.className = "group-row group-row-primary";
+      const secondaryRow = document.createElement("div");
+      secondaryRow.className = "group-row group-row-secondary";
+
+      groups.forEach((group) => {
+        const playersInGroup = groupedMap.get(group.key) || [];
+        const detail = document.createElement("details");
+        detail.className = "group-item" + (group.key === "yes" ? " group-item-yes" : (group.key === "no" ? " group-item-no" : (group.key === "none" ? " group-item-open" : "")));
+        const summary = document.createElement("summary");
+        const labelClass = group.key === "yes" ? "group-label group-label-yes"
+          : group.key === "no" ? "group-label group-label-no"
+          : "group-label";
+        summary.innerHTML =
+          '<span class="' + labelClass + '">' + group.label + "</span>" +
+          '<span class="group-count">' + String(playersInGroup.length) + "</span>";
+        detail.appendChild(summary);
+
+        const content = document.createElement("div");
+        content.className = "group-content";
+        playersInGroup.forEach((player) => {
+          const row = document.createElement("div");
+          row.className = "player-row" + (player.is_current_player ? " current" : "");
+          const nameEl = document.createElement("div");
+          nameEl.className = "player-name";
+          const fullPlayerName = String(player.name || "");
+          nameEl.textContent = truncateLabel(fullPlayerName, 24);
+          nameEl.title = fullPlayerName;
+          if (player.classification) {
+            const classEl = document.createElement("span");
+            classEl.className = "player-meta player-classification";
+            classEl.textContent = " · " + player.classification;
+            nameEl.appendChild(classEl);
+          }
+          if (player.license_number) {
+            const licenseEl = document.createElement("span");
+            licenseEl.className = "player-meta player-license";
+            licenseEl.textContent = " · Liz. " + player.license_number;
+            nameEl.appendChild(licenseEl);
+          }
+
+          const pill = document.createElement("div");
+          const state = player.attendance_status || "none";
+          const displayState = normalizePlayerStatus(state);
+          pill.className = "pill " + displayState;
+          pill.innerHTML = getStatusTextWithBadge(displayState, statusPillShort[displayState] || "OFFEN");
+          pill.title = statusLabels[displayState] || "OFFEN";
+
+          row.appendChild(nameEl);
+          row.appendChild(pill);
+          content.appendChild(row);
+        });
+        detail.appendChild(content);
+        if (group.row === "primary") {
+          primaryRow.appendChild(detail);
+        } else {
+          secondaryRow.appendChild(detail);
+        }
+      });
+
+      groupList.appendChild(primaryRow);
+      groupList.appendChild(secondaryRow);
+      playersListEl.appendChild(groupList);
+
+      if (!commentsSummaryWrapEl || !commentsSummaryBtnEl || !commentsSummaryPanelEl) {
+        return;
+      }
+
+      commentsSummaryPanelEl.innerHTML = "";
+      commentsSummaryWrapEl.classList.toggle("hidden", commentEntries.length === 0);
+      commentsSummaryPanelEl.classList.add("hidden");
+      commentsPanelOpen = false;
+      updateCommentsPanelVisibility();
+
+      if (commentEntries.length === 1) {
+        commentsSummaryBtnEl.textContent = "Kommentar von " + commentEntries[0].name;
+      } else if (commentEntries.length > 1) {
+        commentsSummaryBtnEl.textContent = "Kommentare (" + String(commentEntries.length) + ")";
+      }
+
+      if (commentEntries.length === 0) {
+        return;
+      }
+
+      const list = document.createElement("div");
+      list.className = "comment-summary-list";
+      commentEntries.forEach((entry) => {
+        const item = document.createElement("div");
+        item.className = "comment-summary-item";
+        item.textContent = entry.name + ": " + entry.comment;
+        list.appendChild(item);
+      });
+      commentsSummaryPanelEl.appendChild(list);
     }
 
     function updateUrl() {
       const url = new URL(window.location.href);
       if (playerToken) url.searchParams.set("token", playerToken);
-      if (selectedSeasonId) url.searchParams.set("season_id", String(selectedSeasonId));
-      else url.searchParams.delete("season_id");
-      if (selectedSessionId) url.searchParams.set("session_id", String(selectedSessionId));
-      else url.searchParams.delete("session_id");
+      url.searchParams.delete("season_id");
+      url.searchParams.delete("season_id");
+      url.searchParams.delete("session_id");
       window.history.replaceState({}, "", url.toString());
+    }
+
+    function getLocalTodayIso() {
+      const now = new Date();
+      return [
+        now.getFullYear(),
+        String(now.getMonth() + 1).padStart(2, "0"),
+        String(now.getDate()).padStart(2, "0"),
+      ].join("-");
+    }
+
+    function isSelectableSession(session) {
+      return session.status !== "completed" && session.status !== "cancelled";
     }
 
     function getNextRelevantSessionId(sessions) {
       if (!sessions || sessions.length === 0) return null;
-      const today = new Date();
-      const todayIso = today.toISOString().slice(0, 10);
-      const future = sessions.find((session) => session.session_date >= todayIso);
-      return (future || sessions[0]).id;
+
+      const todayIso = getLocalTodayIso();
+      const sorted = [...sessions].sort((a, b) => String(a.session_date).localeCompare(String(b.session_date)));
+      const selectable = sorted.filter(isSelectableSession);
+      const pool = selectable.length > 0 ? selectable : sorted;
+      const future = pool.find((session) => session.session_date >= todayIso);
+
+      if (future) {
+        return future.id;
+      }
+
+      return pool[pool.length - 1]?.id ?? null;
     }
 
     function scrollToSessionInList(sessionId, behavior) {
@@ -907,6 +1925,7 @@
     }
 
     function updateAppHelpVisibility() {
+      appSubtitleEl.classList.toggle("hidden", !appHelpOpen);
       appHelpPanelEl.classList.toggle("hidden", !appHelpOpen);
       appHelpToggleBtnEl.setAttribute("aria-expanded", appHelpOpen ? "true" : "false");
       appHelpToggleBtnEl.setAttribute("aria-label", appHelpOpen ? "Hinweise ausblenden" : "Hinweise anzeigen");
@@ -915,9 +1934,16 @@
 
     function updateSelectedSessionDetailsVisibility() {
       selectedSessionMetaEl.classList.toggle("hidden", !selectedSessionDetailsOpen);
+      sessionNoteEl.classList.toggle("hidden", !selectedSessionDetailsOpen || !sessionNoteEl.textContent);
       selectedSessionToggleBtnEl.setAttribute("aria-expanded", selectedSessionDetailsOpen ? "true" : "false");
       selectedSessionToggleBtnEl.setAttribute("aria-label", selectedSessionDetailsOpen ? "Termininfo ausblenden" : "Termininfo anzeigen");
       selectedSessionToggleBtnEl.setAttribute("title", selectedSessionDetailsOpen ? "Termininfo ausblenden" : "Termininfo anzeigen");
+    }
+
+    function updateCommentsPanelVisibility() {
+      if (!commentsSummaryPanelEl || !commentsSummaryBtnEl) return;
+      commentsSummaryPanelEl.classList.toggle("hidden", !commentsPanelOpen);
+      commentsSummaryBtnEl.setAttribute("aria-expanded", commentsPanelOpen ? "true" : "false");
     }
 
     function scrollToSessionDetail(behavior) {
@@ -956,21 +1982,120 @@
         .filter(Boolean);
     }
 
+    function getSeasonRank(season, fallbackIndex) {
+      const rankCandidate = Number(
+        season?.display_priority ?? season?.priority_rank ?? season?.rank ?? season?.priority ?? NaN
+      );
+      if (Number.isFinite(rankCandidate) && rankCandidate > 0) {
+        return rankCandidate;
+      }
+      return fallbackIndex + 1;
+    }
+
+    function getSortedSeasons(seasons) {
+      return (seasons || [])
+        .map((season, index) => ({ season, index }))
+        .sort((a, b) => {
+          const rankDiff = getSeasonRank(a.season, a.index) - getSeasonRank(b.season, b.index);
+          if (rankDiff !== 0) return rankDiff;
+          return String(a.season.name || "").localeCompare(String(b.season.name || ""), "de-CH");
+        })
+        .map((entry) => entry.season);
+    }
+
+    function getSeasonButtonLayout(sortedSeasons, activeSeasonId) {
+      if (sortedSeasons.length <= 1) {
+        return { buttons: sortedSeasons, menu: [] };
+      }
+
+      const topTwo = sortedSeasons.slice(0, 2);
+      const selected = sortedSeasons.find((season) => season.id === activeSeasonId);
+      let buttons;
+
+      if (!selected || topTwo.some((season) => season.id === activeSeasonId)) {
+        buttons = topTwo;
+      } else {
+        buttons = [sortedSeasons[0], selected];
+      }
+
+      const buttonIds = new Set(buttons.map((season) => season.id));
+      const menu = sortedSeasons.filter((season) => !buttonIds.has(season.id));
+      return { buttons, menu };
+    }
+
+    function closeSeasonMenu() {
+      seasonMenuOpen = false;
+      if (seasonMenuPanelEl) {
+        seasonMenuPanelEl.classList.add("hidden");
+      }
+      if (seasonMenuBtnEl) {
+        seasonMenuBtnEl.setAttribute("aria-expanded", "false");
+      }
+    }
+
+    function createSeasonButton(season, sortedSeasons) {
+      const rankIndex = sortedSeasons.findIndex((entry) => entry.id === season.id);
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "status-btn season-btn" + (season.id === selectedSeasonId ? " active" : "");
+      const fullSeasonName = String(season.name || "");
+      button.textContent = truncateLabel(fullSeasonName, 26);
+      button.title = fullSeasonName + " · Ranking " + String(getSeasonRank(season, rankIndex >= 0 ? rankIndex : 0));
+      button.addEventListener("click", () => {
+        if (season.id === selectedSeasonId) return;
+        selectedSeasonId = season.id;
+        selectedSessionId = null;
+        sessionSelectionTouched = false;
+        closeSeasonMenu();
+        showAllSessions = false;
+        loadSeasonSessions();
+      });
+      return button;
+    }
+
     function renderSeasonSelector() {
       seasonSelectorEl.innerHTML = "";
-      (seasonPayload.seasons || []).forEach((season) => {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = "status-btn season-btn" + (season.id === selectedSeasonId ? " active" : "");
-        button.textContent = season.name;
-        button.addEventListener("click", () => {
-          if (season.id === selectedSeasonId) return;
+      if (seasonMenuPanelEl) {
+        seasonMenuPanelEl.innerHTML = "";
+      }
+
+      const sortedSeasons = getSortedSeasons(seasonPayload?.seasons || []);
+      const { buttons, menu } = getSeasonButtonLayout(sortedSeasons, selectedSeasonId);
+
+      buttons.forEach((season) => {
+        seasonSelectorEl.appendChild(createSeasonButton(season, sortedSeasons));
+      });
+
+      if (seasonMenuWrapEl) {
+        seasonMenuWrapEl.classList.toggle("hidden", menu.length === 0);
+      }
+
+      menu.forEach((season) => {
+        const item = document.createElement("button");
+        item.type = "button";
+        item.className = "season-menu-item" + (season.id === selectedSeasonId ? " active" : "");
+        item.setAttribute("role", "menuitem");
+        const fullSeasonName = String(season.name || "");
+        item.textContent = truncateLabel(fullSeasonName, 40);
+        item.title = fullSeasonName;
+        item.addEventListener("click", () => {
+          if (season.id === selectedSeasonId) {
+            closeSeasonMenu();
+            return;
+          }
           selectedSeasonId = season.id;
           selectedSessionId = null;
+          sessionSelectionTouched = false;
+          closeSeasonMenu();
+          showAllSessions = false;
           loadSeasonSessions();
         });
-        seasonSelectorEl.appendChild(button);
+        seasonMenuPanelEl.appendChild(item);
       });
+
+      if (!seasonMenuOpen) {
+        closeSeasonMenu();
+      }
     }
 
     function renderSessionsList() {
@@ -981,8 +2106,19 @@
         return;
       }
 
+      const completedSessions = [];
+      const regularSessions = [];
       seasonPayload.sessions.forEach((session) => {
+        if (session.status === "completed") {
+          completedSessions.push(session);
+        } else {
+          regularSessions.push(session);
+        }
+      });
+
+      function createSessionButton(session) {
         const acceptanceCount = (session.summary?.yes ?? 0) + (session.summary?.maybe ?? 0) + (session.summary?.replacement ?? 0);
+        const ownStatus = session.own_response?.attendance_status || "none";
         const button = document.createElement("button");
         button.type = "button";
         button.className = "player-row session-item" + (session.id === selectedSessionId ? " current" : "");
@@ -991,42 +2127,90 @@
         button.style.textAlign = "left";
         button.style.cursor = "pointer";
         button.style.background = "var(--card)";
+        const metaLine = String(acceptanceCount) + " JA";
 
-        const ownStatus = session.own_response?.attendance_status || "none";
         const left = document.createElement("div");
+        left.className = "player-row-main";
         left.innerHTML =
-          '<div class="player-name">' + formatShortDate(session.session_date) + '</div>' +
-          '<div class="player-comment">' +
-            (session.start_time ? formatTimeValue(session.start_time) + ' · ' : '') +
-            (session.location || 'Ort offen') +
-            ' · Zusagen: ' + acceptanceCount +
-            ' · Absagen: ' + (session.summary?.no ?? 0) +
-            ' · Offen: ' + session.summary.missing +
-            ' · Dein Status: ' + statusLabels[ownStatus] +
-          '</div>';
+          '<div class="player-name">' + escapeHtml(formatShortDate(session.session_date)) + "</div>" +
+          '<div class="session-line-meta">' + metaLine + "</div>";
 
         const pill = document.createElement("div");
         const pillData = getSessionPillData(session, ownStatus);
         pill.className = "pill " + pillData.className;
-        pill.textContent = pillData.label;
+        pill.innerHTML = getStatusTextWithBadge(pillData.className, pillData.shortLabel);
+        pill.title = pillData.label;
 
         button.appendChild(left);
         button.appendChild(pill);
         button.addEventListener("click", () => {
           selectedSessionId = session.id;
+          sessionSelectionTouched = true;
           loadSessionDetail({ scrollToDetail: true });
         });
+        return button;
+      }
 
-        sessionsListEl.appendChild(button);
+      const nextSessionId = getNextRelevantSessionId(regularSessions);
+      const visibleRegularSessions = showAllSessions
+        ? regularSessions
+        : (() => {
+            const nextSession = regularSessions.find((session) => session.id === nextSessionId);
+            return nextSession ? [nextSession] : regularSessions.slice(0, 1);
+          })();
+      visibleRegularSessions.forEach((session) => {
+        sessionsListEl.appendChild(createSessionButton(session));
       });
+
+      if (completedSessions.length > 0 && showCompletedSessions) {
+        const completedWrap = document.createElement("div");
+        completedWrap.className = "completed-sessions-wrap";
+        const completedList = document.createElement("div");
+        completedList.className = "completed-sessions-list";
+        completedSessions.forEach((session) => {
+          completedList.appendChild(createSessionButton(session));
+        });
+        completedWrap.appendChild(completedList);
+        sessionsListEl.appendChild(completedWrap);
+      }
+
+      if (sessionsMoreBtnEl) {
+        const hiddenCount = Math.max(0, regularSessions.length - visibleRegularSessions.length);
+        const hasMoreSessions = hiddenCount > 0;
+        sessionsMoreBtnEl.classList.toggle("hidden", !hasMoreSessions && !showAllSessions);
+        if (hasMoreSessions || showAllSessions) {
+          sessionsMoreBtnEl.textContent = showAllSessions
+            ? "Weniger Termine"
+            : "Weitere...";
+        }
+      }
+
+      if (sessionsCompletedBtnEl) {
+        const hasCompleted = completedSessions.length > 0;
+        sessionsCompletedBtnEl.classList.toggle("hidden", !hasCompleted);
+        if (hasCompleted) {
+          sessionsCompletedBtnEl.textContent = showCompletedSessions
+            ? "Durchgefuehrte ausblenden"
+            : "Durchgefuehrte...";
+        }
+      }
+
+      if (regularSessions.length === 0 && completedSessions.length > 0) {
+        const hint = document.createElement("div");
+        hint.className = "empty";
+        hint.textContent = "Aktuell sind nur durchgefuehrte Termine vorhanden.";
+        sessionsListEl.insertBefore(hint, sessionsListEl.firstChild);
+      }
+
     }
 
     function renderSessionDetail(payload) {
       currentDetailPayload = payload;
       teamNameEl.textContent = payload.team.name;
-      ownPlayerNameEl.textContent = payload.own_response
+      heroPlayerLineEl.textContent = payload.own_response
         ? "Eingeloggt als " + payload.own_response.name
         : "Spielerstatus wird geladen";
+      heroPlayerLineEl.classList.remove("hidden");
 
       if (payload.session) {
         highlightTitleEl.textContent = formatEventHeadline(payload.session.session_date, payload.session.start_time);
@@ -1037,8 +2221,9 @@
         const noteParts = [payload.session.description, payload.session.admin_note].filter(Boolean);
         if (noteParts.length > 0) {
           sessionNoteEl.textContent = noteParts.join(" | ");
-          sessionNoteEl.classList.remove("hidden");
+          sessionNoteEl.classList.toggle("hidden", !selectedSessionDetailsOpen);
         } else {
+          sessionNoteEl.textContent = "";
           sessionNoteEl.classList.add("hidden");
         }
       } else {
@@ -1046,6 +2231,7 @@
         selectedSessionTimeEl.textContent = "-";
         selectedSessionDurationEl.textContent = "-";
         selectedSessionLocationEl.textContent = "-";
+        sessionNoteEl.textContent = "";
         sessionNoteEl.classList.add("hidden");
       }
 
@@ -1053,19 +2239,22 @@
 
       if (payload.own_response) {
         commentInputEl.value = payload.own_response.comment || "";
+        commentDetailsEl.open = Boolean(String(payload.own_response.comment || "").trim());
         setSelectedStatus(payload.own_response.attendance_status);
-        updateCurrentStatus(payload.own_response.attendance_status);
       } else {
         commentInputEl.value = "";
-        setSelectedStatus(null);
-        updateCurrentStatus(null);
+        commentDetailsEl.open = false;
+        setSelectedStatus("none");
       }
     }
 
     async function loadSeasonSessions(options = {}) {
       const allowRetry = options.allowRetry !== false;
+      const skipPrimaryCheck = options.skipPrimaryCheck === true;
       clearError();
-      saveMsgEl.textContent = "";
+      if (!options.preserveSaveMsg) {
+        clearSaveFeedback();
+      }
 
       let url = "api/sessions.php?token=" + encodeURIComponent(playerToken);
       if (selectedSeasonId) {
@@ -1081,8 +2270,18 @@
         }
 
         seasonPayload = result.data;
+        const sortedSeasons = getSortedSeasons(seasonPayload.seasons || []);
+        const primarySeasonId = sortedSeasons[0]?.id ?? result.data.season.id;
+
+        if (!skipPrimaryCheck && !initialSeasonResolved && primarySeasonId && primarySeasonId !== result.data.season.id) {
+          selectedSeasonId = primarySeasonId;
+          return loadSeasonSessions({ allowRetry: false, skipPrimaryCheck: true });
+        }
+
         selectedSeasonId = result.data.season.id;
-        overviewSeasonLabelEl.textContent = result.data.season.name;
+        initialSeasonResolved = true;
+        overviewSeasonLabelEl.textContent = truncateLabel(result.data.season.name, 26);
+        overviewSeasonLabelEl.title = result.data.season.name;
         seasonRangeEl.textContent =
           formatSeasonRangeEndpoint(result.data.season.start_date) + " bis " + formatSeasonRangeEndpoint(result.data.season.end_date);
         seasonTimeEl.textContent = result.data.season.default_start_time
@@ -1096,7 +2295,9 @@
         renderSeasonSelector();
         renderSessionsList();
 
-        if (!selectedSessionId || !seasonPayload.sessions.some((session) => session.id === selectedSessionId)) {
+        if (!sessionSelectionTouched) {
+          selectedSessionId = getNextRelevantSessionId(seasonPayload.sessions);
+        } else if (!selectedSessionId || !seasonPayload.sessions.some((session) => session.id === selectedSessionId)) {
           selectedSessionId = getNextRelevantSessionId(seasonPayload.sessions);
         }
 
@@ -1166,8 +2367,12 @@
     }
 
     async function saveResponse() {
+      if (isSavingResponse) {
+        return;
+      }
+
       clearError();
-      saveMsgEl.textContent = "";
+      clearSaveFeedback();
 
       if (!selectedStatus) {
         showError("Bitte zuerst einen Status auswaehlen.");
@@ -1179,8 +2384,13 @@
         return;
       }
 
-      saveBtnEl.disabled = true;
-      saveMsgEl.textContent = "Speichere...";
+      if (responseStateUnchanged(selectedStatus, commentInputEl.value)) {
+        return;
+      }
+
+      isSavingResponse = true;
+      setResponseControlsDisabled(true);
+      showSaveFeedback("Speichere...", "saving", 0);
 
       try {
         const response = await fetch("api/response.php", {
@@ -1189,7 +2399,7 @@
           body: JSON.stringify({
             token: playerToken,
             session_id: selectedSessionId,
-            status: selectedStatus,
+            status: selectedStatus === "none" ? null : selectedStatus,
             comment: commentInputEl.value
           })
         });
@@ -1200,21 +2410,75 @@
         }
 
         renderSessionDetail(result.data);
-        saveMsgEl.textContent = "Gespeichert.";
-        await loadSeasonSessions();
+        await loadSeasonSessions({ preserveSaveMsg: true });
+        showSaveFeedback("Gespeichert", "success", 3000);
       } catch (error) {
-        saveMsgEl.textContent = "";
+        clearSaveFeedback();
         showError(error.message || "Fehler beim Speichern.");
       } finally {
-        saveBtnEl.disabled = false;
+        isSavingResponse = false;
+        setResponseControlsDisabled(false);
       }
     }
 
-    statusButtons.forEach((button) => {
-      button.addEventListener("click", () => setSelectedStatus(button.dataset.status));
+    async function handleStatusSelection(status) {
+      if (isSavingResponse) {
+        return;
+      }
+
+      if (!selectedSessionId) {
+        showError("Bitte zuerst einen Termin auswaehlen.");
+        return;
+      }
+
+      setSelectedStatus(status);
+
+      if (responseStateUnchanged(selectedStatus, commentInputEl.value)) {
+        return;
+      }
+
+      await saveResponse();
+    }
+
+    responseStatusButtons.forEach((button) => {
+      button.addEventListener("click", () => handleStatusSelection(button.dataset.status));
     });
 
-    saveBtnEl.addEventListener("click", saveResponse);
+    commentInputEl?.addEventListener("blur", () => {
+      if (isSavingResponse || !selectedSessionId) {
+        return;
+      }
+      if (responseStateUnchanged(selectedStatus, commentInputEl.value)) {
+        return;
+      }
+      saveResponse();
+    });
+    seasonMenuBtnEl?.addEventListener("click", (event) => {
+      event.stopPropagation();
+      seasonMenuOpen = !seasonMenuOpen;
+      seasonMenuPanelEl.classList.toggle("hidden", !seasonMenuOpen);
+      seasonMenuBtnEl.setAttribute("aria-expanded", seasonMenuOpen ? "true" : "false");
+    });
+    seasonMenuWrapEl?.addEventListener("click", (event) => {
+      event.stopPropagation();
+    });
+    document.addEventListener("click", () => {
+      if (seasonMenuOpen) {
+        closeSeasonMenu();
+      }
+    });
+    sessionsMoreBtnEl?.addEventListener("click", () => {
+      showAllSessions = !showAllSessions;
+      renderSessionsList();
+    });
+    sessionsCompletedBtnEl?.addEventListener("click", () => {
+      showCompletedSessions = !showCompletedSessions;
+      renderSessionsList();
+    });
+    commentsSummaryBtnEl?.addEventListener("click", () => {
+      commentsPanelOpen = !commentsPanelOpen;
+      updateCommentsPanelVisibility();
+    });
     scrollTopBtnEl.addEventListener("click", () => {
       window.scrollTo({ top: 0, behavior: "smooth" });
     });
@@ -1259,9 +2523,12 @@
     }
 
     if (!playerToken) {
-      tokenCardEl.classList.remove("hidden");
-      teamNameEl.textContent = "Tennisteam Testansicht";
+      landingPageEl.classList.remove("hidden");
+      playerAppEl.classList.add("hidden");
+      tokenCardEl.classList.add("hidden");
     } else {
+      landingPageEl.classList.add("hidden");
+      playerAppEl.classList.remove("hidden");
       appContentEl.classList.remove("hidden");
       tokenCardEl.classList.add("hidden");
       loadSeasonSessions();

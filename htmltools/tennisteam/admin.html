@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tennisteam Admin</title>
   <meta name="theme-color" content="#0f172a">
+  <!-- Umami: gleiche Website-ID wie index.html (Domain mysilverline.it-pin.ch). -->
+  <script defer src="https://cloud.umami.is/script.js" data-website-id="d239bee1-4d65-4d54-8f06-73ae6b76fb3e"></script>
   <style>
     :root {
       --bg: #0b1220;
@@ -57,14 +59,40 @@
     }
 
     h1, h2, h3, p { margin: 0; }
-    h1 { font-size: 28px; margin-bottom: 8px; }
-    h2 { margin-bottom: 12px; }
+    h1 {
+      font-size: 28px;
+      margin-bottom: 8px;
+      color: var(--accent);
+    }
+    h2 {
+      margin-bottom: 12px;
+      color: var(--accent);
+    }
 
     .sub,
     .muted-text {
       color: var(--muted);
       font-size: 14px;
       line-height: 1.5;
+    }
+
+    .save-msg-error {
+      display: block;
+      flex-basis: 100%;
+      width: 100%;
+      margin-top: 4px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: rgba(220, 38, 38, 0.08);
+      border: 1px solid rgba(220, 38, 38, 0.25);
+      color: #fecaca;
+      font-size: 13px;
+      line-height: 1.4;
+      font-weight: 600;
+    }
+
+    .actions .save-msg-error {
+      margin-top: 0;
     }
 
     .actions {
@@ -150,6 +178,12 @@
       grid-template-columns: repeat(4, minmax(0, 1fr));
     }
 
+    .season-name-rank-row {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: minmax(0, 2fr) minmax(120px, 1fr);
+    }
+
     .meta-item,
     .summary-item,
     .list-row,
@@ -174,6 +208,80 @@
     .summary-value {
       font-size: 15px;
       font-weight: 700;
+    }
+
+    .session-summary-groups {
+      grid-column: 1 / -1;
+      display: grid;
+      gap: 6px;
+    }
+
+    .session-summary-row {
+      display: grid;
+      gap: 6px;
+    }
+
+    .session-summary-row-primary {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .session-summary-row-secondary {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .session-summary-item {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 8px 10px;
+    }
+
+    .session-summary-item-button {
+      width: 100%;
+      text-align: left;
+      cursor: pointer;
+      color: var(--text);
+    }
+
+    .session-summary-item-button.active {
+      border-color: rgba(56, 189, 248, 0.9);
+      box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.35);
+    }
+
+    .session-summary-item.session-summary-item-yes {
+      background: rgba(22, 163, 74, 0.14);
+      border-color: rgba(22, 163, 74, 0.42);
+    }
+
+    .session-summary-item.session-summary-item-no {
+      background: rgba(220, 38, 38, 0.14);
+      border-color: rgba(220, 38, 38, 0.42);
+    }
+
+    .session-summary-item-label {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 4px;
+      font-weight: 700;
+    }
+
+    .session-summary-item-value {
+      font-size: 28px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .session-summary-item-inline {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .session-summary-item-icon-right {
+      font-size: 14px;
+      line-height: 1;
     }
 
     textarea,
@@ -419,7 +527,43 @@
 
     .roster-card {
       display: grid;
-      gap: 10px;
+      gap: 6px;
+    }
+
+    .session-status-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .delete-icon-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--accent);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      flex: 0 0 auto;
+    }
+
+    .delete-icon-btn:hover {
+      border-color: rgba(56, 189, 248, 0.55);
+      background: rgba(56, 189, 248, 0.12);
+    }
+
+    .delete-icon-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .delete-icon-btn svg {
+      width: 14px;
+      height: 14px;
     }
 
     .selected-players-list {
@@ -429,31 +573,47 @@
 
     .response-row {
       display: grid;
-      gap: 8px;
-      padding: 10px;
+      gap: 6px;
+      padding: 8px;
       border: 1px solid var(--border);
       border-radius: 12px;
       background: rgba(13, 21, 37, 0.85);
     }
 
     .response-row-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      flex-wrap: wrap;
+      min-width: 0;
+    }
+
+    .response-row-comment {
+      font-size: 13px;
+      line-height: 1.45;
+      color: var(--muted);
+      padding: 6px 0 2px;
+      margin-top: 2px;
+      border-top: 1px solid rgba(148, 163, 184, 0.15);
+    }
+
+    .response-comment-label {
+      font-weight: 600;
+      color: #94a3b8;
+      margin-right: 4px;
     }
 
     .response-actions {
-      display: flex;
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
       gap: 6px;
-      flex-wrap: wrap;
     }
 
     .response-btn {
-      padding: 8px 10px;
-      font-size: 12px;
-      border-radius: 999px;
+      padding: 7px 6px;
+      font-size: 11px;
+      border-radius: 10px;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
     }
 
     .response-btn[data-player-status="yes"].active {
@@ -537,6 +697,270 @@
       height: 22px;
     }
 
+    .quickstart-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(6, 10, 18, 0.76);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      overflow-y: auto;
+    }
+
+    .quickstart-overlay.hidden {
+      display: none;
+    }
+
+    .quickstart-panel {
+      background: rgba(17, 26, 43, 0.98);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+      max-width: 520px;
+      width: 100%;
+      padding: 20px 20px 18px;
+      margin: auto;
+    }
+
+    .quickstart-progress {
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .quickstart-title {
+      font-size: 21px;
+      font-weight: 700;
+      margin: 0 0 8px;
+    }
+
+    .quickstart-lede {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+      margin: 0 0 14px;
+    }
+
+    .quickstart-step {
+      display: none;
+    }
+
+    .quickstart-step.active {
+      display: block;
+    }
+
+    .quickstart-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: flex-end;
+      margin-top: 16px;
+    }
+
+    .quickstart-actions .primary-btn {
+      margin-left: auto;
+    }
+
+    .quickstart-actions .secondary-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    input[type="date"],
+    input[type="time"] {
+      color-scheme: dark;
+    }
+
+    .hero-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 2px;
+    }
+
+    .support-icon-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--accent);
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      flex: 0 0 auto;
+    }
+
+    .support-icon-btn:hover {
+      border-color: rgba(56, 189, 248, 0.55);
+      background: rgba(56, 189, 248, 0.12);
+    }
+
+    .save-icon-btn {
+      border: none;
+      background: var(--accent);
+      color: #042036;
+      width: 30px;
+      height: 30px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+
+    .card-head-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .support-info-panel {
+      margin-top: 10px;
+      text-align: left;
+      width: min(420px, 100%);
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(13, 21, 37, 0.72);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .support-info-panel.hidden {
+      display: none;
+    }
+
+    .card-inline-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .inline-toggle-panel.hidden {
+      display: none;
+    }
+
+    .roster-summary {
+      cursor: pointer;
+      list-style: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .roster-summary .list-title {
+      margin-bottom: 0;
+    }
+
+    .roster-status-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      padding: 0;
+      flex: 0 0 auto;
+      cursor: pointer;
+      box-sizing: border-box;
+    }
+
+    .roster-status-dot.is-active {
+      background: #22c55e;
+      border-color: rgba(34, 197, 94, 0.55);
+      box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.12);
+    }
+
+    .roster-status-dot.is-inactive {
+      background: #ef4444;
+      border-color: rgba(239, 68, 68, 0.55);
+      box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.1);
+    }
+
+    .roster-summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .roster-details {
+      margin-top: 8px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .season-optout-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .season-player-chip {
+      border: 1px solid var(--border);
+      background: rgba(13, 21, 37, 0.9);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 120ms ease, border-color 120ms ease, color 120ms ease, opacity 120ms ease;
+    }
+
+    .season-player-chip.is-excluded {
+      border-color: rgba(148, 163, 184, 0.35);
+      color: var(--muted);
+      background: rgba(15, 23, 42, 0.45);
+      text-decoration: line-through;
+      opacity: 0.8;
+    }
+
+    .season-optout-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+
+    .season-optout-action-chip {
+      border: 1px dashed rgba(148, 163, 184, 0.45);
+      background: rgba(15, 23, 42, 0.35);
+      color: #cbd5e1;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    #season-exclusions-search {
+      margin-bottom: 8px;
+    }
+
+    .support-info-row + .support-info-row {
+      margin-top: 12px;
+    }
+
+    .support-info-value {
+      font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+      font-size: 12px;
+      color: var(--text);
+      word-break: break-word;
+      margin-top: 4px;
+    }
+
     @media (max-width: 640px) {
       h1 { font-size: 24px; }
       .grid-2,
@@ -547,9 +971,15 @@
       .copy-row {
         grid-template-columns: 1fr;
       }
+      .season-name-rank-row {
+        grid-template-columns: minmax(0, 2fr) minmax(96px, 1fr);
+      }
       .list-row {
         flex-direction: column;
         align-items: flex-start;
+      }
+      .support-info-panel {
+        width: 100%;
       }
     }
   </style>
@@ -557,9 +987,34 @@
 <body>
   <div class="app">
     <section class="hero">
-      <div class="eyebrow">Admin</div>
-      <h1 id="page-title">Lade Admin...</h1>
-      <p class="sub">Plane dein Team ueber Saisons mit Standardwerten und passe einzelne Termine nur dort an, wo es noetig ist.</p>
+      <div class="hero-head">
+        <h1 id="page-title">Lade Admin...</h1>
+        <button type="button" id="support-info-toggle" class="support-icon-btn" aria-expanded="false" aria-controls="support-info-panel" aria-label="Support-Info anzeigen" title="Support-Info">
+          i
+        </button>
+      </div>
+      <div id="support-info-panel" class="support-info-panel hidden" role="region" aria-label="Technische Hinweise">
+        <p class="sub">Plane dein Team ueber Saisons mit Standardwerten und passe einzelne Termine nur dort an, wo es noetig ist.</p>
+        <div class="support-info-row">
+          <div class="field-label">Admin-Kennung</div>
+          <div id="support-admin-label" class="support-info-value">—</div>
+        </div>
+        <div class="support-info-row">
+          <div class="field-label">Team-ID</div>
+          <div id="support-team-id" class="support-info-value">—</div>
+        </div>
+        <div class="support-info-row">
+          <div class="field-label">Saison-ID (aktuell)</div>
+          <div id="support-season-id" class="support-info-value">—</div>
+        </div>
+        <div class="support-info-row">
+          <div class="field-label">Termin-ID (aktuell)</div>
+          <div id="support-session-id" class="support-info-value">—</div>
+        </div>
+        <div class="actions" style="margin-top:12px;">
+          <button id="quickstart-open-btn" class="secondary-btn hidden" type="button">Erste Saison: Schnellstart</button>
+        </div>
+      </div>
     </section>
 
     <div id="error-box" class="error hidden"></div>
@@ -572,13 +1027,11 @@
       <div class="actions">
         <button id="token-btn" class="primary-btn" type="button">Mit Token laden</button>
       </div>
+      <p id="token-msg" class="muted-text" style="margin-top:10px;"></p>
     </section>
 
     <div id="app-content" class="stack hidden">
       <section class="card">
-        <div class="eyebrow">Grunddaten</div>
-        <h2>Teamdaten</h2>
-        <p class="muted-text" id="admin-label"></p>
         <div class="grid-2">
           <div>
             <div class="field-label">Titel</div>
@@ -593,27 +1046,29 @@
           <button id="team-save-btn" class="primary-btn" type="button">Team speichern</button>
           <span id="team-save-msg" class="muted-text"></span>
         </div>
-        <p class="helper-text" id="season-context-summary">Bestehende Saisons auswaehlen, bearbeiten, loeschen oder neu anlegen.</p>
         <div id="season-selector" class="actions"></div>
         <div class="actions">
           <button id="season-new-btn" class="secondary-btn" type="button">Neue Saison</button>
           <button id="season-delete-btn" class="secondary-btn" type="button" disabled>Saison loeschen</button>
         </div>
-        <h2 id="event-heading" style="margin-top:8px;">Saisondetails</h2>
-        <div class="grid-2">
+        <h2 id="event-heading" class="hidden" style="margin-top:8px;">Saisondetails</h2>
+        <div class="season-name-rank-row">
           <div>
             <div class="field-label">Name</div>
             <input id="season-name-input" type="text" placeholder="Sommer - Trainingssaison 2026">
           </div>
+          <input id="season-type-input" type="hidden" value="custom">
           <div>
-            <div class="field-label">Typ</div>
-            <select id="season-type-input">
-              <option value="summer">Sommer</option>
-              <option value="winter">Winter</option>
-              <option value="interclub">Interclub</option>
-              <option value="custom">Custom</option>
-            </select>
+            <div class="field-label" title="1 = hoechste Prioritaet">Ranking</div>
+            <input id="season-priority-input" type="number" min="1" step="1" placeholder="1">
           </div>
+        </div>
+        <div class="card-inline-head">
+          <div class="field-label" style="margin-bottom:0;">Saison-Details</div>
+          <button id="season-advanced-toggle-btn" type="button" class="support-icon-btn" aria-expanded="false" aria-controls="season-advanced-panel" aria-label="Saison-Details anzeigen" title="Saison-Details">i</button>
+        </div>
+        <div id="season-advanced-panel" class="inline-toggle-panel hidden">
+          <div class="grid-2" style="margin-top:8px;">
           <div>
             <div class="field-label">Startdatum</div>
             <div class="picker-field picker-date">
@@ -656,19 +1111,24 @@
             <input id="season-location-input" type="text" placeholder="Tennisplatz Silverline">
           </div>
         </div>
-        <div style="margin-top:10px;">
-          <div class="field-label">Saison-Beschreibung</div>
-          <textarea id="season-description-input" placeholder="z.B. Mittwochstraining Sommer oder IC-Heimspiele als Grundkontext"></textarea>
+          <div style="margin-top:10px;">
+            <div class="field-label">Saison-Beschreibung</div>
+            <textarea id="season-description-input" placeholder="z.B. Mittwochstraining Sommer oder IC-Heimspiele als Grundkontext"></textarea>
+          </div>
+          <p class="helper-text">Standardwerte gelten fuer automatisch erzeugte Termine; Datum/Zeit mit Picker, Einzeltermine unten anpassbar.</p>
+          <div class="actions">
+            <label class="inline-check"><input id="season-generate-input" type="checkbox"> Termine automatisch erzeugen</label>
+          </div>
         </div>
-        <div style="margin-top:12px;">
-          <div class="field-label">Ohne diese Spieler (kein Saison-Zugang)</div>
-          <p class="helper-text">Persoenlicher Spieler-Link zeigt diese Saison dann nicht.</p>
-          <div id="season-exclusions" class="stack" style="gap:8px;"></div>
+        <div class="card-inline-head" style="margin-top:12px;">
+          <div class="field-label" style="margin-bottom:0;">Saison-Ausschluesse</div>
+          <button id="season-exclusions-toggle-btn" type="button" class="support-icon-btn" aria-expanded="false" aria-controls="season-exclusions-panel" aria-label="Ausschluesse anzeigen" title="Ausschluesse">i</button>
         </div>
-        <p class="helper-text">Saisons definieren Zeitraum und Standardwerte. Automatisch erzeugte Termine uebernehmen Wochentag, Zeit, Dauer und Ort aus der Saison. Datum bleibt im Format `tt.mm.jjjj`, Zeit im 24h-Format `hh:mm`, jeweils mit Picker.</p>
-        <div class="actions">
-          <label class="inline-check"><input id="season-active-input" type="checkbox"> Aktiv setzen</label>
-          <label class="inline-check"><input id="season-generate-input" type="checkbox" checked> Termine automatisch erzeugen</label>
+        <div id="season-exclusions-panel" class="inline-toggle-panel hidden">
+          <p class="helper-text">Alle Spieler sind standardmaessig dabei. Tippe Spieler an, um sie fuer diese Saison auszuschliessen.</p>
+          <input id="season-exclusions-search" class="hidden" type="text" placeholder="Spieler suchen...">
+          <div id="season-exclusions" class="season-optout-list"></div>
+          <div id="season-exclusions-actions" class="season-optout-actions"></div>
         </div>
         <div class="actions">
           <button id="season-save-btn" class="primary-btn" type="button">Saison speichern</button>
@@ -678,20 +1138,35 @@
 
       <section class="card">
         <div class="eyebrow">Termine</div>
-        <h2>Terminpflege</h2>
         <div id="sessions-list" class="list compact-list"></div>
+        <div class="actions compact-actions">
+          <button id="sessions-more-btn" class="secondary-btn hidden" type="button">Weitere...</button>
+          <button id="sessions-completed-btn" class="secondary-btn hidden" type="button">Durchgefuehrte...</button>
+        </div>
         <div id="session-editor" class="stack compact-editor">
-          <div>
-            <div class="field-label">Ausgewaehlter Termin</div>
-            <h3 id="selected-session-title">Noch kein Termin gewaehlt</h3>
+          <div class="card-inline-head" style="margin-top:0;">
+            <div>
+              <h3 id="selected-session-title">Noch kein Termin gewaehlt</h3>
+            </div>
+            <div class="card-head-actions">
+              <button id="session-editor-toggle-btn" type="button" class="support-icon-btn" aria-expanded="false" aria-controls="session-editor-advanced-panel" aria-label="Termin-Details anzeigen" title="Termin-Details">i</button>
+              <button id="session-delete-btn" class="delete-icon-btn" type="button" aria-label="Termin loeschen" title="Termin loeschen" disabled>
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path d="M9 3h6l1 2h4v2H4V5h4l1-2zm1 6h2v9h-2V9zm4 0h2v9h-2V9zM7 9h2v9H7V9z" fill="currentColor"></path>
+                </svg>
+              </button>
+              <button id="session-save-btn" class="save-icon-btn" type="button" aria-label="Termin speichern" title="Termin speichern">✔</button>
+            </div>
           </div>
           <div id="selected-session-summary" class="summary-grid"></div>
-          <div class="actions">
+          <div class="session-status-grid">
             <button class="status-btn" data-status="scheduled" type="button">Geplant</button>
             <button class="status-btn" data-status="provisional" type="button">Provisorisch</button>
             <button class="status-btn" data-status="completed" type="button">Durchgefuehrt</button>
             <button class="status-btn" data-status="cancelled" type="button">Abgesagt</button>
           </div>
+          <div id="session-editor-advanced-panel" class="inline-toggle-panel hidden">
+          <div id="selected-session-meta-summary" class="summary-grid"></div>
           <div class="grid-4">
             <div>
               <div class="field-label">Datum</div>
@@ -720,59 +1195,163 @@
             <div class="field-label">Beschreibung fuer Spieler</div>
             <textarea id="session-description-input" placeholder="z.B. IC auswaerts in Bern, Besammlung 12:15"></textarea>
           </div>
-          <div>
+          </div>
+          <div id="selected-players-panel" class="hidden">
             <div class="field-label">Spielerantworten</div>
             <div id="selected-players-list" class="selected-players-list"></div>
           </div>
-          <div class="actions">
-            <button id="session-save-btn" class="primary-btn" type="button">Termin speichern</button>
-            <button id="session-delete-btn" class="secondary-btn" type="button" disabled>Termin loeschen</button>
-            <span id="session-save-msg" class="muted-text"></span>
-          </div>
+          <div class="actions"><span id="session-save-msg" class="muted-text"></span></div>
         </div>
       </section>
 
       <section class="card">
-        <div class="eyebrow">Spieler & Tokens</div>
-        <h2>Spielerliste</h2>
+        <div class="eyebrow">Spieler</div>
+        <div id="roster-action-msg" class="muted-text" style="margin-bottom:8px;min-height:0;"></div>
         <div id="roster-list" class="roster-list"></div>
         <div class="stack" style="margin-top:14px;">
-          <div>
-            <div class="field-label">Neuen Spieler anlegen</div>
+          <div class="card-inline-head" style="margin-top:0;">
+            <div class="field-label" style="margin-bottom:0;">Neuen Spieler anlegen</div>
+            <button id="new-player-toggle-btn" type="button" class="support-icon-btn" aria-expanded="false" aria-controls="new-player-advanced-panel" aria-label="Spieler-Details anzeigen" title="Spieler-Details">i</button>
           </div>
           <div class="grid-3">
-            <input id="new-player-name" type="text" placeholder="Name">
-            <input id="new-player-order" type="number" min="1" step="1" placeholder="Reihenfolge">
-            <button id="new-player-btn" class="primary-btn" type="button">Spieler anlegen</button>
-          </div>
-          <div class="grid-2" style="margin-top:10px;">
-            <div>
-              <div class="field-label">Lizenz-Nr. (optional, 999.99.999.9)</div>
-              <input id="new-player-license" type="text" placeholder="999.99.999.9" autocomplete="off">
+            <div style="grid-column: span 2;">
+              <div class="field-label">Name</div>
+              <input id="new-player-name" type="text" placeholder="z. B. Max Muster">
             </div>
-            <div>
-              <div class="field-label">Klassierung</div>
-              <select id="new-player-classification">
-                <option value="">—</option>
-                <option value="N1">N1</option>
-                <option value="N2">N2</option>
-                <option value="N3">N3</option>
-                <option value="N4">N4</option>
-                <option value="R1">R1</option>
-                <option value="R2">R2</option>
-                <option value="R3">R3</option>
-                <option value="R4">R4</option>
-                <option value="R5">R5</option>
-                <option value="R6">R6</option>
-                <option value="R7">R7</option>
-                <option value="R8">R8</option>
-                <option value="R9">R9</option>
-              </select>
+            <div style="display:flex;align-items:flex-end;">
+              <button id="new-player-btn" class="primary-btn" type="button">Spieler anlegen</button>
             </div>
           </div>
+          <div id="new-player-advanced-panel" class="inline-toggle-panel hidden">
+            <div class="grid-2" style="margin-top:10px;">
+              <div>
+                <div class="field-label">Reihenfolge</div>
+                <input id="new-player-order" type="number" min="1" step="1" placeholder="leer = automatisch" title="Leer lassen fuer die naechste freie Nummer (1, 2, 3, …)">
+              </div>
+              <div>
+                <div class="field-label">Lizenz-Nr. (optional, 999.99.999.9)</div>
+                <input id="new-player-license" type="text" placeholder="999.99.999.9" autocomplete="off">
+              </div>
+              <div>
+                <div class="field-label">Klassierung</div>
+                <select id="new-player-classification">
+                  <option value="">—</option>
+                  <option value="N1">N1</option>
+                  <option value="N2">N2</option>
+                  <option value="N3">N3</option>
+                  <option value="N4">N4</option>
+                  <option value="R1">R1</option>
+                  <option value="R2">R2</option>
+                  <option value="R3">R3</option>
+                  <option value="R4">R4</option>
+                  <option value="R5">R5</option>
+                  <option value="R6">R6</option>
+                  <option value="R7">R7</option>
+                  <option value="R8">R8</option>
+                  <option value="R9">R9</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div id="new-player-msg" class="muted-text" role="status" aria-live="polite" style="margin-top:6px;"></div>
           <span id="player-save-msg" class="muted-text"></span>
         </div>
       </section>
+
+    </div>
+  </div>
+
+  <div id="quickstart-overlay" class="quickstart-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="quickstart-dialog-title" aria-hidden="true">
+    <div class="quickstart-panel" id="quickstart-panel">
+      <div id="quickstart-progress" class="quickstart-progress">Schritt 1 von 5</div>
+      <h2 id="quickstart-dialog-title" class="quickstart-title">Mannschaft und erste Saison</h2>
+      <p class="quickstart-lede">Nur die Basics - Details passt du danach wie gewohnt unten an.</p>
+      <div id="quickstart-error" class="error hidden" style="margin-bottom:12px;"></div>
+
+      <div id="quickstart-step-1" class="quickstart-step active" data-step="1">
+        <div class="grid-2">
+          <div>
+            <div class="field-label">Team-Titel</div>
+            <input id="qs-team-name" type="text" placeholder="z. B. Herren 35+">
+          </div>
+          <div>
+            <div class="field-label">Standard-Ort</div>
+            <input id="qs-team-location" type="text" placeholder="z. B. Clubhaus">
+          </div>
+        </div>
+      </div>
+
+      <div id="quickstart-step-2" class="quickstart-step" data-step="2">
+        <div class="grid-2">
+          <div>
+            <div class="field-label">Saisonname (optional)</div>
+            <input id="qs-season-name" type="text" placeholder="Leer = Vorschlag aus Typ und Jahr">
+          </div>
+          <div>
+            <div class="field-label">Saison-Typ</div>
+            <select id="qs-season-type">
+              <option value="summer">Sommer</option>
+              <option value="winter">Winter</option>
+              <option value="interclub">Interclub</option>
+              <option value="custom">Custom</option>
+            </select>
+          </div>
+          <div>
+            <div class="field-label">Startdatum</div>
+            <input id="qs-season-start" type="date" aria-label="Saison Startdatum">
+          </div>
+          <div>
+            <div class="field-label">Enddatum</div>
+            <input id="qs-season-end" type="date" aria-label="Saison Enddatum">
+          </div>
+        </div>
+      </div>
+
+      <div id="quickstart-step-3" class="quickstart-step" data-step="3">
+        <div class="grid-2">
+          <div>
+            <div class="field-label">Standard-Wochentag</div>
+            <select id="qs-weekday">
+              <option value="">Kein Standard</option>
+              <option value="1">Montag</option>
+              <option value="2">Dienstag</option>
+              <option value="3">Mittwoch</option>
+              <option value="4">Donnerstag</option>
+              <option value="5">Freitag</option>
+              <option value="6">Samstag</option>
+              <option value="7">Sonntag</option>
+            </select>
+          </div>
+          <div>
+            <div class="field-label">Standard-Zeit (24h)</div>
+            <input id="qs-time" type="time" aria-label="Standard-Zeit">
+          </div>
+          <div>
+            <div class="field-label">Standard-Dauer (Min.)</div>
+            <input id="qs-duration" type="number" min="1" step="1" placeholder="90">
+          </div>
+        </div>
+      </div>
+
+      <div id="quickstart-step-4" class="quickstart-step" data-step="4">
+        <div class="field-label">Spieler (optional)</div>
+        <textarea id="qs-player-names" rows="8" placeholder="Max Muster&#10;Julia Beispiel&#10;..."></textarea>
+        <p class="helper-text" style="margin-top:10px;">Eine Zeile pro Name. Leer lassen, wenn du den Kader erst spaeter pflegst. Bestehende Spieler bleiben erhalten und werden nicht geloescht. Lizenz und Klassierung kannst du danach in der Spielerliste ergaenzen.</p>
+      </div>
+
+      <div id="quickstart-step-5" class="quickstart-step" data-step="5">
+        <p class="muted-text" id="quickstart-summary" style="line-height:1.55;white-space:pre-line;"></p>
+        <div style="margin-top:8px;">
+          <label class="inline-check"><input id="qs-generate" type="checkbox"> Termine automatisch erzeugen</label>
+        </div>
+      </div>
+
+      <div class="quickstart-actions">
+        <button id="quickstart-cancel-btn" class="secondary-btn" type="button">Abbrechen</button>
+        <button id="quickstart-back-btn" class="secondary-btn" type="button" disabled>Zurueck</button>
+        <button id="quickstart-next-btn" class="primary-btn" type="button">Weiter</button>
+        <button id="quickstart-submit-btn" class="primary-btn hidden" type="button">Fertigstellen</button>
+      </div>
     </div>
   </div>
 
@@ -806,6 +1385,12 @@
     let selectedSeasonId = params.get("season_id") ? Number(params.get("season_id")) : null;
     let selectedSessionId = params.get("session_id") ? Number(params.get("session_id")) : null;
     let selectedSessionStatus = null;
+    let showAllUpcomingSessions = false;
+    let showCompletedSessions = false;
+    let seasonAdvancedOpen = false;
+    let seasonExclusionsOpen = false;
+    let sessionAdvancedOpen = false;
+    let newPlayerAdvancedOpen = false;
 
     const weekdayLabels = {
       1: "Montag",
@@ -818,21 +1403,19 @@
     };
 
     const summaryLabels = {
-      total_players: "Spieler",
-      responded: "Geantwortet",
-      missing: "Offen",
-      yes: "Dabei",
-      no: "Abwesend",
-      maybe: "Ersatz org.",
-      replacement: "Bei Bedarf"
+      missing: "OFFEN",
+      yes: "👍 JA",
+      no: "👎 NEIN",
+      replacement: "OPT",
+      maybe: "ERS"
     };
 
     const playerStatusLabels = {
-      yes: "Dabei",
-      no: "Abwesend",
-      maybe: "Ersatz org.",
-      replacement: "Bei Bedarf",
-      none: "Offen"
+      yes: "👍 JA",
+      no: "👎 NEIN",
+      replacement: "OPT",
+      maybe: "ERS",
+      none: "OFFEN"
     };
 
     const sessionStatusLabels = {
@@ -844,23 +1427,35 @@
 
     const pageTitleEl = document.getElementById("page-title");
     const errorBoxEl = document.getElementById("error-box");
+    const tokenMsgEl = document.getElementById("token-msg");
+    const rosterActionMsgEl = document.getElementById("roster-action-msg");
     const successBoxEl = document.getElementById("success-box");
     const tokenCardEl = document.getElementById("token-card");
     const tokenInputEl = document.getElementById("token-input");
     const tokenBtnEl = document.getElementById("token-btn");
     const appContentEl = document.getElementById("app-content");
     const eventHeadingEl = document.getElementById("event-heading");
-    const adminLabelEl = document.getElementById("admin-label");
-    const seasonContextSummaryEl = document.getElementById("season-context-summary");
+    const supportInfoToggleEl = document.getElementById("support-info-toggle");
+    const supportInfoPanelEl = document.getElementById("support-info-panel");
+    const supportAdminLabelEl = document.getElementById("support-admin-label");
+    const supportTeamIdEl = document.getElementById("support-team-id");
+    const supportSeasonIdEl = document.getElementById("support-season-id");
+    const supportSessionIdEl = document.getElementById("support-session-id");
     const seasonSelectorEl = document.getElementById("season-selector");
     const teamNameInputEl = document.getElementById("team-name-input");
     const teamLocationInputEl = document.getElementById("team-location-input");
     const teamSaveBtnEl = document.getElementById("team-save-btn");
     const teamSaveMsgEl = document.getElementById("team-save-msg");
     const sessionsListEl = document.getElementById("sessions-list");
+    const sessionsMoreBtnEl = document.getElementById("sessions-more-btn");
+    const sessionsCompletedBtnEl = document.getElementById("sessions-completed-btn");
     const selectedSessionTitleEl = document.getElementById("selected-session-title");
     const selectedSessionSummaryEl = document.getElementById("selected-session-summary");
+    const selectedSessionMetaSummaryEl = document.getElementById("selected-session-meta-summary");
+    const selectedPlayersPanelEl = document.getElementById("selected-players-panel");
     const selectedPlayersListEl = document.getElementById("selected-players-list");
+    const sessionEditorToggleBtnEl = document.getElementById("session-editor-toggle-btn");
+    const sessionEditorAdvancedPanelEl = document.getElementById("session-editor-advanced-panel");
     const sessionDateInputEl = document.getElementById("session-date-input");
     const sessionDatePickerEl = document.getElementById("session-date-picker");
     const sessionLocationInputEl = document.getElementById("session-location-input");
@@ -871,8 +1466,10 @@
     const sessionSaveBtnEl = document.getElementById("session-save-btn");
     const sessionDeleteBtnEl = document.getElementById("session-delete-btn");
     const sessionSaveMsgEl = document.getElementById("session-save-msg");
+    const sessionStatusButtons = Array.from(document.querySelectorAll('#session-editor .status-btn[data-status]'));
     const seasonNameInputEl = document.getElementById("season-name-input");
     const seasonTypeInputEl = document.getElementById("season-type-input");
+    const seasonPriorityInputEl = document.getElementById("season-priority-input");
     const seasonStartInputEl = document.getElementById("season-start-input");
     const seasonStartPickerEl = document.getElementById("season-start-picker");
     const seasonEndInputEl = document.getElementById("season-end-input");
@@ -882,28 +1479,74 @@
     const seasonDurationInputEl = document.getElementById("season-duration-input");
     const seasonLocationInputEl = document.getElementById("season-location-input");
     const seasonDescriptionInputEl = document.getElementById("season-description-input");
-    const seasonActiveInputEl = document.getElementById("season-active-input");
     const seasonGenerateInputEl = document.getElementById("season-generate-input");
+    const seasonAdvancedToggleBtnEl = document.getElementById("season-advanced-toggle-btn");
+    const seasonAdvancedPanelEl = document.getElementById("season-advanced-panel");
+    const seasonExclusionsToggleBtnEl = document.getElementById("season-exclusions-toggle-btn");
+    const seasonExclusionsPanelEl = document.getElementById("season-exclusions-panel");
     const seasonSaveBtnEl = document.getElementById("season-save-btn");
     const seasonNewBtnEl = document.getElementById("season-new-btn");
     const seasonDeleteBtnEl = document.getElementById("season-delete-btn");
     const seasonSaveMsgEl = document.getElementById("season-save-msg");
     const seasonExclusionsEl = document.getElementById("season-exclusions");
+    const seasonExclusionsSearchEl = document.getElementById("season-exclusions-search");
+    const seasonExclusionsActionsEl = document.getElementById("season-exclusions-actions");
     const rosterListEl = document.getElementById("roster-list");
     const newPlayerNameEl = document.getElementById("new-player-name");
+    const newPlayerToggleBtnEl = document.getElementById("new-player-toggle-btn");
+    const newPlayerAdvancedPanelEl = document.getElementById("new-player-advanced-panel");
     const newPlayerOrderEl = document.getElementById("new-player-order");
     const newPlayerLicenseEl = document.getElementById("new-player-license");
     const newPlayerClassificationEl = document.getElementById("new-player-classification");
     const newPlayerBtnEl = document.getElementById("new-player-btn");
+    const newPlayerMsgEl = document.getElementById("new-player-msg");
     const playerSaveMsgEl = document.getElementById("player-save-msg");
     const scrollTopBtnEl = document.getElementById("scroll-top-btn");
-    const sessionStatusButtons = Array.from(document.querySelectorAll('#session-editor .status-btn[data-status]'));
     const timePickerPopoverEl = document.getElementById("time-picker-popover");
     const timePickerHourEl = document.getElementById("time-picker-hour");
     const timePickerMinuteEl = document.getElementById("time-picker-minute");
     const timePickerApplyBtnEl = document.getElementById("time-picker-apply-btn");
     const timePickerClearBtnEl = document.getElementById("time-picker-clear-btn");
     let activeTimeInputEl = null;
+
+    const quickstartOverlayEl = document.getElementById("quickstart-overlay");
+    const quickstartProgressEl = document.getElementById("quickstart-progress");
+    const quickstartErrorEl = document.getElementById("quickstart-error");
+    const quickstartSummaryEl = document.getElementById("quickstart-summary");
+    const quickstartOpenBtnEl = document.getElementById("quickstart-open-btn");
+    const quickstartCancelBtnEl = document.getElementById("quickstart-cancel-btn");
+    const quickstartBackBtnEl = document.getElementById("quickstart-back-btn");
+    const quickstartNextBtnEl = document.getElementById("quickstart-next-btn");
+    const quickstartSubmitBtnEl = document.getElementById("quickstart-submit-btn");
+    const qsTeamNameEl = document.getElementById("qs-team-name");
+    const qsTeamLocationEl = document.getElementById("qs-team-location");
+    const qsSeasonNameEl = document.getElementById("qs-season-name");
+    const qsSeasonTypeEl = document.getElementById("qs-season-type");
+    const qsSeasonStartEl = document.getElementById("qs-season-start");
+    const qsSeasonEndEl = document.getElementById("qs-season-end");
+    const qsWeekdayEl = document.getElementById("qs-weekday");
+    const qsTimeEl = document.getElementById("qs-time");
+    const qsDurationEl = document.getElementById("qs-duration");
+    const qsGenerateEl = document.getElementById("qs-generate");
+    const qsPlayerNamesEl = document.getElementById("qs-player-names");
+
+    let quickstartStep = 1;
+    let quickstartSuppressed = false;
+    const QUICKSTART_TOTAL_STEPS = 5;
+    const QUICKSTART_MAX_PLAYERS_BATCH = 50;
+    let selectedPlayersStatusFilter = null;
+    const SEASON_EXCLUSIONS_PREVIEW_LIMIT = 8;
+    let seasonExcludedPlayerIds = new Set();
+    let seasonExclusionsRoster = [];
+    let seasonExclusionsExpanded = false;
+    let seasonExclusionsSearchTerm = "";
+
+    const quickstartSeasonTypeLabels = {
+      summer: "Sommer",
+      winter: "Winter",
+      interclub: "Interclub",
+      custom: "Saison"
+    };
 
     function saveTokenLocally(token) {
       try {
@@ -929,6 +1572,30 @@
       errorBoxEl.classList.add("hidden");
     }
 
+    function clearSaveMsg(el) {
+      if (!el) {
+        return;
+      }
+      el.textContent = "";
+      el.classList.remove("save-msg-error");
+    }
+
+    function setSaveMsgNeutral(el, message) {
+      if (!el) {
+        return;
+      }
+      el.textContent = message;
+      el.classList.remove("save-msg-error");
+    }
+
+    function setSaveMsgError(el, message) {
+      if (!el) {
+        return;
+      }
+      el.textContent = message;
+      el.classList.add("save-msg-error");
+    }
+
     function showSuccess(message) {
       successBoxEl.textContent = message;
       successBoxEl.classList.remove("hidden");
@@ -948,6 +1615,12 @@
         .replaceAll(">", "&gt;")
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#39;");
+    }
+
+    function truncateLabel(value, maxLength) {
+      const text = String(value || "").trim();
+      if (text.length <= maxLength) return text;
+      return text.slice(0, maxLength) + "…";
     }
 
     const CLASSIFICATION_VALUES = ["", "N1", "N2", "N3", "N4", "R1", "R2", "R3", "R4", "R5", "R6", "R7", "R8", "R9"];
@@ -1012,6 +1685,14 @@
       const hours = Number(match[1]);
       const minutes = Number(match[2]);
       if (hours > 23 || minutes > 59) return null;
+      return `${match[1]}:${match[2]}`;
+    }
+
+    function normalizeTimeInputToHm(value) {
+      const match = String(value || "").trim().match(/^(\d{2}):(\d{2})/);
+      if (!match) {
+        return "";
+      }
       return `${match[1]}:${match[2]}`;
     }
 
@@ -1113,15 +1794,18 @@
     async function copyText(value, label) {
       try {
         await navigator.clipboard.writeText(value);
+        clearSaveMsg(rosterActionMsgEl);
         showSuccess(label + " kopiert.");
       } catch (error) {
-        showError(label + " konnte nicht kopiert werden.");
+        setSaveMsgError(rosterActionMsgEl, label + " konnte nicht kopiert werden.");
+        rosterActionMsgEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
       }
     }
 
     function renderSelectedSessionEditor() {
       const session = dashboardPayload.selected_session;
       selectedSessionSummaryEl.innerHTML = "";
+      selectedSessionMetaSummaryEl.innerHTML = "";
       selectedPlayersListEl.innerHTML = "";
 
       if (!session) {
@@ -1136,12 +1820,14 @@
         sessionDescriptionInputEl.value = "";
         setSelectedSessionStatus(null);
         sessionDeleteBtnEl.disabled = true;
+        selectedPlayersStatusFilter = null;
+        selectedPlayersPanelEl.classList.add("hidden");
         return;
       }
 
       sessionDeleteBtnEl.disabled = false;
 
-      selectedSessionTitleEl.textContent = formatDate(session.session_date) + (session.start_time ? " · " + formatTimeValue(session.start_time) : "");
+      selectedSessionTitleEl.textContent = formatDate(session.session_date);
       sessionDateInputEl.value = formatDateForInput(session.session_date || "");
       sessionDatePickerEl.value = session.session_date || "";
       sessionLocationInputEl.value = session.location || "";
@@ -1162,15 +1848,57 @@
         const item = document.createElement("div");
         item.className = "summary-item";
         item.innerHTML = '<div class="summary-label">' + label + '</div><div class="summary-value">' + value + '</div>';
-        selectedSessionSummaryEl.appendChild(item);
+        selectedSessionMetaSummaryEl.appendChild(item);
       });
 
-      Object.entries(summaryLabels).forEach(([key, label]) => {
-        const item = document.createElement("div");
-        item.className = "summary-item";
-        item.innerHTML = '<div class="summary-label">' + label + '</div><div class="summary-value">' + (dashboardPayload.selected_summary[key] ?? 0) + '</div>';
-        selectedSessionSummaryEl.appendChild(item);
+      const summary = dashboardPayload.selected_summary || {};
+      const groupWrap = document.createElement("div");
+      groupWrap.className = "session-summary-groups";
+
+      const rowPrimary = document.createElement("div");
+      rowPrimary.className = "session-summary-row session-summary-row-primary";
+      const rowSecondary = document.createElement("div");
+      rowSecondary.className = "session-summary-row session-summary-row-secondary";
+
+      [
+        { key: "yes", label: "👍", row: "primary" },
+        { key: "no", label: "👎", row: "primary" },
+        { key: "maybe", label: "ERS", row: "secondary" },
+        { key: "replacement", label: "OPT", row: "secondary" },
+        { key: "missing", label: "OFFEN", row: "secondary" }
+      ].forEach((entry) => {
+        const item = document.createElement("button");
+        item.type = "button";
+        const statusKey = entry.key === "missing" ? "none" : entry.key;
+        const isActive = selectedPlayersStatusFilter === statusKey;
+        item.className = "session-summary-item session-summary-item-button" +
+          (entry.key === "yes" ? " session-summary-item-yes" : (entry.key === "no" ? " session-summary-item-no" : "")) +
+          (isActive ? " active" : "");
+        if (entry.key === "yes" || entry.key === "no") {
+          item.innerHTML =
+            '<div class="session-summary-item-inline">' +
+              '<div class="session-summary-item-value">' + String(summary[entry.key] ?? 0) + "</div>" +
+              '<div class="session-summary-item-icon-right">' + entry.label + "</div>" +
+            "</div>";
+        } else {
+          item.innerHTML =
+            '<div class="session-summary-item-label">' + entry.label + "</div>" +
+            '<div class="session-summary-item-value">' + String(summary[entry.key] ?? 0) + "</div>";
+        }
+        item.addEventListener("click", () => {
+          selectedPlayersStatusFilter = selectedPlayersStatusFilter === statusKey ? null : statusKey;
+          renderSelectedSessionEditor();
+        });
+        if (entry.row === "primary") {
+          rowPrimary.appendChild(item);
+        } else {
+          rowSecondary.appendChild(item);
+        }
       });
+
+      groupWrap.appendChild(rowPrimary);
+      groupWrap.appendChild(rowSecondary);
+      selectedSessionSummaryEl.appendChild(groupWrap);
 
       renderSelectedPlayers();
     }
@@ -1179,30 +1907,50 @@
       selectedPlayersListEl.innerHTML = "";
 
       if (!dashboardPayload.selected_session) {
+        selectedPlayersPanelEl.classList.add("hidden");
         return;
       }
 
-      if (!dashboardPayload.selected_players?.length) {
+      if (!selectedPlayersStatusFilter) {
+        selectedPlayersPanelEl.classList.add("hidden");
+        return;
+      }
+
+      selectedPlayersPanelEl.classList.remove("hidden");
+
+      const players = Array.isArray(dashboardPayload.selected_players) ? dashboardPayload.selected_players : [];
+      if (!players.length) {
         selectedPlayersListEl.innerHTML = '<div class="note">Noch keine Spieler fuer diesen Termin gefunden.</div>';
         return;
       }
 
-      dashboardPayload.selected_players.forEach((player) => {
+      const filteredPlayers = selectedPlayersStatusFilter
+        ? players.filter((player) => (player.attendance_status || "none") === selectedPlayersStatusFilter)
+        : players;
+
+      if (!filteredPlayers.length) {
+        const label = playerStatusLabels[selectedPlayersStatusFilter] || "Status";
+        selectedPlayersListEl.innerHTML = '<div class="note">Keine Spieler mit Status ' + escapeHtml(label) + ".</div>";
+        return;
+      }
+
+      filteredPlayers.forEach((player) => {
         const wrapper = document.createElement("div");
         wrapper.className = "response-row";
 
         const currentStatus = player.attendance_status || "none";
         const head = document.createElement("div");
         head.className = "response-row-head";
-        const lic = player.license_number ? ' · Liz. ' + escapeHtml(player.license_number) : '';
-        const cl = player.classification ? ' · ' + escapeHtml(player.classification) : '';
+        const metaBits = [];
+        if (player.classification) metaBits.push(escapeHtml(player.classification));
+        if (player.license_number) metaBits.push("Liz. " + escapeHtml(player.license_number));
+        const metaLine = metaBits.length ? '<div class="list-subtitle">' + metaBits.join(" · ") + "</div>" : "";
         head.innerHTML =
-          '<div><div class="list-title">' + escapeHtml(player.name) + '</div><div class="list-subtitle">Aktuell: ' + escapeHtml(playerStatusLabels[currentStatus] || playerStatusLabels.none) + lic + cl + '</div></div>' +
-          '<div class="pill ' + currentStatus + '">' + escapeHtml(playerStatusLabels[currentStatus] || playerStatusLabels.none) + '</div>';
+          '<div><div class="list-title">' + escapeHtml(player.name) + "</div>" + metaLine + "</div>";
 
         const actions = document.createElement("div");
         actions.className = "response-actions";
-        ["yes", "no", "maybe", "replacement", "none"].forEach((status) => {
+        ["yes", "no", "replacement", "maybe", "none"].forEach((status) => {
           const button = document.createElement("button");
           button.type = "button";
           button.className = "status-btn response-btn" + (currentStatus === status ? " active" : "");
@@ -1215,6 +1963,23 @@
         });
 
         wrapper.appendChild(head);
+
+        const commentRaw = player.comment != null ? String(player.comment).trim() : "";
+        if (commentRaw) {
+          const commentBox = document.createElement("div");
+          commentBox.className = "response-row-comment";
+          const lab = document.createElement("span");
+          lab.className = "response-comment-label";
+          lab.textContent = "Kommentar:";
+          const space = document.createTextNode(" ");
+          const val = document.createElement("span");
+          val.textContent = commentRaw;
+          commentBox.appendChild(lab);
+          commentBox.appendChild(space);
+          commentBox.appendChild(val);
+          wrapper.appendChild(commentBox);
+        }
+
         wrapper.appendChild(actions);
         selectedPlayersListEl.appendChild(wrapper);
       });
@@ -1222,16 +1987,42 @@
 
     function renderSeasonSelector() {
       seasonSelectorEl.innerHTML = "";
+      const rankedSeasons = (dashboardPayload.seasons || [])
+        .slice()
+        .sort((a, b) => {
+          const aPriority = Number(a.display_priority || 0);
+          const bPriority = Number(b.display_priority || 0);
+          if (aPriority > 0 && bPriority > 0 && aPriority !== bPriority) {
+            return aPriority - bPriority;
+          }
+          if (aPriority > 0 && bPriority <= 0) return -1;
+          if (bPriority > 0 && aPriority <= 0) return 1;
+          const aStart = String(a.start_date || "");
+          const bStart = String(b.start_date || "");
+          if (aStart !== bStart) {
+            return aStart > bStart ? -1 : 1;
+          }
+          return String(a.name || "").localeCompare(String(b.name || ""), "de-CH");
+        });
 
-      dashboardPayload.seasons.forEach((season) => {
+      rankedSeasons.forEach((season, idx) => {
         const button = document.createElement("button");
         button.type = "button";
         button.className = "secondary-btn" + (season.id === selectedSeasonId ? " active" : "");
-        button.textContent = season.name;
+        const rankLabel = "#" + String(Number(season.display_priority || 0) > 0 ? season.display_priority : (idx + 1));
+        const fullSeasonLabel = rankLabel + " " + String(season.name || "");
+        button.textContent = truncateLabel(fullSeasonLabel, 34);
+        button.title = fullSeasonLabel;
+        if (Number(season.display_priority || 0) === 1) {
+          button.title = fullSeasonLabel + " · Event-Rang 1 (Standard im Spieler-Screen)";
+        }
         button.addEventListener("click", () => {
           if (season.id === selectedSeasonId) return;
           selectedSeasonId = season.id;
           selectedSessionId = null;
+          selectedPlayersStatusFilter = null;
+          showAllUpcomingSessions = false;
+          showCompletedSessions = false;
           loadDashboard();
         });
         seasonSelectorEl.appendChild(button);
@@ -1243,10 +2034,28 @@
 
       if (!dashboardPayload.sessions.length) {
         sessionsListEl.innerHTML = '<div class="note">Fuer diese Saison sind noch keine Termine vorhanden.</div>';
+        sessionsMoreBtnEl?.classList.add("hidden");
+        sessionsCompletedBtnEl?.classList.add("hidden");
         return;
       }
 
+      const completedSessions = [];
+      const upcomingSessions = [];
       dashboardPayload.sessions.forEach((session) => {
+        if (session.status === "completed") {
+          completedSessions.push(session);
+        } else {
+          upcomingSessions.push(session);
+        }
+      });
+
+      const visibleUpcoming = showAllUpcomingSessions ? upcomingSessions : upcomingSessions.slice(0, 1);
+      const visibleSessions = [
+        ...visibleUpcoming,
+        ...(showCompletedSessions ? completedSessions : [])
+      ];
+
+      visibleSessions.forEach((session) => {
         const acceptanceCount = (session.summary?.yes ?? 0) + (session.summary?.maybe ?? 0) + (session.summary?.replacement ?? 0);
         const button = document.createElement("button");
         button.type = "button";
@@ -1255,13 +2064,7 @@
         const left = document.createElement("div");
         left.innerHTML =
           '<div class="list-title">' + formatShortDate(session.session_date) + '</div>' +
-          '<div class="list-subtitle">' +
-            (session.start_time ? formatTimeValue(session.start_time) + ' · ' : '') +
-            (session.location || 'Kein Ort') +
-            ' · Zusagen: ' + acceptanceCount +
-            ' · Absagen: ' + (session.summary?.no ?? 0) +
-            ' · Offen: ' + session.summary.missing +
-          '</div>';
+          '<div class="list-subtitle">Teilnehmende: ' + acceptanceCount + '</div>';
 
         const pill = document.createElement("div");
         pill.className = "pill " + (session.status || "scheduled");
@@ -1271,24 +2074,70 @@
         button.appendChild(pill);
         button.addEventListener("click", () => {
           selectedSessionId = session.id;
+          selectedPlayersStatusFilter = null;
           loadDashboard().then(() => scrollToSessionEditor());
         });
 
         sessionsListEl.appendChild(button);
       });
+
+      if (sessionsMoreBtnEl) {
+        const hiddenCount = Math.max(0, upcomingSessions.length - visibleUpcoming.length);
+        const hasToggle = hiddenCount > 0 || showAllUpcomingSessions;
+        sessionsMoreBtnEl.classList.toggle("hidden", !hasToggle);
+        if (hasToggle) {
+          sessionsMoreBtnEl.textContent = showAllUpcomingSessions ? "Weniger..." : "Weitere...";
+        }
+      }
+
+      if (sessionsCompletedBtnEl) {
+        const hasCompleted = completedSessions.length > 0;
+        sessionsCompletedBtnEl.classList.toggle("hidden", !hasCompleted);
+        if (hasCompleted) {
+          sessionsCompletedBtnEl.textContent = showCompletedSessions ? "Durchgefuehrte ausblenden" : "Durchgefuehrte...";
+        }
+      }
+    }
+
+    function getNextRosterSortOrder(roster) {
+      const list = roster || [];
+      let max = 0;
+      for (let i = 0; i < list.length; i += 1) {
+        const n = Number(list[i].sort_order);
+        if (!Number.isNaN(n) && n > max) {
+          max = n;
+        }
+      }
+      return max + 1;
+    }
+
+    function syncNewPlayerOrderDefault() {
+      if (!dashboardPayload) {
+        return;
+      }
+      newPlayerOrderEl.value = String(getNextRosterSortOrder(dashboardPayload.roster));
     }
 
     function renderRoster() {
       rosterListEl.innerHTML = "";
+      function shortRosterLabel(value) {
+        const text = String(value || "").trim();
+        if (text.length <= 8) return text;
+        return text.slice(0, 8) + "…";
+      }
 
       dashboardPayload.roster.forEach((player) => {
-        const wrapper = document.createElement("div");
+        const fullRosterName = player.name || "Spieler";
+        const wrapper = document.createElement("details");
         wrapper.className = "roster-card";
         wrapper.innerHTML =
-          '<div class="roster-header">' +
-            '<div><div class="list-title">' + escapeHtml(player.name) + '</div><div class="list-subtitle">Token-Link fuer Spieleransicht</div></div>' +
-            '<div class="pill ' + (player.is_active ? "scheduled" : "none") + '">' + (player.is_active ? "Aktiv" : "Inaktiv") + '</div>' +
-          '</div>' +
+          '<summary class="roster-summary">' +
+            '<div><div class="list-title" title="' + escapeHtml(fullRosterName) + '">' + escapeHtml(shortRosterLabel(fullRosterName)) + '</div></div>' +
+            '<button type="button" class="roster-status-dot ' + (player.is_active ? "is-active" : "is-inactive") + '" data-action="toggle-active" ' +
+              'aria-label="' + (player.is_active ? "Aktiv, zu Passiv wechseln" : "Passiv, zu Aktiv wechseln") + '" ' +
+              'title="' + (player.is_active ? "Aktiv (Klick: Passiv)" : "Passiv (Klick: Aktiv)") + '"></button>' +
+          '</summary>' +
+          '<div class="roster-details">' +
           '<div class="grid-2">' +
             '<div><div class="field-label">Name</div><input data-field="name" type="text" value="' + escapeHtml(player.name) + '"></div>' +
             '<div><div class="field-label">Reihenfolge</div><input data-field="sort_order" type="number" min="1" step="1" value="' + player.sort_order + '"></div>' +
@@ -1298,12 +2147,12 @@
             '<div><div class="field-label">Klassierung</div><select data-field="classification">' + classificationOptionsHtml(player.classification || "") + '</select></div>' +
           '</div>' +
           '<label class="inline-check"><input data-field="is_active" type="checkbox"' + (player.is_active ? " checked" : "") + '> Aktiv</label>' +
-          '<div><div class="field-label">Spieler-Token</div><div class="copy-row"><input type="text" value="' + escapeHtml(player.player_token) + '" readonly><button data-action="copy-token" class="secondary-btn" type="button">Token kopieren</button></div></div>' +
-          '<div><div class="field-label">Spieler-Link</div><div class="copy-row"><input type="text" value="' + escapeHtml(buildPlayerLink(player.player_token)) + '" readonly><button data-action="copy-link" class="secondary-btn" type="button">Link kopieren</button></div></div>' +
+          '<div class="actions" style="margin-top:4px;"><button data-action="copy-link" class="secondary-btn" type="button">Spieler-Link kopieren</button></div>' +
           '<div class="actions">' +
             '<button data-action="save-player" class="primary-btn" type="button">Spieler speichern</button>' +
-            '<button data-action="regen-token" class="secondary-btn" type="button">Token erneuern</button>' +
+            '<button data-action="regen-token" class="secondary-btn" type="button">Neuen Link erzeugen</button>' +
             '<button data-action="delete-player" class="secondary-btn" type="button">Spieler loeschen</button>' +
+          '</div>' +
           '</div>';
 
         const nameInput = wrapper.querySelector('[data-field="name"]');
@@ -1326,9 +2175,22 @@
           );
         }
 
-        wrapper.querySelector('[data-action="copy-token"]').addEventListener("click", () => {
-          copyText(player.player_token, "Token");
+        const statusDotEl = wrapper.querySelector('[data-action="toggle-active"]');
+        function syncStatusDotFromCheckbox() {
+          statusDotEl.classList.toggle("is-active", activeInput.checked);
+          statusDotEl.classList.toggle("is-inactive", !activeInput.checked);
+          statusDotEl.setAttribute("aria-label", activeInput.checked ? "Aktiv, zu Passiv wechseln" : "Passiv, zu Aktiv wechseln");
+          statusDotEl.setAttribute("title", activeInput.checked ? "Aktiv (Klick: Passiv)" : "Passiv (Klick: Aktiv)");
+        }
+        activeInput.addEventListener("change", syncStatusDotFromCheckbox);
+        statusDotEl.addEventListener("click", (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          activeInput.checked = !activeInput.checked;
+          syncStatusDotFromCheckbox();
+          savePlayer(playerPayload({ regenerate_token: false }));
         });
+
         wrapper.querySelector('[data-action="copy-link"]').addEventListener("click", () => {
           copyText(buildPlayerLink(player.player_token), "Spieler-Link");
         });
@@ -1355,6 +2217,7 @@
       if (!season) {
         seasonNameInputEl.value = "";
         seasonTypeInputEl.value = "custom";
+        seasonPriorityInputEl.value = "";
         seasonStartInputEl.value = "";
         seasonStartPickerEl.value = "";
         seasonEndInputEl.value = "";
@@ -1364,8 +2227,7 @@
         seasonDurationInputEl.value = "";
         seasonLocationInputEl.value = "";
         seasonDescriptionInputEl.value = "";
-        seasonActiveInputEl.checked = true;
-        seasonGenerateInputEl.checked = true;
+        seasonGenerateInputEl.checked = false;
         seasonDeleteBtnEl.disabled = true;
         renderSeasonExclusions(dashboardPayload?.roster || [], []);
         return;
@@ -1373,6 +2235,7 @@
 
       seasonNameInputEl.value = season.name || "";
       seasonTypeInputEl.value = season.season_type || "custom";
+      seasonPriorityInputEl.value = season.display_priority ? String(season.display_priority) : "";
       seasonStartInputEl.value = formatDateForInput(season.start_date || "");
       seasonStartPickerEl.value = season.start_date || "";
       seasonEndInputEl.value = formatDateForInput(season.end_date || "");
@@ -1382,51 +2245,433 @@
       seasonDurationInputEl.value = season.default_duration_minutes ? String(season.default_duration_minutes) : "";
       seasonLocationInputEl.value = season.default_location || "";
       seasonDescriptionInputEl.value = season.description || "";
-      seasonActiveInputEl.checked = !!season.is_active;
       seasonDeleteBtnEl.disabled = false;
     }
 
     function collectSeasonExcludedPlayerIds() {
-      if (!seasonExclusionsEl) return [];
-      const out = [];
-      seasonExclusionsEl.querySelectorAll("input[type=\"checkbox\"][data-player-id]").forEach((input) => {
-        if (input.checked) out.push(Number(input.dataset.playerId));
+      return Array.from(seasonExcludedPlayerIds);
+    }
+
+    function shortChipLabel(value) {
+      return truncateLabel(value, 8);
+    }
+
+    function renderSeasonExclusionsView() {
+      if (!seasonExclusionsEl || !seasonExclusionsActionsEl) return;
+      seasonExclusionsEl.innerHTML = "";
+      seasonExclusionsActionsEl.innerHTML = "";
+
+      if (!seasonExclusionsRoster.length) {
+        seasonExclusionsEl.innerHTML = '<div class="note">Noch keine Spieler im Kader.</div>';
+        seasonExclusionsSearchEl?.classList.add("hidden");
+        return;
+      }
+
+      const searchTerm = seasonExclusionsSearchTerm.trim().toLowerCase();
+      const filteredRoster = searchTerm
+        ? seasonExclusionsRoster.filter((player) => String(player.name || "").toLowerCase().includes(searchTerm))
+        : seasonExclusionsRoster;
+      const hasOverflow = filteredRoster.length > SEASON_EXCLUSIONS_PREVIEW_LIMIT;
+      const visibleRoster = seasonExclusionsExpanded ? filteredRoster : filteredRoster.slice(0, SEASON_EXCLUSIONS_PREVIEW_LIMIT);
+
+      seasonExclusionsSearchEl?.classList.toggle("hidden", !seasonExclusionsExpanded);
+      if (seasonExclusionsSearchEl && seasonExclusionsSearchEl.value !== seasonExclusionsSearchTerm) {
+        seasonExclusionsSearchEl.value = seasonExclusionsSearchTerm;
+      }
+
+      visibleRoster.forEach((player) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "season-player-chip";
+        const playerId = Number(player.id);
+        const isExcluded = seasonExcludedPlayerIds.has(playerId);
+        button.classList.toggle("is-excluded", isExcluded);
+        const fullLabel = (player.name || "Spieler") + (player.is_active ? "" : " (inaktiv)");
+        button.textContent = shortChipLabel(fullLabel);
+        button.setAttribute("aria-pressed", isExcluded ? "true" : "false");
+        button.setAttribute("title", fullLabel + " · " + (isExcluded ? "Ausgeschlossen - klicken zum Einschliessen" : "Eingeschlossen - klicken zum Ausschliessen"));
+        button.addEventListener("click", () => {
+          if (seasonExcludedPlayerIds.has(playerId)) {
+            seasonExcludedPlayerIds.delete(playerId);
+          } else {
+            seasonExcludedPlayerIds.add(playerId);
+          }
+          renderSeasonExclusionsView();
+        });
+        seasonExclusionsEl.appendChild(button);
       });
-      return out;
+
+      if (!seasonExclusionsExpanded && hasOverflow) {
+        const moreBtn = document.createElement("button");
+        moreBtn.type = "button";
+        moreBtn.className = "season-optout-action-chip";
+        moreBtn.textContent = "+" + String(filteredRoster.length - visibleRoster.length) + " mehr";
+        moreBtn.addEventListener("click", () => {
+          seasonExclusionsExpanded = true;
+          renderSeasonExclusionsView();
+        });
+        seasonExclusionsActionsEl.appendChild(moreBtn);
+      }
+
+      if (seasonExclusionsExpanded) {
+        const lessBtn = document.createElement("button");
+        lessBtn.type = "button";
+        lessBtn.className = "season-optout-action-chip";
+        lessBtn.textContent = "Weniger";
+        lessBtn.addEventListener("click", () => {
+          seasonExclusionsExpanded = false;
+          seasonExclusionsSearchTerm = "";
+          renderSeasonExclusionsView();
+        });
+        seasonExclusionsActionsEl.appendChild(lessBtn);
+      }
     }
 
     function renderSeasonExclusions(roster, excludedIds) {
-      if (!seasonExclusionsEl) return;
-      seasonExclusionsEl.innerHTML = "";
-      const excludedSet = new Set(excludedIds || []);
-      if (!roster || !roster.length) {
-        seasonExclusionsEl.innerHTML = '<div class="note">Noch keine Spieler im Kader.</div>';
+      seasonExclusionsRoster = Array.isArray(roster) ? roster.slice() : [];
+      seasonExcludedPlayerIds = new Set((excludedIds || []).map((id) => Number(id)));
+      seasonExclusionsExpanded = false;
+      seasonExclusionsSearchTerm = "";
+      renderSeasonExclusionsView();
+    }
+
+    function updateSeasonAdvancedVisibility() {
+      if (!seasonAdvancedPanelEl || !seasonAdvancedToggleBtnEl) return;
+      seasonAdvancedPanelEl.classList.toggle("hidden", !seasonAdvancedOpen);
+      seasonAdvancedToggleBtnEl.setAttribute("aria-expanded", seasonAdvancedOpen ? "true" : "false");
+      seasonAdvancedToggleBtnEl.setAttribute("aria-label", seasonAdvancedOpen ? "Saison-Details ausblenden" : "Saison-Details anzeigen");
+    }
+
+    function updateSeasonExclusionsVisibility() {
+      if (!seasonExclusionsPanelEl || !seasonExclusionsToggleBtnEl) return;
+      seasonExclusionsPanelEl.classList.toggle("hidden", !seasonExclusionsOpen);
+      seasonExclusionsToggleBtnEl.setAttribute("aria-expanded", seasonExclusionsOpen ? "true" : "false");
+      seasonExclusionsToggleBtnEl.setAttribute("aria-label", seasonExclusionsOpen ? "Ausschluesse ausblenden" : "Ausschluesse anzeigen");
+    }
+
+    function updateSessionAdvancedVisibility() {
+      if (!sessionEditorAdvancedPanelEl || !sessionEditorToggleBtnEl) return;
+      sessionEditorAdvancedPanelEl.classList.toggle("hidden", !sessionAdvancedOpen);
+      sessionEditorToggleBtnEl.setAttribute("aria-expanded", sessionAdvancedOpen ? "true" : "false");
+      sessionEditorToggleBtnEl.setAttribute("aria-label", sessionAdvancedOpen ? "Termin-Details ausblenden" : "Termin-Details anzeigen");
+    }
+
+    function updateNewPlayerAdvancedVisibility() {
+      if (!newPlayerAdvancedPanelEl || !newPlayerToggleBtnEl) return;
+      newPlayerAdvancedPanelEl.classList.toggle("hidden", !newPlayerAdvancedOpen);
+      newPlayerToggleBtnEl.setAttribute("aria-expanded", newPlayerAdvancedOpen ? "true" : "false");
+      newPlayerToggleBtnEl.setAttribute("aria-label", newPlayerAdvancedOpen ? "Spieler-Details ausblenden" : "Spieler-Details anzeigen");
+    }
+
+    function suggestQuickstartSeasonName(type, startIso) {
+      const y =
+        startIso && String(startIso).length >= 4
+          ? String(startIso).slice(0, 4)
+          : String(new Date().getFullYear());
+      const label = quickstartSeasonTypeLabels[type] || "Saison";
+      return label + " " + y;
+    }
+
+    function resolveQuickstartSeasonName() {
+      const raw = qsSeasonNameEl.value.trim();
+      if (raw) {
+        return raw;
+      }
+      return suggestQuickstartSeasonName(qsSeasonTypeEl.value, qsSeasonStartEl.value);
+    }
+
+    function parseQuickstartPlayerNames() {
+      return qsPlayerNamesEl.value
+        .split(/\n/)
+        .map((line) => line.trim())
+        .filter(Boolean);
+    }
+
+    function hideQuickstartError() {
+      quickstartErrorEl.textContent = "";
+      quickstartErrorEl.classList.add("hidden");
+    }
+
+    function showQuickstartError(message) {
+      quickstartErrorEl.textContent = message;
+      quickstartErrorEl.classList.remove("hidden");
+    }
+
+    function prefillQuickstartFromDashboard() {
+      if (!dashboardPayload) {
         return;
       }
-      roster.forEach((player) => {
-        const label = document.createElement("label");
-        label.className = "inline-check";
-        label.style.display = "flex";
-        label.style.alignItems = "flex-start";
-        label.style.gap = "8px";
-        const input = document.createElement("input");
-        input.type = "checkbox";
-        input.dataset.playerId = String(player.id);
-        if (excludedSet.has(player.id)) input.checked = true;
-        label.appendChild(input);
-        const span = document.createElement("span");
-        span.textContent = (player.name || "Spieler") + (player.is_active ? "" : " (inaktiv)");
-        label.appendChild(span);
-        seasonExclusionsEl.appendChild(label);
-      });
+      const team = dashboardPayload.team;
+      qsTeamNameEl.value = team.name || "";
+      qsTeamLocationEl.value = team.location || "";
+      qsSeasonTypeEl.value = "summer";
+      qsSeasonNameEl.value = "";
+      const y = new Date().getFullYear();
+      qsSeasonStartEl.value = `${y}-05-01`;
+      qsSeasonEndEl.value = `${y}-09-30`;
+      qsWeekdayEl.value = "3";
+      qsTimeEl.value = "19:00";
+      qsDurationEl.value = "90";
+      qsGenerateEl.checked = false;
+      qsPlayerNamesEl.value = "";
+    }
+
+    function updateQuickstartSummary() {
+      const seasonName = resolveQuickstartSeasonName();
+      const wd = qsWeekdayEl.value ? weekdayLabels[Number(qsWeekdayEl.value)] || "-" : "Kein Standard";
+      const timeHm = normalizeTimeInputToHm(qsTimeEl.value);
+      const timeLabel = timeHm ? formatTimeValue(timeHm) : "-";
+      const durRaw = qsDurationEl.value.trim();
+      const durLabel = durRaw === "" ? "- (wie Formular leer)" : durRaw + " Min.";
+      quickstartSummaryEl.textContent =
+        "Team: " +
+        qsTeamNameEl.value.trim() +
+        "\nOrt: " +
+        (qsTeamLocationEl.value.trim() || "-") +
+        "\nSaison: " +
+        seasonName +
+        "\nZeitraum: " +
+        formatDate(qsSeasonStartEl.value) +
+        " bis " +
+        formatDate(qsSeasonEndEl.value) +
+        "\nRhythmus: " +
+        wd +
+        (timeLabel !== "-" ? ", " + timeLabel : "") +
+        ", Dauer: " +
+        durLabel;
+      const names = parseQuickstartPlayerNames();
+      const playerLine =
+        names.length === 0
+          ? "Neue Spieler: keine (spaeter in der Spielerliste)"
+          : "Neue Spieler: " +
+            names.length +
+            " (" +
+            names.slice(0, 5).join(", ") +
+            (names.length > 5 ? ", ..." : "") +
+            ")";
+      quickstartSummaryEl.textContent = quickstartSummaryEl.textContent + "\n" + playerLine;
+    }
+
+    function validateQuickstartStep(step) {
+      hideQuickstartError();
+      if (step === 1) {
+        if (!qsTeamNameEl.value.trim()) {
+          showQuickstartError("Bitte einen Team-Titel eingeben.");
+          return false;
+        }
+      }
+      if (step === 2) {
+        const start = qsSeasonStartEl.value;
+        const end = qsSeasonEndEl.value;
+        if (!start || !end) {
+          showQuickstartError("Bitte Start- und Enddatum waehlen.");
+          return false;
+        }
+        if (end < start) {
+          showQuickstartError("Das Enddatum muss am oder nach dem Startdatum liegen.");
+          return false;
+        }
+      }
+      if (step === 3) {
+        const dRaw = qsDurationEl.value.trim();
+        if (dRaw !== "") {
+          const d = Number(dRaw);
+          if (!Number.isFinite(d) || d < 1) {
+            showQuickstartError("Bitte eine gueltige Dauer (Minuten) eingeben oder leer lassen.");
+            return false;
+          }
+        }
+        const timeHm = normalizeTimeInputToHm(qsTimeEl.value);
+        if (timeHm !== "" && !parseDisplayTime(timeHm)) {
+          showQuickstartError("Bitte eine gueltige Zeit waehlen oder leer lassen.");
+          return false;
+        }
+      }
+      if (step === 4) {
+        const names = parseQuickstartPlayerNames();
+        if (names.length > QUICKSTART_MAX_PLAYERS_BATCH) {
+          showQuickstartError(
+            "Maximal " +
+              QUICKSTART_MAX_PLAYERS_BATCH +
+              " Spielernamen auf einmal. Bitte kuerzen oder spaeter ergaenzen."
+          );
+          return false;
+        }
+        for (let i = 0; i < names.length; i += 1) {
+          if (names[i].length > 120) {
+            showQuickstartError("Ein Name ist zu lang (max. 120 Zeichen). Bitte kuerzen.");
+            return false;
+          }
+        }
+      }
+      return true;
+    }
+
+    function validateQuickstartAll() {
+      for (let s = 1; s <= 4; s += 1) {
+        if (!validateQuickstartStep(s)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    function renderQuickstartStep() {
+      for (let i = 1; i <= QUICKSTART_TOTAL_STEPS; i += 1) {
+        const panel = document.getElementById("quickstart-step-" + i);
+        if (panel) {
+          panel.classList.toggle("active", i === quickstartStep);
+        }
+      }
+      quickstartProgressEl.textContent = "Schritt " + quickstartStep + " von " + QUICKSTART_TOTAL_STEPS;
+      quickstartBackBtnEl.disabled = quickstartStep === 1;
+      quickstartNextBtnEl.classList.toggle("hidden", quickstartStep === QUICKSTART_TOTAL_STEPS);
+      quickstartSubmitBtnEl.classList.toggle("hidden", quickstartStep !== QUICKSTART_TOTAL_STEPS);
+      if (quickstartStep === QUICKSTART_TOTAL_STEPS) {
+        updateQuickstartSummary();
+      }
+    }
+
+    function closeQuickstartModal(suppress) {
+      if (suppress) {
+        quickstartSuppressed = true;
+      }
+      quickstartOverlayEl.classList.add("hidden");
+      quickstartOverlayEl.setAttribute("aria-hidden", "true");
+    }
+
+    function openQuickstartModal() {
+      closeTimePicker();
+      hideQuickstartError();
+      prefillQuickstartFromDashboard();
+      quickstartStep = 1;
+      renderQuickstartStep();
+      quickstartOverlayEl.classList.remove("hidden");
+      quickstartOverlayEl.setAttribute("aria-hidden", "false");
+    }
+
+    function maybeOfferQuickstart(seasonCount) {
+      quickstartOpenBtnEl.classList.toggle("hidden", seasonCount > 0);
+      if (seasonCount > 0) {
+        closeQuickstartModal(false);
+        return;
+      }
+      if (!quickstartSuppressed && quickstartOverlayEl.classList.contains("hidden")) {
+        openQuickstartModal();
+      }
+    }
+
+    async function submitQuickstart() {
+      if (!validateQuickstartAll()) {
+        return;
+      }
+      hideQuickstartError();
+      quickstartNextBtnEl.disabled = true;
+      quickstartBackBtnEl.disabled = true;
+      quickstartSubmitBtnEl.disabled = true;
+      quickstartCancelBtnEl.disabled = true;
+
+      const teamName = qsTeamNameEl.value.trim();
+      const teamLocation = qsTeamLocationEl.value.trim();
+      const seasonNameResolved = resolveQuickstartSeasonName();
+      const startDate = qsSeasonStartEl.value;
+      const endDate = qsSeasonEndEl.value;
+      const timeHm = normalizeTimeInputToHm(qsTimeEl.value);
+      const parsedTime = timeHm === "" ? "" : parseDisplayTime(timeHm) || "";
+      const dRaw = qsDurationEl.value.trim();
+      const durationMinutes = dRaw === "" ? null : Number(dRaw);
+
+      try {
+        const teamResponse = await fetch("api/admin/team-save.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            token: adminToken,
+            name: teamName,
+            location: teamLocation
+          })
+        });
+        const teamResult = await teamResponse.json();
+        if (!teamResponse.ok || !teamResult.success) {
+          throw new Error(teamResult.error || "Team konnte nicht gespeichert werden.");
+        }
+
+        const seasonResponse = await fetch("api/admin/season-save.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            token: adminToken,
+            season_id: selectedSeasonId || 0,
+            name: seasonNameResolved,
+            season_type: qsSeasonTypeEl.value,
+            start_date: startDate,
+            end_date: endDate,
+            default_weekday: qsWeekdayEl.value === "" ? null : Number(qsWeekdayEl.value),
+            default_start_time: parsedTime,
+            default_duration_minutes: durationMinutes,
+            default_location: teamLocation,
+            description: "",
+            display_priority: 1,
+            is_active: true,
+            generate_sessions: qsGenerateEl.checked,
+            excluded_player_ids: []
+          })
+        });
+        const seasonResult = await seasonResponse.json();
+        if (!seasonResponse.ok || !seasonResult.success) {
+          throw new Error(seasonResult.error || "Saison konnte nicht gespeichert werden.");
+        }
+
+        const newPlayerNames = parseQuickstartPlayerNames();
+        for (let i = 0; i < newPlayerNames.length; i += 1) {
+          const plResponse = await fetch("api/admin/player-save.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              token: adminToken,
+              name: newPlayerNames[i],
+              sort_order: 0,
+              is_active: true,
+              regenerate_token: false,
+              license_number: "",
+              classification: ""
+            })
+          });
+          const plResult = await plResponse.json();
+          if (!plResponse.ok || !plResult.success) {
+            throw new Error(
+              plResult.error || "Spieler \"" + newPlayerNames[i] + "\" konnte nicht angelegt werden."
+            );
+          }
+        }
+
+        quickstartSuppressed = false;
+        closeQuickstartModal(false);
+        showSuccess(
+          newPlayerNames.length > 0
+            ? "Saison angelegt, " + newPlayerNames.length + " Spieler erstellt."
+            : "Erste Saison angelegt."
+        );
+        await loadDashboard();
+      } catch (error) {
+        showQuickstartError(error.message || "Schnellstart fehlgeschlagen.");
+      } finally {
+        quickstartNextBtnEl.disabled = false;
+        quickstartSubmitBtnEl.disabled = false;
+        quickstartCancelBtnEl.disabled = false;
+        renderQuickstartStep();
+      }
     }
 
     async function loadDashboard(options = {}) {
       const allowRetry = options.allowRetry !== false;
       clearError();
-      teamSaveMsgEl.textContent = "";
-      seasonSaveMsgEl.textContent = "";
-      sessionSaveMsgEl.textContent = "";
+      clearSaveMsg(teamSaveMsgEl);
+      clearSaveMsg(seasonSaveMsgEl);
+      clearSaveMsg(sessionSaveMsgEl);
+      clearSaveMsg(playerSaveMsgEl);
+      clearSaveMsg(newPlayerMsgEl);
+      clearSaveMsg(rosterActionMsgEl);
 
       let url = "api/admin/dashboard.php?token=" + encodeURIComponent(adminToken);
       if (selectedSeasonId) url += "&season_id=" + encodeURIComponent(selectedSeasonId);
@@ -1451,29 +2696,11 @@
       selectedSessionId = result.data.selected_session?.id || null;
       pageTitleEl.textContent = result.data.team.name + " Admin";
       eventHeadingEl.textContent = result.data.season?.name || result.data.team.name;
-      adminLabelEl.textContent = "Admin: " + result.data.admin.label;
-      if (result.data.season) {
-        const timeLabel = result.data.season.default_start_time
-          ? ((result.data.season.default_weekday ? weekdayLabels[result.data.season.default_weekday] + ", " : "") + formatTimeValue(result.data.season.default_start_time))
-          : (result.data.team.start_time ? weekdayLabels[result.data.team.weekday] + ", " + formatTimeValue(result.data.team.start_time) : "-");
-        const durationLabel = result.data.season.default_duration_minutes !== null && result.data.season.default_duration_minutes !== undefined
-          ? formatDurationLabel(result.data.season.default_duration_minutes)
-          : formatDurationLabel(result.data.team.duration_minutes);
-        const locationLabel = result.data.season.default_location || result.data.team.location || "-";
-        seasonContextSummaryEl.textContent =
-          formatDate(result.data.season.start_date) +
-          " bis " +
-          formatDate(result.data.season.end_date) +
-          " · " +
-          timeLabel +
-          " · " +
-          durationLabel +
-          " · " +
-          locationLabel;
-      } else {
-        seasonContextSummaryEl.textContent = 'Waehle oben die Saison. Bearbeitet wird sie weiter unten nur einmal im Bereich "Saison verwalten".';
-      }
-
+      supportAdminLabelEl.textContent = result.data.admin.label || "—";
+      supportTeamIdEl.textContent = String(result.data.team.id ?? "—");
+      supportSeasonIdEl.textContent = result.data.season?.id != null ? String(result.data.season.id) : "— (keine Saison)";
+      supportSessionIdEl.textContent =
+        result.data.selected_session?.id != null ? String(result.data.selected_session.id) : "— (kein Termin)";
       fillTeamForm(result.data.team);
       fillSeasonForm(result.data.season);
       renderSeasonExclusions(result.data.roster || [], result.data.season_excluded_player_ids || []);
@@ -1481,13 +2708,16 @@
       renderSessionsList();
       renderSelectedSessionEditor();
       renderRoster();
+      syncNewPlayerOrderDefault();
       updateUrl();
+      const seasonCount = (result.data.seasons || []).length;
+      maybeOfferQuickstart(seasonCount);
     }
 
     async function saveTeam() {
       clearError();
       teamSaveBtnEl.disabled = true;
-      teamSaveMsgEl.textContent = "Speichere...";
+      setSaveMsgNeutral(teamSaveMsgEl, "Speichere...");
 
       try {
         const response = await fetch("api/admin/team-save.php", {
@@ -1504,12 +2734,11 @@
           throw new Error(result.error || "Team konnte nicht gespeichert werden.");
         }
 
-        teamSaveMsgEl.textContent = "Gespeichert.";
+        setSaveMsgNeutral(teamSaveMsgEl, "Gespeichert.");
         showSuccess("Team gespeichert.");
         await loadDashboard();
       } catch (error) {
-        teamSaveMsgEl.textContent = "";
-        showError(error.message || "Team konnte nicht gespeichert werden.");
+        setSaveMsgError(teamSaveMsgEl, error.message || "Team konnte nicht gespeichert werden.");
       } finally {
         teamSaveBtnEl.disabled = false;
       }
@@ -1518,12 +2747,12 @@
     async function saveSession() {
       clearError();
       if (!selectedSessionId || !selectedSessionStatus) {
-        showError("Bitte zuerst einen Termin und Status waehlen.");
+        setSaveMsgError(sessionSaveMsgEl, "Bitte zuerst einen Termin und Status waehlen.");
         return;
       }
 
       sessionSaveBtnEl.disabled = true;
-      sessionSaveMsgEl.textContent = "Speichere...";
+      setSaveMsgNeutral(sessionSaveMsgEl, "Speichere...");
 
       try {
         const parsedDate = parseDisplayDate(sessionDateInputEl.value);
@@ -1558,12 +2787,11 @@
           throw new Error(result.error || "Termin konnte nicht gespeichert werden.");
         }
 
-        sessionSaveMsgEl.textContent = "Gespeichert.";
+        setSaveMsgNeutral(sessionSaveMsgEl, "Gespeichert.");
         showSuccess("Termin gespeichert.");
         await loadDashboard();
       } catch (error) {
-        sessionSaveMsgEl.textContent = "";
-        showError(error.message || "Termin konnte nicht gespeichert werden.");
+        setSaveMsgError(sessionSaveMsgEl, error.message || "Termin konnte nicht gespeichert werden.");
       } finally {
         sessionSaveBtnEl.disabled = false;
       }
@@ -1572,7 +2800,7 @@
     async function deleteSession() {
       clearError();
       if (!selectedSessionId) {
-        showError("Bitte zuerst einen Termin waehlen.");
+        setSaveMsgError(sessionSaveMsgEl, "Bitte zuerst einen Termin waehlen.");
         return;
       }
 
@@ -1585,7 +2813,7 @@
 
       sessionDeleteBtnEl.disabled = true;
       sessionSaveBtnEl.disabled = true;
-      sessionSaveMsgEl.textContent = "Loesche...";
+      setSaveMsgNeutral(sessionSaveMsgEl, "Loesche...");
 
       try {
         const response = await fetch("api/admin/session-delete.php", {
@@ -1601,15 +2829,14 @@
           throw new Error(result.error || "Termin konnte nicht geloescht werden.");
         }
 
-        sessionSaveMsgEl.textContent = "Geloescht.";
+        setSaveMsgNeutral(sessionSaveMsgEl, "Geloescht.");
         showSuccess("Termin geloescht.");
         selectedSessionId = null;
         updateUrl();
         await loadDashboard();
-        sessionSaveMsgEl.textContent = "Geloescht.";
+        setSaveMsgNeutral(sessionSaveMsgEl, "Geloescht.");
       } catch (error) {
-        sessionSaveMsgEl.textContent = "";
-        showError(error.message || "Termin konnte nicht geloescht werden.");
+        setSaveMsgError(sessionSaveMsgEl, error.message || "Termin konnte nicht geloescht werden.");
       } finally {
         sessionSaveBtnEl.disabled = false;
         sessionDeleteBtnEl.disabled = !selectedSessionId;
@@ -1619,10 +2846,10 @@
     async function saveSelectedPlayerResponse(playerId, status) {
       clearError();
       if (!selectedSessionId) {
-        showError("Bitte zuerst einen Termin waehlen.");
+        setSaveMsgError(sessionSaveMsgEl, "Bitte zuerst einen Termin waehlen.");
         return;
       }
-      playerSaveMsgEl.textContent = "Speichere Antwort...";
+      setSaveMsgNeutral(sessionSaveMsgEl, "Speichere Antwort...");
 
       try {
         const response = await fetch("api/admin/response-save.php", {
@@ -1649,18 +2876,17 @@
         );
         renderSessionsList();
         renderSelectedSessionEditor();
-        playerSaveMsgEl.textContent = "Antwort gespeichert.";
+        setSaveMsgNeutral(sessionSaveMsgEl, "Antwort gespeichert.");
         showSuccess("Spielerantwort gespeichert.");
       } catch (error) {
-        playerSaveMsgEl.textContent = "";
-        showError(error.message || "Antwort konnte nicht gespeichert werden.");
+        setSaveMsgError(sessionSaveMsgEl, error.message || "Antwort konnte nicht gespeichert werden.");
       }
     }
 
     async function saveSeason() {
       clearError();
       seasonSaveBtnEl.disabled = true;
-      seasonSaveMsgEl.textContent = "Speichere...";
+      setSaveMsgNeutral(seasonSaveMsgEl, "Speichere...");
 
       try {
         const startDate = parseDisplayDate(seasonStartInputEl.value);
@@ -1673,6 +2899,10 @@
         }
         if (seasonTimeInputEl.value.trim() !== "" && !parsedTime) {
           throw new Error("Bitte eine gueltige Zeit auswaehlen.");
+        }
+        const parsedPriority = seasonPriorityInputEl.value.trim() === "" ? null : Number(seasonPriorityInputEl.value);
+        if (parsedPriority !== null && (!Number.isFinite(parsedPriority) || parsedPriority <= 0)) {
+          throw new Error("Event-Ranking muss groesser als 0 sein.");
         }
 
         const response = await fetch("api/admin/season-save.php", {
@@ -1690,7 +2920,8 @@
             default_duration_minutes: seasonDurationInputEl.value === "" ? null : Number(seasonDurationInputEl.value),
             default_location: seasonLocationInputEl.value,
             description: seasonDescriptionInputEl.value,
-            is_active: seasonActiveInputEl.checked,
+            display_priority: parsedPriority,
+            is_active: true,
             generate_sessions: seasonGenerateInputEl.checked,
             excluded_player_ids: collectSeasonExcludedPlayerIds()
           })
@@ -1718,13 +2949,12 @@
           messageParts.push(result.data.generated_sessions + " Termine erzeugt.");
         }
         const seasonMessage = messageParts.length > 0 ? messageParts.join(" ") : "Gespeichert.";
-        seasonSaveMsgEl.textContent = seasonMessage;
+        setSaveMsgNeutral(seasonSaveMsgEl, seasonMessage);
         showSuccess("Saison gespeichert.");
         await loadDashboard();
-        seasonSaveMsgEl.textContent = seasonMessage;
+        setSaveMsgNeutral(seasonSaveMsgEl, seasonMessage);
       } catch (error) {
-        seasonSaveMsgEl.textContent = "";
-        showError(error.message || "Saison konnte nicht gespeichert werden.");
+        setSaveMsgError(seasonSaveMsgEl, error.message || "Saison konnte nicht gespeichert werden.");
       } finally {
         seasonSaveBtnEl.disabled = false;
       }
@@ -1733,7 +2963,7 @@
     async function deleteSeason() {
       clearError();
       if (!selectedSeasonId) {
-        showError("Bitte zuerst eine Saison waehlen.");
+        setSaveMsgError(seasonSaveMsgEl, "Bitte zuerst eine Saison waehlen.");
         return;
       }
 
@@ -1743,7 +2973,7 @@
       }
 
       seasonDeleteBtnEl.disabled = true;
-      seasonSaveMsgEl.textContent = "Loesche...";
+      setSaveMsgNeutral(seasonSaveMsgEl, "Loesche...");
 
       try {
         const response = await fetch("api/admin/season-delete.php", {
@@ -1762,21 +2992,22 @@
         selectedSeasonId = null;
         selectedSessionId = null;
         const deleteMessage = (result.data.deleted_sessions || 0) + " Termine geloescht.";
-        seasonSaveMsgEl.textContent = deleteMessage;
+        setSaveMsgNeutral(seasonSaveMsgEl, deleteMessage);
         showSuccess("Saison geloescht.");
         await loadDashboard();
-        seasonSaveMsgEl.textContent = deleteMessage;
+        setSaveMsgNeutral(seasonSaveMsgEl, deleteMessage);
       } catch (error) {
-        seasonSaveMsgEl.textContent = "";
-        showError(error.message || "Saison konnte nicht geloescht werden.");
+        setSaveMsgError(seasonSaveMsgEl, error.message || "Saison konnte nicht geloescht werden.");
       } finally {
         seasonDeleteBtnEl.disabled = !selectedSeasonId;
       }
     }
 
-    async function savePlayer(payload) {
+    async function savePlayer(payload, options) {
+      options = options || {};
+      const feedbackEl = options.feedbackEl || playerSaveMsgEl;
       clearError();
-      playerSaveMsgEl.textContent = "Speichere...";
+      setSaveMsgNeutral(feedbackEl, "Speichere...");
 
       try {
         const response = await fetch("api/admin/player-save.php", {
@@ -1789,16 +3020,19 @@
           throw new Error(result.error || "Spieler konnte nicht gespeichert werden.");
         }
 
-        playerSaveMsgEl.textContent = "Gespeichert.";
+        setSaveMsgNeutral(feedbackEl, "Gespeichert.");
         showSuccess("Spieler gespeichert.");
-        newPlayerNameEl.value = "";
-        newPlayerOrderEl.value = "";
-        newPlayerLicenseEl.value = "";
-        newPlayerClassificationEl.value = "";
+        if (!payload.player_id) {
+          newPlayerNameEl.value = "";
+          newPlayerLicenseEl.value = "";
+          newPlayerClassificationEl.value = "";
+        }
         await loadDashboard();
       } catch (error) {
-        playerSaveMsgEl.textContent = "";
-        showError(error.message || "Spieler konnte nicht gespeichert werden.");
+        setSaveMsgError(feedbackEl, error.message || "Spieler konnte nicht gespeichert werden.");
+        if (!payload.player_id) {
+          newPlayerMsgEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
       }
     }
 
@@ -1809,7 +3043,7 @@
         return;
       }
 
-      playerSaveMsgEl.textContent = "Loesche...";
+      setSaveMsgNeutral(playerSaveMsgEl, "Loesche...");
 
       try {
         const response = await fetch("api/admin/player-delete.php", {
@@ -1825,49 +3059,139 @@
           throw new Error(result.error || "Spieler konnte nicht geloescht werden.");
         }
 
-        playerSaveMsgEl.textContent = "Geloescht.";
+        setSaveMsgNeutral(playerSaveMsgEl, "Geloescht.");
         showSuccess("Spieler geloescht.");
         await loadDashboard();
-        playerSaveMsgEl.textContent = "Geloescht.";
+        setSaveMsgNeutral(playerSaveMsgEl, "Geloescht.");
       } catch (error) {
-        playerSaveMsgEl.textContent = "";
-        showError(error.message || "Spieler konnte nicht geloescht werden.");
+        setSaveMsgError(playerSaveMsgEl, error.message || "Spieler konnte nicht geloescht werden.");
       }
     }
 
     teamSaveBtnEl.addEventListener("click", saveTeam);
     sessionSaveBtnEl.addEventListener("click", saveSession);
     sessionDeleteBtnEl.addEventListener("click", deleteSession);
+    sessionsMoreBtnEl?.addEventListener("click", () => {
+      showAllUpcomingSessions = !showAllUpcomingSessions;
+      renderSessionsList();
+    });
+    sessionsCompletedBtnEl?.addEventListener("click", () => {
+      showCompletedSessions = !showCompletedSessions;
+      renderSessionsList();
+    });
+    seasonAdvancedToggleBtnEl?.addEventListener("click", () => {
+      seasonAdvancedOpen = !seasonAdvancedOpen;
+      updateSeasonAdvancedVisibility();
+    });
+    seasonExclusionsToggleBtnEl?.addEventListener("click", () => {
+      seasonExclusionsOpen = !seasonExclusionsOpen;
+      updateSeasonExclusionsVisibility();
+    });
+    seasonExclusionsSearchEl?.addEventListener("input", () => {
+      seasonExclusionsSearchTerm = seasonExclusionsSearchEl.value || "";
+      renderSeasonExclusionsView();
+    });
+    sessionEditorToggleBtnEl?.addEventListener("click", () => {
+      sessionAdvancedOpen = !sessionAdvancedOpen;
+      updateSessionAdvancedVisibility();
+    });
+    newPlayerToggleBtnEl?.addEventListener("click", () => {
+      newPlayerAdvancedOpen = !newPlayerAdvancedOpen;
+      updateNewPlayerAdvancedVisibility();
+    });
     seasonSaveBtnEl.addEventListener("click", saveSeason);
     seasonNewBtnEl.addEventListener("click", () => {
       selectedSeasonId = null;
+      showAllUpcomingSessions = false;
+      showCompletedSessions = false;
       fillSeasonForm(null);
       renderSeasonExclusions(dashboardPayload?.roster || [], []);
-      seasonSaveMsgEl.textContent = "Neue Saison vorbereitet.";
+      setSaveMsgNeutral(seasonSaveMsgEl, "Neue Saison vorbereitet.");
     });
     seasonDeleteBtnEl.addEventListener("click", deleteSeason);
-    newPlayerBtnEl.addEventListener("click", () => {
-      savePlayer({
-        name: newPlayerNameEl.value.trim(),
-        sort_order: Number(newPlayerOrderEl.value),
-        is_active: true,
-        regenerate_token: false,
-        license_number: newPlayerLicenseEl.value.trim(),
-        classification: newPlayerClassificationEl.value.trim()
-      });
+    newPlayerNameEl.addEventListener("input", () => {
+      clearSaveMsg(newPlayerMsgEl);
     });
+
+    newPlayerBtnEl.addEventListener("click", () => {
+      const name = newPlayerNameEl.value.trim();
+      clearError();
+      if (!name) {
+        setSaveMsgError(newPlayerMsgEl, "Bitte einen Namen eingeben.");
+        newPlayerNameEl.focus();
+        newPlayerMsgEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        return;
+      }
+      savePlayer(
+        {
+          name: name,
+          sort_order: Number(newPlayerOrderEl.value) || 0,
+          is_active: true,
+          regenerate_token: false,
+          license_number: newPlayerLicenseEl.value.trim(),
+          classification: newPlayerClassificationEl.value.trim()
+        },
+        { feedbackEl: newPlayerMsgEl }
+      );
+    });
+    tokenInputEl.addEventListener("input", () => {
+      clearSaveMsg(tokenMsgEl);
+    });
+
     tokenBtnEl.addEventListener("click", () => {
       const value = tokenInputEl.value.trim();
       if (!value) {
-        showError("Bitte einen Admin-Token eingeben.");
+        setSaveMsgError(tokenMsgEl, "Bitte einen Admin-Token eingeben.");
         return;
       }
 
+      clearSaveMsg(tokenMsgEl);
       saveTokenLocally(value);
       const url = new URL(window.location.href);
       url.searchParams.set("token", value);
       window.location.href = url.toString();
     });
+
+    supportInfoToggleEl.addEventListener("click", () => {
+      supportInfoPanelEl.classList.toggle("hidden");
+      const expanded = !supportInfoPanelEl.classList.contains("hidden");
+      supportInfoToggleEl.setAttribute("aria-expanded", expanded ? "true" : "false");
+    });
+
+    updateSeasonAdvancedVisibility();
+    updateSeasonExclusionsVisibility();
+    updateSessionAdvancedVisibility();
+    updateNewPlayerAdvancedVisibility();
+
+    quickstartOpenBtnEl.addEventListener("click", () => {
+      quickstartSuppressed = false;
+      openQuickstartModal();
+    });
+    quickstartCancelBtnEl.addEventListener("click", () => {
+      closeQuickstartModal(true);
+    });
+    quickstartBackBtnEl.addEventListener("click", () => {
+      hideQuickstartError();
+      if (quickstartStep <= 1) {
+        return;
+      }
+      quickstartStep -= 1;
+      renderQuickstartStep();
+    });
+    quickstartNextBtnEl.addEventListener("click", () => {
+      if (!validateQuickstartStep(quickstartStep)) {
+        return;
+      }
+      if (quickstartStep >= QUICKSTART_TOTAL_STEPS) {
+        return;
+      }
+      quickstartStep += 1;
+      renderQuickstartStep();
+    });
+    quickstartSubmitBtnEl.addEventListener("click", () => {
+      submitQuickstart();
+    });
+
     sessionStatusButtons.forEach((button) => {
       button.addEventListener("click", () => setSelectedSessionStatus(button.dataset.status));
     });
@@ -1903,9 +3227,15 @@
     });
 
     document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape") {
-        closeTimePicker();
+      if (event.key !== "Escape") {
+        return;
       }
+      if (!quickstartOverlayEl.classList.contains("hidden")) {
+        closeQuickstartModal(true);
+        event.preventDefault();
+        return;
+      }
+      closeTimePicker();
     });
 
     attachDatePicker(seasonStartInputEl, seasonStartPickerEl);

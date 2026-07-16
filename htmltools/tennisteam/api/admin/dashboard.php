@@ -2,31 +2,15 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../../lib/bootstrap.php';
-require_once __DIR__ . '/../../lib/json.php';
-require_once __DIR__ . '/../../lib/team_data.php';
+require_once __DIR__ . '/../../lib/auth.php';
 
-$token = isset($_GET['token']) ? trim((string) $_GET['token']) : '';
 $seasonId = isset($_GET['season_id']) ? (int) $_GET['season_id'] : 0;
 $sessionId = isset($_GET['session_id']) ? (int) $_GET['session_id'] : 0;
 
-if ($token === '') {
-    jsonResponse([
-        'success' => false,
-        'error' => 'Missing admin token.',
-    ], 400);
-}
-
 try {
     $pdo = db();
-    $context = fetchAdminContextByToken($pdo, $token);
-
-    if ($context === null) {
-        jsonResponse([
-            'success' => false,
-            'error' => 'Invalid admin token.',
-        ], 403);
-    }
+    $context = requireAdminContextFromQuery($pdo);
+    $token = extractAdminTokenFromQuery();
 
     $teamId = (int) $context['team_id'];
     $seasons = fetchSeasonsForTeam($pdo, $teamId);

@@ -2,9 +2,7 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../../lib/bootstrap.php';
-require_once __DIR__ . '/../../lib/json.php';
-require_once __DIR__ . '/../../lib/team_data.php';
+require_once __DIR__ . '/../../lib/auth.php';
 
 $body = readJsonBody();
 
@@ -21,7 +19,8 @@ $playerId = array_key_exists('player_id', $body) ? (int) $body['player_id'] : 0;
 $status = array_key_exists('status', $body) && $body['status'] !== null
     ? trim((string) $body['status'])
     : null;
-$comment = array_key_exists('comment', $body) ? (string) $body['comment'] : null;
+$commentProvided = array_key_exists('comment', $body);
+$comment = $commentProvided ? (string) $body['comment'] : null;
 
 if ($sessionId <= 0 || $playerId <= 0) {
     jsonResponse([
@@ -39,14 +38,7 @@ if ($status !== null && $status !== '' && !isValidAttendanceStatus($status)) {
 
 try {
     $pdo = db();
-    $context = fetchAdminContextByToken($pdo, $token);
-
-    if ($context === null) {
-        jsonResponse([
-            'success' => false,
-            'error' => 'Invalid admin token.',
-        ], 403);
-    }
+    $context = requireAdminContextFromJsonBody($pdo, $body);
 
     $teamId = (int) $context['team_id'];
     $session = fetchSessionForTeam($pdo, $teamId, $sessionId);
@@ -69,6 +61,15 @@ try {
     if ($status === null || $status === '') {
         deleteResponse($pdo, $sessionId, $playerId);
     } else {
+        if (!$commentProvided) {
+            $existingRows = fetchResponsesForSession($pdo, $teamId, $sessionId);
+            foreach ($existingRows as $row) {
+                if ((int) $row['player_id'] === $playerId && !empty($row['comment'])) {
+                    $comment = (string) $row['comment'];
+                    break;
+                }
+            }
+        }
         upsertResponse($pdo, $sessionId, $playerId, $status, $comment);
     }
 

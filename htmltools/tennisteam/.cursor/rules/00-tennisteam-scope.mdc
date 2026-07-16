@@ -1,0 +1,12 @@
+---
+description: Workspace-Scope — nur Tennisteam, kein Silverline
+alwaysApply: true
+---
+
+# Tennisteam Workspace
+
+Du arbeitest in **htmltools/tennisteam** — PHP-JSON-API + Vanilla HTML/JS.
+
+- **Nicht** `app/`, `lib/forecast/`, IndexedDB, WordPress REST anfassen (Silverline).
+- Einstieg: `AGENTS.md`, `doc/ARCHITECTURE.md`.
+- Parent-Monorepo (`next-app`) nur für Vitest/Playwright im Terminal — nicht als Arbeitsscope.

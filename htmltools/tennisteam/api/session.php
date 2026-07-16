@@ -2,30 +2,14 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../lib/bootstrap.php';
-require_once __DIR__ . '/../lib/json.php';
-require_once __DIR__ . '/../lib/team_data.php';
+require_once __DIR__ . '/../lib/auth.php';
 
 $token = isset($_GET['token']) ? trim((string) $_GET['token']) : '';
 $sessionId = isset($_GET['session_id']) ? (int) $_GET['session_id'] : 0;
 
-if ($token === '') {
-    jsonResponse([
-        'success' => false,
-        'error' => 'Missing player token.',
-    ], 400);
-}
-
 try {
     $pdo = db();
-    $context = fetchPlayerContextByToken($pdo, $token);
-
-    if ($context === null) {
-        jsonResponse([
-            'success' => false,
-            'error' => 'Invalid player token.',
-        ], 403);
-    }
+    $context = requirePlayerContextFromQuery($pdo);
 
     $teamId = (int) $context['team_id'];
     $playerId = (int) $context['player_id'];

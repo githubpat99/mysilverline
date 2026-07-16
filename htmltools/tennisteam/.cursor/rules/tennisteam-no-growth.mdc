@@ -1,0 +1,40 @@
+---
+description: Tennisteam Anti-Bloat — kontrollierte KI-Weiterentwicklung
+globs: "**/*"
+alwaysApply: false
+---
+
+# Tennisteam — Kein unkontrolliertes Code-Wachstum
+
+## Vor jeder Änderung
+
+1. Betroffene Schicht identifizieren (Domain / API / UI).
+2. Bei Business-Regeln: zuerst `domain.ts` + `domain.test.ts`, dann PHP in `team_data.php`, zuletzt UI.
+3. Diff-Ziel: **< 200 Zeilen** pro Feature.
+
+## Verboten ohne explizite Anweisung
+
+- Neue PHP-Dateien in `api/` (Ausnahme: abgestimmte Struktur wie `lib/auth.php`).
+- Neue HTML-Seiten.
+- Business-Logik inline in `index.html` oder `admin.html`.
+- Silverline/Next.js/React-Patterns hier anwenden.
+
+## Pflicht bei neuen Endpoints
+
+1. `lib/auth.php`-Helper nutzen.
+2. `api/README.md` + `test-api.ps1` + `doc/ARCHITECTURE.md` aktualisieren.
+
+## Domain Single Source of Truth
+
+1. `domain.ts` → 2. `domain.test.ts` → 3. Vitest → 4. `team_data.php` → 5. UI nur via API
+
+## Tests (Monorepo-Root eine Ebene höher)
+
+Vitest/Playwright liegen im Parent-Repo `next-app`:
+
+```powershell
+npm --prefix ../.. run test:run -- htmltools/tennisteam/domain.test.ts
+npm --prefix ../.. run test:e2e -- tests/e2e/tennisteam.spec.ts tests/e2e/tennisteam-admin.spec.ts
+```
+
+Lokal: `./test-api.ps1`

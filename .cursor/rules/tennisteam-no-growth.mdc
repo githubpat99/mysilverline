@@ -1,0 +1,52 @@
+---
+description: Tennisteam Anti-Bloat — kontrollierte KI-Weiterentwicklung
+globs: htmltools/tennisteam/**
+alwaysApply: false
+---
+
+# Tennisteam — Kein unkontrolliertes Code-Wachstum
+
+## Vor jeder Änderung
+
+1. Betroffene Schicht identifizieren (Domain / API / UI).
+2. Bei Business-Regeln: zuerst `domain.ts` + `domain.test.ts`, dann PHP in `team_data.php`, zuletzt UI.
+3. Diff-Ziel: **< 200 Zeilen** pro Feature; größere Änderungen in Schritte teilen.
+
+## Verboten ohne explizite Anweisung
+
+- Neue PHP-Dateien in `api/` (Ausnahme: bereits abgestimmte Struktur wie `lib/auth.php`).
+- Neue HTML-Seiten.
+- Neue npm-Dependencies im Root-`package.json` nur für Tennisteam.
+- Business-Logik inline in `index.html` oder `admin.html`.
+- Regeln parallel in PHP **und** JS **und** TS implementieren.
+
+## Pflicht bei neuen Endpoints
+
+1. `lib/auth.php`-Helper nutzen.
+2. `api/README.md` aktualisieren.
+3. `test-api.ps1` um Smoke-Test erweitern.
+4. `doc/ARCHITECTURE.md` Endpoint-Tabelle prüfen.
+
+## team_data.php
+
+- Kein Feature-Block **> ~50 Zeilen** ohne vorherige Diskussion über Aufteilung.
+- Keine neuen Funktionen, wenn bestehende wiederverwendet werden können.
+
+## Domain Single Source of Truth
+
+Reihenfolge für neue Regeln:
+
+1. `domain.ts` — reine Funktion, exportiert
+2. `domain.test.ts` — Vitest-Fall
+3. `npm run test:run -- htmltools/tennisteam/domain.test.ts`
+4. Entsprechende PHP-Funktion in `team_data.php`
+5. UI ruft nur API auf — keine Duplikation der Regel in JS
+
+## Tests nach jeder Änderung
+
+```bash
+npm run test:run -- htmltools/tennisteam/domain.test.ts
+npm run test:e2e -- tests/e2e/tennisteam.spec.ts tests/e2e/tennisteam-admin.spec.ts
+```
+
+Manuell (gegen Live/staging): `htmltools/tennisteam/test-api.ps1`

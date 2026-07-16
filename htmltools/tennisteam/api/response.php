@@ -2,13 +2,11 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../lib/bootstrap.php';
-require_once __DIR__ . '/../lib/json.php';
-require_once __DIR__ . '/../lib/team_data.php';
+require_once __DIR__ . '/../lib/auth.php';
 
 $body = readJsonBody();
 
-if (empty($body['token']) || empty($body['status'])) {
+if (empty($body['token']) || !array_key_exists('status', $body)) {
     jsonResponse([
         'success' => false,
         'error' => 'token and status are required.',
@@ -16,11 +14,11 @@ if (empty($body['token']) || empty($body['status'])) {
 }
 
 $token = trim((string) $body['token']);
-$status = trim((string) $body['status']);
+$status = $body['status'] !== null ? trim((string) $body['status']) : null;
 $comment = array_key_exists('comment', $body) ? (string) $body['comment'] : null;
 $sessionId = array_key_exists('session_id', $body) ? (int) $body['session_id'] : 0;
 
-if (!isValidAttendanceStatus($status)) {
+if ($status !== null && $status !== '' && !isValidAttendanceStatus($status)) {
     jsonResponse([
         'success' => false,
         'error' => 'Invalid attendance status.',
@@ -29,14 +27,7 @@ if (!isValidAttendanceStatus($status)) {
 
 try {
     $pdo = db();
-    $context = fetchPlayerContextByToken($pdo, $token);
-
-    if ($context === null) {
-        jsonResponse([
-            'success' => false,
-            'error' => 'Invalid player token.',
-        ], 403);
-    }
+    $context = requirePlayerContext($pdo, $token);
 
     $teamId = (int) $context['team_id'];
     $playerId = (int) $context['player_id'];
@@ -67,13 +58,17 @@ try {
         ], 403);
     }
 
-    upsertResponse(
-        $pdo,
-        (int) $session['id'],
-        $playerId,
-        $status,
-        $comment
-    );
+    if ($status === null || $status === '') {
+        deleteResponse($pdo, (int) $session['id'], $playerId);
+    } else {
+        upsertResponse(
+            $pdo,
+            (int) $session['id'],
+            $playerId,
+            $status,
+            $comment
+        );
+    }
 
     $playerRows = fetchResponsesForSession($pdo, $teamId, (int) $session['id']);
     $season = ($sid > 0)

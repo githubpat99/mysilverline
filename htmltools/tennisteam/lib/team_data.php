@@ -309,10 +309,10 @@ function fetchSeasonsForTeam(PDO $pdo, int $teamId): array
     $seasonsTable = tnTable('seasons');
 
     $stmt = $pdo->prepare(
-        "SELECT id, team_id, name, season_type, start_date, end_date, default_location, default_weekday, default_start_time, default_duration_minutes, description, is_active
+        "SELECT id, team_id, name, season_type, start_date, end_date, default_location, default_weekday, default_start_time, default_duration_minutes, description, is_active, display_priority
         FROM {$seasonsTable}
         WHERE team_id = :team_id
-        ORDER BY start_date DESC"
+        ORDER BY COALESCE(display_priority, 9999) ASC, start_date DESC"
     );
     $stmt->execute(['team_id' => $teamId]);
 
@@ -324,7 +324,7 @@ function fetchSeasonForTeam(PDO $pdo, int $teamId, int $seasonId): ?array
     $seasonsTable = tnTable('seasons');
 
     $stmt = $pdo->prepare(
-        "SELECT id, team_id, name, season_type, start_date, end_date, default_location, default_weekday, default_start_time, default_duration_minutes, description, is_active
+        "SELECT id, team_id, name, season_type, start_date, end_date, default_location, default_weekday, default_start_time, default_duration_minutes, description, is_active, display_priority
         FROM {$seasonsTable}
         WHERE id = :season_id
           AND team_id = :team_id
@@ -344,12 +344,12 @@ function fetchCurrentSeasonForTeam(PDO $pdo, int $teamId): ?array
     $seasonsTable = tnTable('seasons');
 
     $stmt = $pdo->prepare(
-        "SELECT id, team_id, name, season_type, start_date, end_date, default_location, default_weekday, default_start_time, default_duration_minutes, description, is_active
+        "SELECT id, team_id, name, season_type, start_date, end_date, default_location, default_weekday, default_start_time, default_duration_minutes, description, is_active, display_priority
         FROM {$seasonsTable}
         WHERE team_id = :team_id
           AND is_active = 1
           AND CURDATE() BETWEEN start_date AND end_date
-        ORDER BY start_date DESC
+        ORDER BY COALESCE(display_priority, 9999) ASC, start_date DESC
         LIMIT 1"
     );
     $stmt->execute(['team_id' => $teamId]);
@@ -360,12 +360,12 @@ function fetchCurrentSeasonForTeam(PDO $pdo, int $teamId): ?array
     }
 
     $futureStmt = $pdo->prepare(
-        "SELECT id, team_id, name, season_type, start_date, end_date, default_location, default_weekday, default_start_time, default_duration_minutes, description, is_active
+        "SELECT id, team_id, name, season_type, start_date, end_date, default_location, default_weekday, default_start_time, default_duration_minutes, description, is_active, display_priority
         FROM {$seasonsTable}
         WHERE team_id = :team_id
           AND is_active = 1
           AND start_date > CURDATE()
-        ORDER BY start_date ASC
+        ORDER BY COALESCE(display_priority, 9999) ASC, start_date ASC
         LIMIT 1"
     );
     $futureStmt->execute(['team_id' => $teamId]);
@@ -376,10 +376,10 @@ function fetchCurrentSeasonForTeam(PDO $pdo, int $teamId): ?array
     }
 
     $pastStmt = $pdo->prepare(
-        "SELECT id, team_id, name, season_type, start_date, end_date, default_location, default_weekday, default_start_time, default_duration_minutes, description, is_active
+        "SELECT id, team_id, name, season_type, start_date, end_date, default_location, default_weekday, default_start_time, default_duration_minutes, description, is_active, display_priority
         FROM {$seasonsTable}
         WHERE team_id = :team_id
-        ORDER BY end_date DESC
+        ORDER BY COALESCE(display_priority, 9999) ASC, end_date DESC
         LIMIT 1"
     );
     $pastStmt->execute(['team_id' => $teamId]);
@@ -475,6 +475,28 @@ function pickDefaultSeasonFromCandidates(array $seasons): ?array
 {
     if ($seasons === []) {
         return null;
+    }
+
+    $ranked = [];
+    foreach ($seasons as $s) {
+        if (!(int) ($s['is_active'] ?? 0)) {
+            continue;
+        }
+        $priority = isset($s['display_priority']) && $s['display_priority'] !== null ? (int) $s['display_priority'] : 0;
+        if ($priority > 0) {
+            $ranked[] = $s;
+        }
+    }
+    if ($ranked !== []) {
+        usort($ranked, static function (array $a, array $b): int {
+            $pa = (int) ($a['display_priority'] ?? 9999);
+            $pb = (int) ($b['display_priority'] ?? 9999);
+            if ($pa !== $pb) {
+                return $pa <=> $pb;
+            }
+            return strcmp((string) ($b['start_date'] ?? ''), (string) ($a['start_date'] ?? ''));
+        });
+        return $ranked[0];
     }
 
     $today = (new DateTimeImmutable('today'))->format('Y-m-d');
@@ -778,6 +800,7 @@ function serializeSeason(array $season): array
         'default_duration_minutes' => isset($season['default_duration_minutes']) && $season['default_duration_minutes'] !== null ? (int) $season['default_duration_minutes'] : null,
         'description' => $season['description'] ?: null,
         'is_active' => (bool) $season['is_active'],
+        'display_priority' => isset($season['display_priority']) && $season['display_priority'] !== null ? (int) $season['display_priority'] : null,
     ];
 }
 
@@ -1091,6 +1114,7 @@ function createSeason(
     ?string $defaultStartTime,
     ?int $defaultDurationMinutes,
     ?string $description,
+    ?int $displayPriority,
     bool $isActive
 ): int {
     $seasonsTable = tnTable('seasons');
@@ -1107,6 +1131,7 @@ function createSeason(
             default_start_time,
             default_duration_minutes,
             description,
+            display_priority,
             is_active
         )
         VALUES (
@@ -1120,6 +1145,7 @@ function createSeason(
             :default_start_time,
             :default_duration_minutes,
             :description,
+            :display_priority,
             :is_active
         )"
     );
@@ -1134,6 +1160,7 @@ function createSeason(
         'default_start_time' => $defaultStartTime,
         'default_duration_minutes' => $defaultDurationMinutes,
         'description' => trimComment($description, 500),
+        'display_priority' => $displayPriority,
         'is_active' => $isActive ? 1 : 0,
     ]);
 
@@ -1158,6 +1185,7 @@ function updateSeason(
     ?string $defaultStartTime,
     ?int $defaultDurationMinutes,
     ?string $description,
+    ?int $displayPriority,
     bool $isActive
 ): void {
     $seasonsTable = tnTable('seasons');
@@ -1173,6 +1201,7 @@ function updateSeason(
             default_start_time = :default_start_time,
             default_duration_minutes = :default_duration_minutes,
             description = :description,
+            display_priority = :display_priority,
             is_active = :is_active,
             updated_at = CURRENT_TIMESTAMP
         WHERE id = :season_id
@@ -1190,6 +1219,7 @@ function updateSeason(
         'default_start_time' => $defaultStartTime,
         'default_duration_minutes' => $defaultDurationMinutes,
         'description' => trimComment($description, 500),
+        'display_priority' => $displayPriority,
         'is_active' => $isActive ? 1 : 0,
     ]);
 
@@ -1455,6 +1485,41 @@ function generateSessionsForSeason(PDO $pdo, int $teamId, int $seasonId): int
     }
 
     return $created;
+}
+
+function fetchNextPlayerSortOrderForTeam(PDO $pdo, int $teamId): int
+{
+    $playersTable = tnTable('players');
+    $stmt = $pdo->prepare(
+        "SELECT COALESCE(MAX(sort_order), 0) + 1 AS next_n
+        FROM {$playersTable}
+        WHERE team_id = :team_id"
+    );
+    $stmt->execute(['team_id' => $teamId]);
+    $next = (int) $stmt->fetchColumn();
+    return $next >= 1 ? $next : 1;
+}
+
+function fetchPlayerSortOrderForTeam(PDO $pdo, int $teamId, int $playerId): ?int
+{
+    $playersTable = tnTable('players');
+    $stmt = $pdo->prepare(
+        "SELECT sort_order
+        FROM {$playersTable}
+        WHERE id = :player_id
+          AND team_id = :team_id
+        LIMIT 1"
+    );
+    $stmt->execute([
+        'player_id' => $playerId,
+        'team_id' => $teamId,
+    ]);
+    $row = $stmt->fetch();
+    if ($row === false) {
+        return null;
+    }
+
+    return (int) $row['sort_order'];
 }
 
 function savePlayer(

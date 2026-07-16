@@ -78,6 +78,7 @@ Technische Richtung:
 - `sql/migrate_add_seasons.sql`: einmalige Migration fuer bestehende Live-Datenbank
 - `sql/migrate_add_player_license_classification.sql`: Lizenz-Nr. und Klassierung auf `players`
 - `sql/seed_example.sql`: Beispiel-Daten fuer lokalen Start
+- `sql/seed_captain_outreach_8_teams.sql`: acht gleiche Demo-Teams (Captain-Outreach); Ablauf/Mailtext in `doc/marketing/captain-outreach-mail.md`
 - `sql/generate_season_sessions.sql`: erzeugt Wochen-Termine fuer aktive Saisons
 - `script/neuesteam/neuesteam.ps1`: erzeugt SQL + Mailtext fuer neue Teams
 - `script/neuesteam/neueslivekundenteam.ps1`: erzeugt SQL + Mailtext fuer neue Live-Kundenteams

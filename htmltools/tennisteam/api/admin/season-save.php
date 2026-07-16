@@ -2,9 +2,7 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../../lib/bootstrap.php';
-require_once __DIR__ . '/../../lib/json.php';
-require_once __DIR__ . '/../../lib/team_data.php';
+require_once __DIR__ . '/../../lib/auth.php';
 
 $body = readJsonBody();
 $token = isset($body['token']) ? trim((string) $body['token']) : '';
@@ -22,6 +20,9 @@ $defaultDurationMinutes = array_key_exists('default_duration_minutes', $body) &&
     ? (int) $body['default_duration_minutes']
     : null;
 $description = isset($body['description']) ? (string) $body['description'] : null;
+$displayPriority = array_key_exists('display_priority', $body) && $body['display_priority'] !== null && $body['display_priority'] !== ''
+    ? (int) $body['display_priority']
+    : null;
 $isActive = (bool) ($body['is_active'] ?? false);
 $generateSessions = (bool) ($body['generate_sessions'] ?? false);
 
@@ -89,16 +90,16 @@ if ($defaultDurationMinutes !== null && $defaultDurationMinutes <= 0) {
     ], 400);
 }
 
+if ($displayPriority !== null && $displayPriority <= 0) {
+    jsonResponse([
+        'success' => false,
+        'error' => 'Invalid display priority.',
+    ], 400);
+}
+
 try {
     $pdo = db();
-    $context = fetchAdminContextByToken($pdo, $token);
-
-    if ($context === null) {
-        jsonResponse([
-            'success' => false,
-            'error' => 'Invalid admin token.',
-        ], 403);
-    }
+    $context = requireAdminContextFromJsonBody($pdo, $body);
 
     $teamId = (int) $context['team_id'];
     $pdo->beginTransaction();
@@ -137,6 +138,7 @@ try {
             $defaultStartTime !== '' ? $defaultStartTime . ':00' : null,
             $defaultDurationMinutes,
             $description,
+            $displayPriority,
             $isActive
         );
 
@@ -162,6 +164,7 @@ try {
             $defaultStartTime !== '' ? $defaultStartTime . ':00' : null,
             $defaultDurationMinutes,
             $description,
+            $displayPriority,
             $isActive
         );
     }

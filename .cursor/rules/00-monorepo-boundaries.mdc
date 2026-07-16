@@ -1,0 +1,26 @@
+---
+description: Monorepo-Grenzen — Silverline und Tennisteam getrennt behandeln
+alwaysApply: true
+---
+
+# Monorepo-Grenzen (next-app)
+
+Dieses Repository enthält **unabhängige Teilprojekte**. Vor jeder Änderung das richtige Teilprojekt identifizieren.
+
+| Teilprojekt | Pfad | Stack | AI-Einstieg |
+|-------------|------|-------|-------------|
+| **Tennisteam** | `htmltools/tennisteam/` | PHP, MariaDB, Vanilla HTML/JS | `htmltools/tennisteam/AGENTS.md` |
+| **Silverline** | `app/`, `lib/` | Next.js, TypeScript, IndexedDB, WP REST | `app/docs/diagrams/SYSTEM_PROMPT.md` |
+| **Mediplan / Trainer** | `htmltools/mediplan/`, `htmltools/trainer/` | Statische PWAs | README im jeweiligen Ordner |
+| **WP Backend** | `BE_Copy/` | PHP WordPress Plugin | Plugin-Dateien direkt |
+
+## Harte Regeln
+
+- **Nie** Silverline-Patterns (React, Dexie, Forecast, Nonce) in Tennisteam anwenden.
+- **Nie** Tennisteam-Patterns (Token-URL-Auth, `team_data.php`) in Silverline anwenden.
+- **Kein** Runtime-Import zwischen Teilprojekten — geteiltes Repo nutzt nur gemeinsame Werkzeuge (Vitest, Playwright, Deploy).
+- Änderungen **nur** im Scope des angeforderten Teilprojekts; keine „Nebenbei“-Refactorings in anderen Ordnern.
+
+## Workspace
+
+Für Code-Arbeit `c:\Users\patri\next-app` öffnen — nicht `.cursor/plans` (dort nur Plan-Dateien, kein Quellcode).

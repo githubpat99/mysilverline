@@ -1,5 +1,11 @@
 # Tennisteam V1 Spezifikation
 
+## Dokumentationsstand
+
+**Aktualisiert:** Saisonplanung, Session-Generierung, Spieler-Exclusions und erweiterte Admin-CRUD sind **implementiert** (nicht nur geplant). Technische Details und alle 15 API-Endpunkte: [doc/ARCHITECTURE.md](doc/ARCHITECTURE.md) und [api/README.md](api/README.md).
+
+Historische Abschnitte unten (z. B. „Geplante Erweiterung: Saisonansicht“) beschreiben teils den ursprünglichen V1-Entwurf — bei Widersprüchen gilt ARCHITECTURE.md.
+
 ## 1. Zielbild
 
 Die App soll einem kleinen Tennisteam helfen, die Anwesenheit fuer das woechentliche Training einfach und mobil zu pflegen. Alle sehen denselben aktuellen Stand. Jede Person kann den eigenen Status ohne komplizierten Login aendern.
@@ -27,9 +33,10 @@ Die App soll einem kleinen Tennisteam helfen, die Anwesenheit fuer das woechentl
 - Zentral gespeicherte Daten in `MariaDB`
 - Persoenliche Bearbeitungslinks fuer Spieler
 - Separater Admin-Zugang per Token-Link
-- Solide Basis fuer spaetere Saisonplanung
+- **Saisonplanung:** Sommer-/Winter-/Interclub-Saisons, Session-Listen, Spieler-Exclusions pro Saison
+- Admin-CRUD: Team, Saisons, Sessions, Spieler, Rückmeldungen
 
-### Nicht enthalten
+### Nicht enthalten (weiterhin)
 
 - Registrierung mit Passwort
 - Mehrere Teams in derselben App
@@ -112,15 +119,15 @@ Inhalt:
 - Liste aller Antworten
 - letzte Aenderungen
 
-### Geplante Erweiterung: Saisonansicht
+### Saisonansicht (implementiert)
 
-In einer spaeteren Iteration soll es zusaetzlich eine Saisonansicht geben:
+Die App zeigt die Saisonansicht mit:
 
-- aktuelle Saison oben
+- aktuelle Saison oben (Auswahl mehrerer Saisons)
 - Liste aller Trainingstermine der Saison
 - Team-Zusammenfassung pro Termin
 - eigener Status pro Termin
-- schneller Wechsel zwischen Sommer- und Wintersaison
+- Wechsel zwischen Saisons; Spieler können pro Saison ausgeschlossen sein (`season_player_exclusions`)
 
 ## 7. Rollen und Zugriff
 
@@ -135,7 +142,8 @@ In einer spaeteren Iteration soll es zusaetzlich eine Saisonansicht geben:
 - sieht alles
 - kann Termin-Hinweis pflegen
 - kann Termin absagen oder wieder aktivieren
-- kann Teamdaten spaeter verwalten
+- kann Team-, Saison-, Session- und Spielerdaten verwalten
+- kann Spieler pro Saison ausschliessen
 
 ## 8. Authentifizierung fuer V1
 
@@ -206,7 +214,9 @@ Wichtige Regel:
 
 - `id`
 - `team_id`
+- `season_id` (optional, FK)
 - `session_date`
+- `location`, `start_time`, `duration_minutes`, `description` (Session-Overrides)
 - `status`
 - `admin_note`
 - `created_at`
@@ -215,11 +225,9 @@ Wichtige Regel:
 Empfohlene Werte fuer `status`:
 
 - `scheduled`
+- `provisional`
+- `completed`
 - `cancelled`
-
-Geplante Erweiterung:
-
-- `season_id`
 
 ### Tabelle `responses`
 
@@ -230,50 +238,42 @@ Geplante Erweiterung:
 - `comment`
 - `updated_at`
 
-### Geplante Tabelle `seasons`
-
-Diese Tabelle ist nicht Teil des aktuellen Prototyps, aber die bevorzugte Erweiterung fuer die Saisonansicht:
+### Tabelle `seasons` (implementiert)
 
 - `id`
 - `team_id`
 - `name`
-- `season_type`
-- `start_date`
-- `end_date`
+- `season_type` (`summer`, `winter`, `interclub`, `custom`)
+- `start_date`, `end_date`
+- Default-Overrides: `default_location`, `default_weekday`, `default_start_time`, `default_duration_minutes`, `description`
 - `is_active`
-- `created_at`
-- `updated_at`
+- `created_at`, `updated_at`
 
-Empfohlene Werte fuer `season_type`:
+### Tabelle `season_player_exclusions` (implementiert)
 
-- `summer`
-- `winter`
+- `season_id`, `player_id` (Composite PK)
 
-## 11. API-Vorschlag
+## 11. API (Ist-Stand)
 
-### Oeffentliche / spielerbezogene Endpunkte
+Vollständige Tabelle: [api/README.md](api/README.md) und [doc/ARCHITECTURE.md](doc/ARCHITECTURE.md).
 
-- `GET /api/session.php?token=...`
-  - liefert Teaminfo, naechste Session, Spielerliste und eigenen Spieler
+### Spieler
 
-- `POST /api/response.php`
-  - setzt oder aktualisiert Status und Kommentar des identifizierten Spielers
+- `GET api/health.php` — DB-Check
+- `GET api/sessions.php?token=...` — **Haupt-Einstieg:** Saison + alle Sessions
+- `GET api/session.php?token=...` — Einzelne Session; optional `session_id`
+- `POST api/response.php` — eigene Rückmeldung setzen/löschen
 
-### Admin-Endpunkte
+### Admin
 
-- `GET /api/admin/session.php?token=...`
-  - liefert Sessiondaten fuer Admin
+- `GET api/admin/dashboard.php?token=...` — **Haupt-Einstieg:** Aggregat-Dashboard
+- `GET api/admin/session.php?token=...` — Legacy (nächste Session)
+- `POST api/admin/session-update.php`, `session-delete.php`
+- `POST api/admin/response-save.php`
+- `POST api/admin/team-save.php`, `season-save.php`, `season-delete.php`
+- `POST api/admin/player-save.php`, `player-delete.php`
 
-- `POST /api/admin/session-update.php`
-  - aktualisiert `admin_note` oder `status`
-
-### Geplante Saison-Endpunkte
-
-- `GET /api/sessions.php?token=...`
-  - liefert alle relevanten Termine einer Saison inklusive eigener Rueckmeldung und Summary pro Termin
-
-- `GET /api/seasons.php?token=...`
-  - liefert verfuegbare Saisons fuer das Team
+Auth zentral: `lib/auth.php`. Smoke-Tests: `test-api.ps1`.
 
 ## 12. API-Antworten
 

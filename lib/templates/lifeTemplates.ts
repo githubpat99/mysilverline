@@ -108,6 +108,31 @@ function oneOffSpendingEvent(title: string, amountCHF: number, startDate: string
   };
 }
 
+function yearlySpendingEvent(title: string, amountCHF: number, startDate: string): ProfileEvent {
+  return {
+    client_id: `tpl_evt_${rid()}`,
+    title,
+    start_date: startDate,
+    end_date: null,
+    recurrence: "yearly",
+    active: 1,
+    meta_json: { notes: "" },
+    line: {
+      line_type: "spending",
+      amount_chf: Math.trunc(amountCHF),
+      indexation: null,
+      category: null,
+      meta_json: null,
+      funding: {
+        fundingStrategy: "waterfall",
+        fundingSources: [{ source: "liquidity" }, { source: "short" }],
+        minLiquidityCHF: 10000,
+        allowLoanAsLastResort: true,
+      },
+    },
+  };
+}
+
 export function getLifeTemplates(): LifeTemplate[] {
   const y = new Date().getFullYear();
   const singleJungBirthDate = `${y - 25}-06-15`;
@@ -205,28 +230,46 @@ export function getLifeTemplates(): LifeTemplate[] {
     {
       id: "familie-50",
       label: "Familie 50+",
-      description: "Kinder aus dem Haus, Hypothek reduziert, Vorsorge im Fokus.",
+      description: "Familie K. und S. Ackermann. Geplante Frühpensionierung.",
       icon: "🏠",
       formState: {
         base: {
           birthDate: familie50BirthDate,
           forecastHorizonYears: forecastYearsUntilAge80(familie50BirthDate),
-          retireAtAge: 65,
+          retireAtAge: 62,
+          description:
+            "Familie Ackermann: Kurt verdient jährlich netto CHF 110'000, Stefanie steuert CHF 20'000 zum Jahreseinkommen bei. Im Jahr 2038 möchte Kurt mit 62 Jahren in Frühpension gehen. Für die Familie bedeutet dies eine Einkommenslücke von CHF 20'000 pro Jahr, die mit Silverline analysiert werden soll.",
         },
         step1: {
           positions: [
             liquidityAsset(75_000),
-            asset("Wertschriften", 250_000, "securities", "gt_3y"),
+            {
+              id: "familien-depot",
+              label: "Familien - Depot",
+              amountChf: 250_000,
+              currency: "CHF",
+              availability: "gt_3y",
+              assetClass: "securities",
+              cashflowPa: 15_000,
+              goal: "reinvest",
+              targetAccountKey: "asset:familien-depot",
+            },
             asset("Eigenheim", 950_000, "real_estate", "locked"),
           ],
         },
         step2: { positions: [mortgage(350_000, 1.5)] },
         step3: {
           annualsV2: {
-            income: [income("Haushaltseinkommen", 170_000)],
+            income: [income("Haushaltseinkommen", 130_000)],
             expense: [expense("Lebenshaltung", 115_000)],
           },
-          events: [],
+          events: [
+            yearlySpendingEvent(
+              "Pensionierung Kurt (Einkommenslücke)",
+              20_000,
+              "2038-01-01",
+            ),
+          ],
         },
       },
     },

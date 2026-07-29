@@ -13,7 +13,7 @@ import type {
 import { Amount, InlineAmount } from "../Amount";
 import { FieldMoneyInt } from "../fields/FieldMoney";
 import { bucketFromAvailability, bucketLabel, type Bucket } from "@/lib/forecast/buckets";
-import { ChevronDown, Plus, Trash2, X } from "lucide-react";
+import { Check, ChevronDown, Plus, Trash2 } from "lucide-react";
 import CustomSelect from "../CustomSelect";
 
 type Step1Data = FormState["step1"];
@@ -576,11 +576,12 @@ export default function Step1Form({
                   </button>
                   <button
                     onClick={closeModal}
-                    className="hidden sm:inline-flex items-center justify-center rounded-full border border-slate-700 p-2.5 text-sm hover:border-slate-600"
+                    className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-slate-700 px-3 py-2 text-sm text-slate-200 hover:border-slate-600"
                     type="button"
-                    title="Schliessen"
+                    title="Fertig - wird automatisch gespeichert"
                   >
-                    <X size={18} className="text-slate-400" />
+                    <Check size={16} className="text-emerald-400" />
+                    <span>Fertig</span>
                   </button>
 
                   {/* Mobile icons (min 44px Touch-Target) */}
@@ -595,10 +596,10 @@ export default function Step1Form({
                   <button
                     onClick={closeModal}
                     className="sm:hidden flex size-11 items-center justify-center rounded-full border border-slate-700 hover:border-slate-600 touch-manipulation"
-                    title="Schliessen"
+                    title="Fertig - wird automatisch gespeichert"
                     type="button"
                   >
-                    <X size={20} className="text-slate-400 hover:text-slate-100 transition" />
+                    <Check size={20} className="text-emerald-400" />
                   </button>
                 </div>
               </div>

@@ -18,6 +18,17 @@ table, td, th { border:none !important; }
 .sl-fb p { color:#c8d0dc; line-height:1.7; }
 .sl-fb h2 { font-size:1.15em; color:#e2e8f0; margin:2em 0 0.5em; }
 .sl-fb strong, .sl-fb b { color:#e2e8f0; }
+.sl-fb-back {
+  display:inline-block;
+  font-size:0.82em;
+  color:#93c5fd !important;
+  text-decoration:none !important;
+  border:1px solid #334155;
+  border-radius:8px;
+  background:#0f172a;
+  padding:6px 10px;
+}
+.sl-fb-back:hover { border-color:#475569; }
 
 .sl-fb-card {
   padding:16px 18px; border:1px solid #334155; border-radius:10px;
@@ -28,22 +39,43 @@ table, td, th { border:none !important; }
 
 .sl-fb textarea {
   width:100%; min-height:70px; padding:10px 12px; border:1px solid #334155;
-  border-radius:8px; background:#1e293b; color:#e2e8f0; font-size:0.9em;
+  border-radius:8px; background:#ffffff; color:#000000; font-size:0.9em;
   font-family:inherit; resize:vertical; outline:none; box-sizing:border-box;
 }
 .sl-fb textarea:focus { border-color:#3b82f6; }
+.sl-fb textarea::placeholder { color:#475569; }
 .sl-fb input[type="text"].sl-inline-input {
   width:100%; padding:8px 10px; border:1px solid #334155; border-radius:8px;
-  background:#1e293b; color:#e2e8f0; font-size:0.88em; font-family:inherit; outline:none; box-sizing:border-box;
+  background:#ffffff; color:#000000; font-size:0.88em; font-family:inherit; outline:none; box-sizing:border-box;
 }
 .sl-fb input[type="text"].sl-inline-input:focus { border-color:#3b82f6; }
+.sl-fb input[type="text"].sl-inline-input::placeholder { color:#475569; }
 
 .sl-fb input[type="text"], .sl-fb input[type="email"] {
   width:100%; padding:10px 12px; border:1px solid #334155; border-radius:8px;
-  background:#1e293b; color:#e2e8f0; font-size:0.9em; font-family:inherit;
+  background:#ffffff; color:#000000; font-size:0.9em; font-family:inherit;
   outline:none; box-sizing:border-box;
 }
 .sl-fb input[type="text"]:focus, .sl-fb input[type="email"]:focus { border-color:#3b82f6; }
+.sl-fb input[type="text"]::placeholder, .sl-fb input[type="email"]::placeholder { color:#475569; }
+.sl-fb input, .sl-fb textarea, .sl-fb select {
+  color:#000000 !important;
+  -webkit-text-fill-color:#000000 !important;
+  caret-color:#000000 !important;
+}
+.sl-fb select,
+.sl-fb select option {
+  background:#ffffff !important;
+  color:#000000 !important;
+}
+.sl-fb input:-webkit-autofill,
+.sl-fb input:-webkit-autofill:hover,
+.sl-fb input:-webkit-autofill:focus,
+.sl-fb textarea:-webkit-autofill,
+.sl-fb select:-webkit-autofill {
+  -webkit-text-fill-color:#000000 !important;
+  box-shadow:0 0 0 1000px #ffffff inset !important;
+}
 
 /* Radio group as pill buttons */
 .sl-radio-group { display:flex !important; flex-direction:row !important; flex-wrap:wrap !important; gap:6px !important; }
@@ -123,8 +155,9 @@ table, td, th { border:none !important; }
 .sl-rank-custom-grid { display:grid; gap:8px; margin-top:10px; }
 @media(min-width:640px){ .sl-rank-custom-grid { grid-template-columns:1fr auto; } }
 .sl-rank-select {
-  padding:8px 10px; border:1px solid #334155; border-radius:8px; background:#1e293b; color:#e2e8f0; font-size:0.85em;
+  padding:8px 10px; border:1px solid #334155; border-radius:8px; background:#ffffff; color:#000000; font-size:0.85em;
 }
+.sl-hidden { display:none; }
 
 /* Toast */
 .sl-toast {
@@ -141,6 +174,9 @@ table, td, th { border:none !important; }
 
 <!-- Hero -->
 <div style="margin:0 0 2em;padding:1.4em 1.6em;border-radius:14px;background:linear-gradient(135deg,#0f172a,#1a1f3a);border:1px solid #1e293b;">
+<div style="display:flex;justify-content:flex-end;margin:0 0 .5em;">
+<a class="sl-fb-back" href="/erklaerungen/beta-einladung/">← Zurück zur Einladung</a>
+</div>
 <h2 style="margin:0 0 0.4em;font-size:1.25em;color:#f1f5f9;">Beta-Feedback</h2>
 <p style="margin:0;font-size:0.95em;color:#94a3b8;">Hilf uns, Silverline besser zu machen. Dein Feedback ist anonym sichtbar – nur wir sehen deinen Namen, um bei Rückfragen auf dich zukommen zu können.</p>
 </div>
@@ -164,7 +200,7 @@ table, td, th { border:none !important; }
 
 <!-- Q1 -->
 <div class="sl-fb-card">
-<div class="sl-fb-q">1. Wie oft nutzt du Silverline?</div>
+<div class="sl-fb-q">1. Wie oft würdest du Silverline nutzen?</div>
 <div class="sl-radio-group">
 <label><input type="radio" name="q1" value="Täglich"><span>Täglich</span></label>
 <label><input type="radio" name="q1" value="Wöchentlich"><span>Wöchentlich</span></label>
@@ -212,7 +248,12 @@ table, td, th { border:none !important; }
 <label><input type="radio" name="q6" value="3–5 CHF"><span>3–5 CHF</span></label>
 <label><input type="radio" name="q6" value="5–10 CHF"><span>5–10 CHF</span></label>
 <label><input type="radio" name="q6" value="10+ CHF"><span>10+ CHF</span></label>
-<label><input type="radio" name="q6" value="Einmalzahlung"><span>Einmalzahlung bevorzugt</span></label>
+</div>
+<div style="margin-top:10px;">
+  <label style="display:flex;align-items:center;gap:8px;font-size:0.88em;color:#c8d0dc;">
+    <input type="checkbox" id="sl-q6-yearly" style="width:16px;height:16px;">
+    <span>besser jährlich mit Rabatt</span>
+  </label>
 </div>
 </div>
 
@@ -302,7 +343,7 @@ table, td, th { border:none !important; }
 <!-- Q10 -->
 <div class="sl-fb-card">
 <div class="sl-fb-q">10. Sonstige Anmerkungen</div>
-<textarea id="sl-q10" placeholder="Alles, was du uns noch sagen möchtest..."></textarea>
+<textarea id="sl-q10" placeholder="Alles, was du uns noch sagen möchtest... - egal was 😊"></textarea>
 </div>
 
 <div style="text-align:center;margin-top:16px;">

@@ -47,6 +47,7 @@ function ensureSelf(profile: ProfileV2 | null): ProfileV2 {
 export default function BaseForm() {
     const [profile, setProfile] = useState<ProfileV2 | null>(null);
     const [saving, setSaving] = useState(false);
+    const [savedOnce, setSavedOnce] = useState(false);
     const [err, setErr] = useState("");
     const dirtyRef = useRef(false);
     const committingRef = useRef(false);
@@ -189,6 +190,7 @@ export default function BaseForm() {
                 const rr = await loadProfile();
                 if (rr.ok) setProfile(ensureSelf(rr.profile));
             }
+            setSavedOnce(true);
         } finally {
             setSaving(false);
         }
@@ -224,7 +226,7 @@ export default function BaseForm() {
                     </p>
                 </div>
                 <div className="text-xs text-slate-500">
-                    {saving ? "Speichert…" : "Autosave aktiv"}
+                    {saving ? "Speichert…" : savedOnce ? "Automatisch gespeichert" : "Autosave aktiv"}
                 </div>
             </div>
 

@@ -117,6 +117,8 @@ export default function FinanceClientPage() {
   const [completed, setCompleted] = useState<CompletionState>(INITIAL_COMPLETED);
   const [loading, setLoading] = useState(true);
   const [saveError, setSaveError] = useState<string>("");
+  const [isAutosaving, setIsAutosaving] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
   const [profileV2, setProfileV2] = useState<ProfileV2 | null>(null);
 
   // Step-1 UI state (owned by parent)
@@ -199,7 +201,13 @@ export default function FinanceClientPage() {
   async function handleAutosave() {
     setSaveError("");
     if (!profileV2) return;
-    await buildAndSaveV2();
+    setIsAutosaving(true);
+    try {
+      const result = await buildAndSaveV2();
+      if (result.ok) setLastSavedAt(Date.now());
+    } finally {
+      setIsAutosaving(false);
+    }
   }
 
   const setStep1 = (next: FormState["step1"]) =>
@@ -290,6 +298,13 @@ export default function FinanceClientPage() {
                 setCurrentStep(step);
               }}
             />
+            <div className="text-xs text-slate-500">
+              {isAutosaving
+                ? "Speichert…"
+                : lastSavedAt
+                  ? "Automatisch gespeichert"
+                  : "Autosave aktiv"}
+            </div>
           </div>
 
           <section className="min-w-0 rounded-2xl border border-slate-800 bg-slate-900/40 p-4 sm:p-6 shadow-lg">

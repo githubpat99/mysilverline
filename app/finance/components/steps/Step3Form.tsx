@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef } from "react";
-import { ArrowDownCircle, ArrowUpCircle, ArrowLeftRight, Copy, Plus, Trash2, X } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, ArrowLeftRight, Check, Copy, Plus, Trash2 } from "lucide-react";
 import CustomSelect from "../CustomSelect";
 import CustomDateInput from "../CustomDateInput";
 import type { Step3Data, AssetPosition, DebtPosition } from "@/lib/types";
@@ -834,10 +834,11 @@ export default function Step3Form({
                 <button
                   type="button"
                   onClick={closeAnnualsModal}
-                  className="flex items-center justify-center rounded-full border border-slate-700 p-2.5 text-sm hover:border-slate-600"
-                  title="Schliessen"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-700 px-3 py-2 text-sm text-slate-200 hover:border-slate-600"
+                  title="Fertig - wird automatisch gespeichert"
                 >
-                  <X size={18} className="text-slate-400" />
+                  <Check size={16} className="text-emerald-400" />
+                  <span>Fertig</span>
                 </button>
               </div>
 
@@ -1044,10 +1045,11 @@ export default function Step3Form({
                   <button
                     type="button"
                     onClick={closeEventModal}
-                    className="flex items-center justify-center rounded-full border border-slate-700 p-2.5 text-sm hover:border-slate-600"
-                    title="Schliessen"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-slate-700 px-3 py-2 text-sm text-slate-200 hover:border-slate-600"
+                    title="Fertig - wird automatisch gespeichert"
                   >
-                    <X size={18} className="text-slate-400" />
+                    <Check size={16} className="text-emerald-400" />
+                    <span>Fertig</span>
                   </button>
                 </div>
               </div>

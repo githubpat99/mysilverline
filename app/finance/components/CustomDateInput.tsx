@@ -25,6 +25,11 @@ function toYMD(y: number, m: number, d: number): string {
   return `${y}-${mm}-${dd}`;
 }
 
+function clampYear(year: number, minYear: number, maxYear: number): number {
+  if (!Number.isFinite(year)) return minYear;
+  return Math.min(maxYear, Math.max(minYear, year));
+}
+
 function formatDisplay(ymd: string | null | undefined): string {
   if (!ymd) return "";
   const { y, m, d } = parseYMD(ymd);
@@ -37,8 +42,8 @@ export default function CustomDateInput({
   label,
   placeholder = "Datum wählen…",
   allowEmpty = false,
-  minYear = 2020,
-  maxYear = 2040,
+  minYear,
+  maxYear,
   className = "",
 }: {
   value: string | null;
@@ -50,19 +55,25 @@ export default function CustomDateInput({
   maxYear?: number;
   className?: string;
 }) {
+  const currentYear = new Date().getFullYear();
+  const effectiveMinYear = minYear ?? currentYear;
+  const effectiveMaxYear = maxYear ?? currentYear + 90;
+  const safeMinYear = Math.min(effectiveMinYear, effectiveMaxYear);
+  const safeMaxYear = Math.max(effectiveMinYear, effectiveMaxYear);
+
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const parsed = parseYMD(value ?? "");
-  const [y, setY] = useState(parsed.y);
+  const [y, setY] = useState(clampYear(parsed.y, safeMinYear, safeMaxYear));
   const [m, setM] = useState(parsed.m);
   const [d, setD] = useState(parsed.d);
 
   useEffect(() => {
     const p = parseYMD(value ?? "");
-    setY(p.y);
+    setY(clampYear(p.y, safeMinYear, safeMaxYear));
     setM(p.m);
     setD(p.d);
-  }, [value, open]);
+  }, [value, open, safeMinYear, safeMaxYear]);
 
   useEffect(() => {
     if (!open) return;
@@ -79,11 +90,15 @@ export default function CustomDateInput({
 
   const maxD = daysInMonth(y, m);
   const dayOpts = Array.from({ length: maxD }, (_, i) => i + 1);
-  const yearOpts = Array.from({ length: maxYear - minYear + 1 }, (_, i) => minYear + i);
+  const yearOpts = Array.from(
+    { length: safeMaxYear - safeMinYear + 1 },
+    (_, i) => safeMinYear + i,
+  );
 
   function apply() {
+    const clampedYear = clampYear(y, safeMinYear, safeMaxYear);
     const clamped = Math.min(d, maxD);
-    onChange(toYMD(y, m, clamped));
+    onChange(toYMD(clampedYear, m, clamped));
     setOpen(false);
   }
 

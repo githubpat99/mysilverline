@@ -148,6 +148,7 @@ add_shortcode('sl_feedback_js', function () {
     {id:'q4',l:'Bereit zu bezahlen?',t:'c'},
     {id:'q5',l:'Bedingungen f\u00fcr Zahlung',t:'t'},
     {id:'q6',l:'Fairer Betrag/Monat',t:'c'},
+    {id:'q6_yearly_discount',l:'Lieber j\u00e4hrlich mit Rabatt?',t:'c'},
     {id:'q7',l:'Intuitivit\u00e4t (1-5)',t:'s'},
     {id:'q8',l:'Weiterempfehlung (0-10)',t:'n'},
     {id:'q9',l:'Wunsch-Feature',t:'t'},
@@ -261,6 +262,7 @@ add_shortcode('sl_feedback_js', function () {
 
   function getAnswers(){
     var q8v=gid('sl-q8-range');
+    var q6yearly = gid('sl-q6-yearly');
     return {
       q1:radio('q1'),
       q2:txt('sl-q2'),
@@ -268,6 +270,7 @@ add_shortcode('sl_feedback_js', function () {
       q4:radio('q4'),
       q5:txt('sl-q5'),
       q6:radio('q6'),
+      q6_yearly_discount:(q6yearly && q6yearly.checked) ? 'Jährlich mit Rabatt' : 'Monatlich',
       q7:radio('q7'),
       q8:q8v?q8v.value:'',
       q9:buildQ9Summary(),
@@ -338,7 +341,8 @@ add_shortcode('sl_feedback_js', function () {
     h+='<div style="font-size:1em;color:#e2e8f0;font-weight:600;margin-bottom:12px;">\uD83D\uDCCA '+n+' Teilnehmer</div>';
     h+=sBar('Zahlungsbereitschaft',rs,'q4',['Ja','Vielleicht','Eher nein','Nein']);
     h+=sBar('Nutzungsh\u00e4ufigkeit',rs,'q1',['T\u00e4glich','W\u00f6chentlich','Monatlich','Selten','Gerade erst entdeckt']);
-    h+=sBar('Fairer Betrag',rs,'q6',['0\u20133 CHF','3\u20135 CHF','5\u201310 CHF','10+ CHF','Einmalzahlung']);
+    h+=sBar('Fairer Betrag/Monat',rs,'q6',['0\u20133 CHF','3\u20135 CHF','5\u201310 CHF','10+ CHF']);
+    h+=sBar('Zahlungsmodus',rs,'q6_yearly_discount',['Monatlich','Jährlich mit Rabatt']);
     var ss=0,sc=0,ns=0,nc=0,i;
     for(i=0;i<n;i++){var v=rs[i].answers&&rs[i].answers.q7;if(v&&parseInt(v)>0){ss+=parseInt(v);sc++;}}
     if(sc>0)h+='<div style="margin-top:12px;font-size:0.9em;color:#94a3b8;">\u2B50 Intuitivit\u00e4t: <b style="color:#f59e0b;">'+(ss/sc).toFixed(1)+' / 5</b> <span style="color:#64748b;">('+sc+')</span></div>';
@@ -350,7 +354,14 @@ add_shortcode('sl_feedback_js', function () {
   function sBar(title,rs,key,opts){
     var c={},i,tot=0;
     for(i=0;i<opts.length;i++)c[opts[i]]=0;
-    for(i=0;i<rs.length;i++){var v=rs[i].answers&&rs[i].answers[key];if(v&&c.hasOwnProperty(v)){c[v]++;tot++;}}
+    for(i=0;i<rs.length;i++){
+      var v=rs[i].answers&&rs[i].answers[key];
+      if(key==='q6_yearly_discount'){
+        if(v==='Ja') v='Jährlich mit Rabatt';
+        else if(v==='Nein' || v==='') v='Monatlich';
+      }
+      if(v&&c.hasOwnProperty(v)){c[v]++;tot++;}
+    }
     if(tot===0)return '';
     var h='<div style="margin-top:12px;font-size:0.82em;color:#64748b;margin-bottom:6px;font-weight:600;">'+title+'</div>';
     for(i=0;i<opts.length;i++){
@@ -414,8 +425,8 @@ add_shortcode('sl_feedback_js', function () {
           }
           continue;
         }
-        if(qd.t==='s')val=val+' / 5 \u2605';
-        else if(qd.t==='n')val=val+' / 10';
+        if(qd.t==='s') val=val+' / 5 \u2605';
+        else if(qd.t==='n') val=val+' / 10';
         else val=esc(String(val));
         h+='<div style="'+S.ql+'">'+qd.l+'</div>';
         h+='<div style="'+S.al+'">'+val+'</div>';

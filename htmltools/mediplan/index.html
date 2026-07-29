@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#111827" />
+  <title>Einnahmeplan</title>
+  <link rel="manifest" href="manifest.json" />
+  <style>
+    :root{
+      --bg:#0f172a; --card:#111827; --card2:#1f2937; --text:#f9fafb;
+      --muted:#9ca3af; --border:#374151; --accent:#38bdf8; --danger:#f87171;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background:linear-gradient(180deg,#020617,#111827); color:var(--text);
+      padding:16px; padding-bottom:96px;
+      -webkit-tap-highlight-color:transparent;
+      overscroll-behavior-y:contain;
+    }
+    body.drag-active{user-select:none; touch-action:none; overflow:hidden}
+    header{
+      position:sticky; top:0; z-index:10; background:rgba(15,23,42,.96);
+      backdrop-filter:blur(8px); padding:10px 0 14px; border-bottom:1px solid var(--border)
+    }
+    h1{font-size:1.55rem;margin:0 0 6px}
+    .sub{color:var(--muted);font-size:.92rem;line-height:1.35}
+    .status{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap}
+    .pill{border:1px solid var(--border);background:#0b1220;border-radius:999px;padding:7px 10px;font-size:.85rem;color:var(--muted)}
+    .pill strong{color:var(--text)}
+    section{margin:18px 0 22px}
+    h2{font-size:1.05rem;margin:0 0 10px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+    .section-title{display:flex;gap:8px;align-items:center;min-width:0}
+    .section-title span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .section-actions{display:flex;gap:7px}
+    .mini-btn{width:auto;flex:none;border:1px solid var(--border);background:#0b1220;color:var(--text);padding:7px 10px;border-radius:999px;font-size:.86rem}
+    .card{background:rgba(17,24,39,.92);border:1px solid var(--border);border-radius:16px;overflow:hidden;min-height:66px}
+    .card.drag-over{outline:3px solid var(--accent);outline-offset:4px;background:rgba(56,189,248,.08)}
+    .item{
+      min-height:62px; display:grid; grid-template-columns:40px 1fr 44px; gap:6px;
+      align-items:center; padding:10px 10px; border-top:1px solid var(--border);
+      touch-action:pan-y;
+    }
+    .item:first-child{border-top:0}
+    .item.moving-source{opacity:.25}
+    input[type=checkbox]{width:25px;height:25px;accent-color:var(--accent)}
+    .name{font-weight:800}
+    .note{font-size:.86rem;color:var(--muted);margin-top:2px}
+    .done .name{text-decoration:line-through;color:var(--muted)}
+    .done .note{color:#6b7280}
+    .handle{
+      font-size:1.55rem;color:var(--muted);text-align:center;cursor:grab;user-select:none;
+      border:1px solid var(--border);border-radius:12px;padding:6px 0;background:#0b1220;
+      touch-action:none;
+    }
+    .handle:active{cursor:grabbing}
+    .empty{padding:18px;color:var(--muted);font-size:.9rem;text-align:center}
+    .warn{background:#2a1620;border:1px solid #7f1d1d;color:#fecaca;padding:12px;border-radius:14px;font-size:.9rem;line-height:1.35}
+    .footer{
+      position:fixed;left:0;right:0;bottom:0;background:rgba(2,6,23,.96);
+      border-top:1px solid var(--border);padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+      display:flex;gap:10px;z-index:20
+    }
+    button{
+      flex:1;border:0;border-radius:12px;padding:12px 10px;font-weight:800;
+      background:var(--card2);color:var(--text)
+    }
+    button.primary{background:var(--accent);color:#082f49}
+    button.danger{background:#7f1d1d;color:#fecaca}
+    dialog{
+      width:min(94vw,520px);border:1px solid var(--border);border-radius:18px;
+      background:#0b1220;color:var(--text);padding:0;box-shadow:0 20px 90px rgba(0,0,0,.65)
+    }
+    dialog::backdrop{background:rgba(0,0,0,.65)}
+    .modal-head{padding:16px 16px 10px;border-bottom:1px solid var(--border)}
+    .modal-head h3{margin:0;font-size:1.15rem}
+    .modal-body{padding:16px;display:grid;gap:12px}
+    label.field{display:grid;gap:6px;color:var(--muted);font-size:.88rem}
+    input[type=text], select, textarea{
+      width:100%;border:1px solid var(--border);border-radius:12px;background:#111827;
+      color:var(--text);padding:12px;font-size:1rem
+    }
+    textarea{min-height:82px;resize:vertical}
+    .modal-actions{display:flex;gap:10px;padding:0 16px 16px}
+    .hint{color:#fde68a;font-size:.86rem;line-height:1.35}
+    .drag-ghost{
+      position:fixed;left:0;top:0;z-index:9999;pointer-events:none;
+      width:calc(100vw - 32px);max-width:620px;
+      background:#1f2937;border:2px solid var(--accent);border-radius:16px;
+      padding:12px 14px;box-shadow:0 18px 50px rgba(0,0,0,.55);
+      transform:translate3d(-9999px,-9999px,0);
+    }
+    .drag-ghost .name{font-size:1rem}
+    .drag-ghost .note{font-size:.85rem}
+  </style>
+</head>
+<body>
+<header>
+  <h1>💊 Einnahmeplan</h1>
+  <div class="sub">Zum Verschieben am Griff ≡ ziehen. Langer Druck auf den Eintrag bearbeitet ihn.</div>
+  <div class="status">
+    <div class="pill">Datum: <strong id="today"></strong></div>
+    <div class="pill">Erledigt: <strong id="progress">0/0</strong></div>
+  </div>
+</header>
+
+<main id="app"></main>
+
+<section class="warn">
+  <strong>Wichtig:</strong> Medizinische Dosierungen nur gemäss Arzt/Apotheke ändern.
+</section>
+
+<div class="footer">
+  <button onclick="resetToday()">Heute zurücksetzen</button>
+  <button class="primary" onclick="addGroup()">+ Abschnitt</button>
+</div>
+
+<dialog id="medDialog">
+  <form method="dialog" id="medForm">
+    <div class="modal-head"><h3>Medikament bearbeiten</h3></div>
+    <div class="modal-body">
+      <input type="hidden" id="medId">
+      <label class="field">Tagesabschnitt
+        <select id="medGroup"></select>
+      </label>
+      <label class="field">Medikamentenname
+        <input type="text" id="medName" required placeholder="z. B. Dafalgan">
+      </label>
+      <label class="field">Menge / Dosierung
+        <input type="text" id="medDose" placeholder="z. B. 1 g oder 800 mg">
+      </label>
+      <label class="field">Hinweis
+        <textarea id="medNote" placeholder="z. B. mit Essen, bei Bedarf"></textarea>
+      </label>
+      <div class="hint">Langer Druck oder Doppelklick auf ein Medikament öffnet dieses Fenster.</div>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="danger" id="deleteMedBtn">Löschen</button>
+      <button type="button" onclick="closeMedModal()">Abbrechen</button>
+      <button type="submit" class="primary">Speichern</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="groupDialog">
+  <form method="dialog" id="groupForm">
+    <div class="modal-head"><h3>Tagesabschnitt bearbeiten</h3></div>
+    <div class="modal-body">
+      <input type="hidden" id="groupId">
+      <label class="field">Titel
+        <input type="text" id="groupTitle" required placeholder="z. B. 🌅 Morgen · ca. 07:00">
+      </label>
+      <div class="hint">Beim Löschen werden Medikamente in den ersten verbleibenden Abschnitt verschoben.</div>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="danger" id="deleteGroupBtn">Löschen</button>
+      <button type="button" onclick="closeGroupModal()">Abbrechen</button>
+      <button type="submit" class="primary">Speichern</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+const DEFAULT_GROUPS = [
+  { id:"morgen", title:"🌅 Morgen · ca. 07:00" },
+  { id:"vormittag", title:"🕚 Vormittag · ca. 11:00" },
+  { id:"mittag", title:"🕛 Mittag · ca. 12:00" },
+  { id:"abend", title:"🌆 Abend · ca. 18:00–20:00" },
+  { id:"spaet", title:"🌙 Später Abend · ca. 22:00" },
+  { id:"nacht", title:"🌌 Nacht · nur bei Bedarf" }
+];
+
+const DEFAULT_MEDS = [
+  { id:"ibu_morgen", group:"morgen", name:"IBU / Brufen", dose:"800 mg", note:"mit/ nach Essen; gemäss Plan" },
+  { id:"eso_morgen", group:"morgen", name:"Esomeprazol", dose:"40 mg", note:"30 Min. vor Frühstück / Magenschutz" },
+  { id:"meta_morgen", group:"morgen", name:"Metamizol", dose:"500 mg", note:"gemäss Plan" },
+  { id:"para_11", group:"vormittag", name:"Paracetamol / Dafalgan", dose:"1 g", note:"gemäss Plan" },
+  { id:"meta_12", group:"mittag", name:"Metamizol", dose:"500 mg", note:"gemäss Plan" },
+  { id:"meta_18", group:"abend", name:"Metamizol", dose:"500 mg", note:"ca. 18:00" },
+  { id:"zivax_18", group:"abend", name:"Zivax / Thrombosespritze", dose:"", note:"täglich möglichst gleiche Zeit" },
+  { id:"para_20", group:"abend", name:"Paracetamol / Dafalgan", dose:"1 g", note:"ca. 20:00" },
+  { id:"ibu_22", group:"spaet", name:"IBU / Brufen", dose:"800 mg", note:"mit/ nach Essen; gemäss Plan" },
+  { id:"meta_22", group:"spaet", name:"Metamizol", dose:"500 mg", note:"gemäss Plan" },
+  { id:"tramal_22", group:"spaet", name:"Tramadol / Tramal retard", dose:"", note:"nur wie verordnet / bei Bedarf gemäss Arzt" },
+  { id:"stilnox_22", group:"spaet", name:"Stilnox", dose:"", note:"nur nachts; nicht mit Alkohol; Vorsicht Sturzgefahr" },
+  { id:"para_nacht", group:"nacht", name:"Paracetamol / Dafalgan", dose:"1 g", note:"nur wenn vorgesehen; Maximaldosis beachten" },
+  { id:"tramal_nacht", group:"nacht", name:"Tramal Tropfen", dose:"20–40 Tropfen", note:"Reserve: nur bei starken Schmerzen, gemäss Verordnung" }
+];
+
+const STORAGE_KEY = "medplan_pwa_v4";
+const todayKey = () => new Date().toISOString().slice(0,10);
+const clone = obj => JSON.parse(JSON.stringify(obj));
+
+function newState(){
+  return { date: todayKey(), groups: clone(DEFAULT_GROUPS), meds: clone(DEFAULT_MEDS), checked: {} };
+}
+
+function migrateOldState(){
+  const keys = ["medplan_pwa_v3","medplan_pwa_editable_v2","medplan_pwa_v1"];
+  for(const key of keys){
+    try{
+      const raw = localStorage.getItem(key);
+      if(!raw) continue;
+      const old = JSON.parse(raw);
+      if(Array.isArray(old.groups) && Array.isArray(old.meds)){
+        old.date = todayKey();
+        old.checked = old.checked || {};
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(old));
+        return old;
+      }
+    }catch(e){}
+  }
+  return null;
+}
+
+function loadState(){
+  let raw = localStorage.getItem(STORAGE_KEY);
+  let state;
+  try { state = raw ? JSON.parse(raw) : (migrateOldState() || newState()); } catch { state = newState(); }
+  if(!Array.isArray(state.groups) || !Array.isArray(state.meds)) state = newState();
+  if(!state.checked || typeof state.checked !== "object") state.checked = {};
+  if(!state.date) state.date = todayKey();
+
+  if(state.date !== todayKey()){
+    state.date = todayKey();
+    state.checked = {};
+    storeState(state);
+  }
+  return state;
+}
+
+function storeState(state){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function medLabel(m){ return m.dose ? `${m.name} ${m.dose}` : m.name; }
+function escapeHtml(str){
+  return String(str ?? "").replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[s]));
+}
+
+function render(){
+  const state = loadState();
+  document.getElementById("today").textContent = state.date;
+  document.getElementById("progress").textContent =
+    `${state.meds.filter(m => state.checked[m.id]).length}/${state.meds.length}`;
+
+  const app = document.getElementById("app");
+  app.innerHTML = "";
+
+  state.groups.forEach(group => {
+    const section = document.createElement("section");
+    const title = document.createElement("h2");
+    title.innerHTML = `
+      <span class="section-title"><span>${escapeHtml(group.title)}</span></span>
+      <span class="section-actions">
+        <button class="mini-btn" type="button" data-edit-group="${group.id}">✎</button>
+        <button class="mini-btn" type="button" data-add-med="${group.id}">+</button>
+      </span>`;
+
+    const card = document.createElement("div");
+    card.className = "card";
+    card.dataset.group = group.id;
+
+    const meds = state.meds.filter(m => m.group === group.id);
+    if(meds.length === 0){
+      const empty = document.createElement("div");
+      empty.className = "empty";
+      empty.textContent = "Hierhin ziehen oder + drücken";
+      card.appendChild(empty);
+    }
+
+    meds.forEach(m => {
+      const checked = !!state.checked[m.id];
+      const item = document.createElement("div");
+      item.className = "item" + (checked ? " done" : "");
+      item.dataset.id = m.id;
+      item.innerHTML = `
+        <input type="checkbox" ${checked ? "checked" : ""} data-id="${m.id}">
+        <div class="text">
+          <div class="name">${escapeHtml(medLabel(m))}</div>
+          <div class="note">${escapeHtml(m.note || "")}</div>
+        </div>
+        <div class="handle" title="Ziehen">≡</div>`;
+
+      let timer = null;
+      item.addEventListener("pointerdown", (e) => {
+        if(e.target.matches("input") || e.target.closest(".handle")) return;
+        timer = setTimeout(() => openMedEdit(m.id), 750);
+      });
+      ["pointerup","pointercancel","pointerleave"].forEach(evt =>
+        item.addEventListener(evt, () => clearTimeout(timer))
+      );
+      item.addEventListener("dblclick", () => openMedEdit(m.id));
+
+      const handle = item.querySelector(".handle");
+      handle.addEventListener("pointerdown", (e) => startTouchDrag(e, m.id));
+
+      card.appendChild(item);
+    });
+
+    section.appendChild(title);
+    section.appendChild(card);
+    app.appendChild(section);
+  });
+
+  document.querySelectorAll("input[type=checkbox]").forEach(cb => {
+    cb.addEventListener("change", e => {
+      const state = loadState();
+      state.checked[e.target.dataset.id] = e.target.checked;
+      storeState(state);
+      render();
+    });
+  });
+
+  document.querySelectorAll("[data-add-med]").forEach(btn => {
+    btn.addEventListener("click", () => addMedication(btn.dataset.addMed));
+  });
+  document.querySelectorAll("[data-edit-group]").forEach(btn => {
+    btn.addEventListener("click", () => openGroupEdit(btn.dataset.editGroup));
+  });
+}
+
+/* Robustes Touch-/Mouse-Schieben */
+let drag = null;
+
+function startTouchDrag(e, medId){
+  e.preventDefault();
+  const state = loadState();
+  const med = state.meds.find(m => m.id === medId);
+  const sourceEl = document.querySelector(`.item[data-id="${CSS.escape(medId)}"]`);
+  if(!med || !sourceEl) return;
+
+  const ghost = document.createElement("div");
+  ghost.className = "drag-ghost";
+  ghost.innerHTML = `<div class="name">${escapeHtml(medLabel(med))}</div><div class="note">${escapeHtml(med.note || "")}</div>`;
+  document.body.appendChild(ghost);
+
+  sourceEl.classList.add("moving-source");
+  document.body.classList.add("drag-active");
+
+  drag = {
+    id: medId,
+    pointerId: e.pointerId,
+    ghost,
+    sourceEl,
+    currentGroup: null
+  };
+
+  e.currentTarget.setPointerCapture?.(e.pointerId);
+  moveGhost(e.clientX, e.clientY);
+
+  window.addEventListener("pointermove", onTouchDragMove, {passive:false});
+  window.addEventListener("pointerup", onTouchDragEnd, {passive:false});
+  window.addEventListener("pointercancel", onTouchDragCancel, {passive:false});
+}
+
+function moveGhost(x,y){
+  if(!drag) return;
+  drag.ghost.style.transform = `translate3d(16px, ${Math.max(8, y - 34)}px, 0)`;
+}
+
+function groupAtPoint(x,y){
+  const hidden = drag?.ghost;
+  if(hidden) hidden.style.display = "none";
+  const els = document.elementsFromPoint(x,y);
+  if(hidden) hidden.style.display = "";
+  const card = els.find(el => el.classList && el.classList.contains("card"));
+  return card ? card.dataset.group : null;
+}
+
+function onTouchDragMove(e){
+  if(!drag) return;
+  e.preventDefault();
+  moveGhost(e.clientX, e.clientY);
+
+  const group = groupAtPoint(e.clientX, e.clientY);
+  drag.currentGroup = group;
+
+  document.querySelectorAll(".card").forEach(c => {
+    c.classList.toggle("drag-over", !!group && c.dataset.group === group);
+  });
+}
+
+function onTouchDragEnd(e){
+  if(!drag) return;
+  e.preventDefault();
+  const targetGroup = drag.currentGroup || groupAtPoint(e.clientX, e.clientY);
+  finishTouchDrag(targetGroup);
+}
+
+function onTouchDragCancel(e){
+  if(!drag) return;
+  e.preventDefault();
+  finishTouchDrag(null);
+}
+
+function finishTouchDrag(targetGroup){
+  const id = drag.id;
+  drag.sourceEl.classList.remove("moving-source");
+  drag.ghost.remove();
+  document.body.classList.remove("drag-active");
+  document.querySelectorAll(".card").forEach(c => c.classList.remove("drag-over"));
+  window.removeEventListener("pointermove", onTouchDragMove);
+  window.removeEventListener("pointerup", onTouchDragEnd);
+  window.removeEventListener("pointercancel", onTouchDragCancel);
+
+  if(targetGroup){
+    const state = loadState();
+    const med = state.meds.find(m => m.id === id);
+    if(med){
+      med.group = targetGroup;
+      state.meds = state.meds.filter(m => m.id !== id).concat(med);
+      storeState(state);
+    }
+  }
+  drag = null;
+  render();
+}
+
+/* Medikament-Modal */
+const medDialog = document.getElementById("medDialog");
+const medForm = document.getElementById("medForm");
+
+function fillMedGroupSelect(selected){
+  const state = loadState();
+  const sel = document.getElementById("medGroup");
+  sel.innerHTML = "";
+  state.groups.forEach(g => {
+    const opt = document.createElement("option");
+    opt.value = g.id;
+    opt.textContent = g.title;
+    if(g.id === selected) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+function openMedEdit(id){
+  const state = loadState();
+  const med = state.meds.find(m => m.id === id);
+  if(!med) return;
+  document.getElementById("medId").value = med.id;
+  document.getElementById("medName").value = med.name || "";
+  document.getElementById("medDose").value = med.dose || "";
+  document.getElementById("medNote").value = med.note || "";
+  fillMedGroupSelect(med.group);
+  medDialog.showModal();
+}
+
+function addMedication(groupId){
+  const state = loadState();
+  if(state.groups.length === 0){
+    state.groups.push({ id:"gruppe_" + Date.now(), title:"Neuer Tagesabschnitt" });
+  }
+  const group = groupId || state.groups[0].id;
+  const id = "med_" + Date.now();
+  state.meds.push({ id, group, name:"Neues Medikament", dose:"", note:"" });
+  storeState(state);
+  render();
+  openMedEdit(id);
+}
+
+function closeMedModal(){ medDialog.close(); }
+
+medForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const state = loadState();
+  const id = document.getElementById("medId").value;
+  const med = state.meds.find(m => m.id === id);
+  if(med){
+    med.group = document.getElementById("medGroup").value;
+    med.name = document.getElementById("medName").value.trim() || "Medikament";
+    med.dose = document.getElementById("medDose").value.trim();
+    med.note = document.getElementById("medNote").value.trim();
+  }
+  storeState(state);
+  medDialog.close();
+  render();
+});
+
+document.getElementById("deleteMedBtn").addEventListener("click", () => {
+  const id = document.getElementById("medId").value;
+  if(!confirm("Dieses Medikament wirklich löschen?")) return;
+  const state = loadState();
+  state.meds = state.meds.filter(m => m.id !== id);
+  delete state.checked[id];
+  storeState(state);
+  medDialog.close();
+  render();
+});
+
+/* Tagesabschnitt-Modal */
+const groupDialog = document.getElementById("groupDialog");
+const groupForm = document.getElementById("groupForm");
+
+function openGroupEdit(id){
+  const state = loadState();
+  const group = state.groups.find(g => g.id === id);
+  if(!group) return;
+  document.getElementById("groupId").value = group.id;
+  document.getElementById("groupTitle").value = group.title || "";
+  document.getElementById("deleteGroupBtn").style.display = state.groups.length <= 1 ? "none" : "block";
+  groupDialog.showModal();
+}
+
+function addGroup(){
+  const state = loadState();
+  const id = "gruppe_" + Date.now();
+  state.groups.push({ id, title:"Neuer Tagesabschnitt" });
+  storeState(state);
+  render();
+  openGroupEdit(id);
+}
+
+function closeGroupModal(){ groupDialog.close(); }
+
+groupForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const state = loadState();
+  const id = document.getElementById("groupId").value;
+  const group = state.groups.find(g => g.id === id);
+  if(group) group.title = document.getElementById("groupTitle").value.trim() || "Tagesabschnitt";
+  storeState(state);
+  groupDialog.close();
+  render();
+});
+
+document.getElementById("deleteGroupBtn").addEventListener("click", () => {
+  const id = document.getElementById("groupId").value;
+  const state = loadState();
+  if(state.groups.length <= 1){
+    alert("Der letzte Tagesabschnitt kann nicht gelöscht werden.");
+    return;
+  }
+  const fallback = state.groups.find(g => g.id !== id).id;
+  if(!confirm("Tagesabschnitt löschen? Medikamente darin werden in den ersten verbleibenden Abschnitt verschoben.")) return;
+
+  state.groups = state.groups.filter(g => g.id !== id);
+  state.meds.forEach(m => { if(m.group === id) m.group = fallback; });
+  storeState(state);
+  groupDialog.close();
+  render();
+});
+
+function resetToday(){
+  if(confirm("Alle Haken für heute löschen? Medikamente und Tagesabschnitte bleiben erhalten.")){
+    const state = loadState();
+    state.date = todayKey();
+    state.checked = {};
+    storeState(state);
+    render();
+  }
+}
+
+setInterval(() => {
+  const state = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+  if(state.date && state.date !== todayKey()) render();
+}, 60000);
+
+if("serviceWorker" in navigator){
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js"));
+}
+
+render();
+</script>
+</body>
+</html>

@@ -28,7 +28,7 @@ export default function BalanceSummaryChart({
         {/* EK / Schulden labels */}
         <div className="flex items-end mb-1.5">
           <div
-            className="text-center text-sm font-semibold text-green-300 tabular-nums"
+            className="text-center text-sm font-semibold text-sky-400 tabular-nums"
             style={{ width: `calc(${ekPct}% - 2px)` }}
           >
             {formatCHF(saldo)}
@@ -48,7 +48,7 @@ export default function BalanceSummaryChart({
             className="h-full rounded-l-full"
             style={{
               width: `calc(${ekPct}% - 2px)`,
-              background: "linear-gradient(90deg, #22d3ee, #818cf8)",
+              background: "#0ea5e9",
             }}
           />
           <div className="flex items-center justify-center" style={{ width: 4 }}>
@@ -66,7 +66,7 @@ export default function BalanceSummaryChart({
         {/* Vermögen total with end markers */}
         <div className="flex items-start mt-1.5">
           <div className="bg-slate-600" style={{ width: 1, height: 8 }} />
-          <div className="flex-1 text-center text-sm text-slate-400 tabular-nums">
+          <div className="flex-1 text-center text-sm text-green-300 tabular-nums">
             {formatCHF(aktiven)}
           </div>
           <div className="bg-slate-600" style={{ width: 1, height: 8 }} />

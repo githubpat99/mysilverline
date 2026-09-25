@@ -19,7 +19,7 @@ Leichtgewichtige `PHP`-JSON-API für klassisches Hosting. Vollständige Architek
 | `health.php` | GET | — | DB-Verbindung und Tabellen-Check |
 | `sessions.php` | GET | `?token=` | Saison + alle Sessions (Haupt-Einstieg Spieler); optional `season_id` |
 | `session.php` | GET | `?token=` | Einzelne Session; optional `session_id` |
-| `response.php` | POST | JSON `token`, `status` | Eigene Rückmeldung setzen/löschen; optional `comment`, `session_id` |
+| `response.php` | POST | JSON `token`, `status` | Eigene Rückmeldung setzen/löschen; optional `comment`, `session_id`. Ein `comment` ohne `status` wird als „offen, aber Bemerkung" gespeichert (`attendance_status = NULL`, siehe `sql/migrate_responses_comment_without_status.sql`) |
 
 ### Admin (`api/admin/`)
 

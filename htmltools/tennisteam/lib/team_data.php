@@ -845,7 +845,11 @@ function buildSeasonSessionsPayload(array $context, array $season, array $season
     ];
 }
 
-function upsertResponse(PDO $pdo, int $sessionId, int $playerId, string $status, ?string $comment): void
+/**
+ * Legt die eigene Rueckmeldung an oder aktualisiert sie.
+ * `$status === null` speichert nur den Kommentar ("offen, aber Bemerkung").
+ */
+function upsertResponse(PDO $pdo, int $sessionId, int $playerId, ?string $status, ?string $comment): void
 {
     $responsesTable = tnTable('responses');
 

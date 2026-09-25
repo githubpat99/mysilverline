@@ -58,14 +58,19 @@ try {
         ], 403);
     }
 
-    if ($status === null || $status === '') {
+    $hasStatus = $status !== null && $status !== '';
+    $hasComment = trimComment($comment) !== null;
+
+    if (!$hasStatus && !$hasComment) {
+        // "Offen" ohne Bemerkung: die Rueckmeldung wird entfernt.
         deleteResponse($pdo, (int) $session['id'], $playerId);
     } else {
+        // Ein Kommentar wird auch ohne Status gespeichert (attendance_status = NULL).
         upsertResponse(
             $pdo,
             (int) $session['id'],
             $playerId,
-            $status,
+            $hasStatus ? $status : null,
             $comment
         );
     }

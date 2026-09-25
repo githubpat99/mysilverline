@@ -1,0 +1,4 @@
+# Interner Bereich mit Live-Tokens: wird deployt, darf aber nicht ins Repo.
+intern/admin-links.html
+intern/.htaccess
+intern/.htpasswd

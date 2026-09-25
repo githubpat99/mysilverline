@@ -43,6 +43,29 @@ describe("tennisteam domain rules", () => {
     });
   });
 
+  it("counts a comment-only response as not yet responded", () => {
+    const summary = summarizeAttendance(
+      [
+        { id: 1, name: "Patrik" },
+        { id: 2, name: "Sven" },
+      ],
+      [
+        { playerId: 1, attendanceStatus: null },
+        { playerId: 2, attendanceStatus: "yes" },
+      ],
+    );
+
+    expect(summary).toEqual({
+      totalPlayers: 2,
+      responded: 1,
+      missing: 1,
+      yes: 1,
+      no: 0,
+      maybe: 0,
+      replacement: 0,
+    });
+  });
+
   it("prefers the next upcoming session over older ones", () => {
     const session = pickRelevantSession(
       [

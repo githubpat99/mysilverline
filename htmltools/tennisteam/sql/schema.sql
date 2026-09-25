@@ -87,7 +87,7 @@ CREATE TABLE wp_1340630_tt_responses (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     session_id INT UNSIGNED NOT NULL,
     player_id INT UNSIGNED NOT NULL,
-    attendance_status ENUM('yes', 'no', 'maybe', 'replacement') NOT NULL,
+    attendance_status ENUM('yes', 'no', 'maybe', 'replacement') DEFAULT NULL,
     comment VARCHAR(255) DEFAULT NULL,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_responses_session

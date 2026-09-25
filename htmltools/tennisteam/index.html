@@ -754,6 +754,51 @@
       padding: 9px 11px;
     }
 
+    .session-chips {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(56px, 1fr));
+      gap: 6px;
+      width: 100%;
+    }
+
+    .session-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 0;
+      gap: 4px;
+      padding: 9px 4px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: var(--card);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .session-chip.current {
+      background: rgba(56, 189, 248, 0.22);
+      border-color: #38bdf8;
+      color: #eaf8ff;
+      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.45);
+    }
+
+    .session-chip .thumb-badge {
+      width: auto;
+      height: auto;
+      margin-right: 0;
+      font-size: 12px;
+    }
+
+    .session-chip-status-text {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
     .comment-summary-list {
       display: grid;
       gap: 6px;
@@ -1351,10 +1396,8 @@
       </section>
 
       <section class="card">
-        <div id="overview-season-label" class="eyebrow">Saison</div>
         <div id="sessions-list" class="players players-dense"></div>
         <div class="actions compact-actions">
-          <button id="sessions-more-btn" class="secondary-btn hidden" type="button">Weitere Termine</button>
           <button id="sessions-completed-btn" class="secondary-btn sessions-completed-btn hidden" type="button">Durchgefuehrte</button>
         </div>
       </section>
@@ -1389,7 +1432,7 @@
         <div id="save-msg" class="save-feedback" role="status" aria-live="polite"></div>
         <div class="response-footer-row">
           <details id="comment-details" class="comment-details comment-inline">
-            <summary>Kommentar</summary>
+            <summary>Dein Kommentar</summary>
             <textarea id="comment-input" placeholder="Optionaler Kommentar, z.B. komme 10 Minuten spaeter"></textarea>
           </details>
         </div>
@@ -1428,7 +1471,6 @@
     let selectedSessionDetailsOpen = false;
     let appHelpOpen = false;
     let seasonMenuOpen = false;
-    let showAllSessions = false;
     let showCompletedSessions = false;
     let commentsPanelOpen = false;
     let initialSeasonResolved = false;
@@ -1452,7 +1494,6 @@
     const appSubtitleEl = document.getElementById("app-subtitle");
     const appHelpPanelEl = document.getElementById("app-help-panel");
     const heroPlayerLineEl = document.getElementById("hero-player-line");
-    const overviewSeasonLabelEl = document.getElementById("overview-season-label");
     const seasonRangeEl = document.getElementById("season-range");
     const seasonSelectorEl = document.getElementById("season-selector");
     const seasonMenuWrapEl = document.getElementById("season-menu-wrap");
@@ -1472,7 +1513,6 @@
     const selectedSessionLocationEl = document.getElementById("selected-session-location");
     const sessionNoteEl = document.getElementById("session-note");
     const sessionsListEl = document.getElementById("sessions-list");
-    const sessionsMoreBtnEl = document.getElementById("sessions-more-btn");
     const sessionsCompletedBtnEl = document.getElementById("sessions-completed-btn");
     const responseCardEl = document.getElementById("response-card");
     const commentDetailsEl = document.getElementById("comment-details");
@@ -1819,6 +1859,16 @@
 
           row.appendChild(nameEl);
           row.appendChild(pill);
+
+          const commentText = String(player.comment || "").trim();
+          if (commentText) {
+            const commentEl = document.createElement("div");
+            commentEl.className = "player-comment-line";
+            commentEl.textContent = commentText;
+            commentEl.title = commentText;
+            row.appendChild(commentEl);
+          }
+
           content.appendChild(row);
         });
         detail.appendChild(content);
@@ -1900,6 +1950,75 @@
       }
 
       return pool[pool.length - 1]?.id ?? null;
+    }
+
+    // Anzahl der Folgetermine im Kurzdatum-Band. Der ausgewaehlte Termin kommt
+    // zusaetzlich dazu, damit Karte und Band dasselbe Datum zeigen (kein Datumswechsel).
+    const compactSessionLimit = 4;
+
+    function formatChipDate(value) {
+      if (!value) return "-";
+      const date = new Date(value + "T00:00:00");
+      return new Intl.DateTimeFormat("de-CH", {
+        day: "numeric",
+        month: "numeric"
+      }).format(date);
+    }
+
+    function getCompactSessionWindow(pool, selectedId) {
+      const sorted = [...pool].sort((a, b) => String(a.session_date).localeCompare(String(b.session_date)));
+      const todayIso = getLocalTodayIso();
+      const upcoming = sorted.filter((session) => session.session_date >= todayIso);
+      const base = upcoming.length > 0
+        ? upcoming
+        // Saison vorbei: stattdessen die zuletzt gewesenen Termine anbieten.
+        : sorted.slice(Math.max(0, sorted.length - (compactSessionLimit + 1)));
+      const window = base.slice(0, compactSessionLimit + 1);
+
+      if (window.some((session) => session.id === selectedId)) {
+        return window;
+      }
+
+      // Ausgewaehlter Termin liegt ausserhalb des Fensters (z. B. aus der URL):
+      // voranstellen, damit er im Band sichtbar und markiert ist.
+      const selected = sorted.find((session) => session.id === selectedId);
+      return selected ? [selected].concat(window.slice(0, compactSessionLimit)) : window;
+    }
+
+    function getChipStatusHtml(status) {
+      const badge = getStatusBadgeHtml(status);
+      if (badge) return badge;
+
+      // Offen: Fragezeichen als klares Zeichen, dass hier noch eine Antwort fehlt.
+      if (status === "none") {
+        return '<span class="session-chip-status-text">?</span>';
+      }
+
+      const short = statusPillShort[status] || sessionStatusShort[status] || "";
+      return short ? '<span class="session-chip-status-text">' + escapeHtml(short) + "</span>" : "";
+    }
+
+    function createSessionChip(session) {
+      const ownStatus = session.own_response?.attendance_status || "none";
+      const pillData = getSessionPillData(session, ownStatus);
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "session-chip" + (session.id === selectedSessionId ? " current" : "");
+      button.dataset.sessionId = String(session.id);
+      button.title = formatShortDate(session.session_date) + " · " + pillData.label;
+      button.innerHTML =
+        '<span class="session-chip-date">' + escapeHtml(formatChipDate(session.session_date)) + "</span>" +
+        getChipStatusHtml(pillData.className);
+      button.addEventListener("click", () => {
+        if (session.id === selectedSessionId) {
+          scrollToSessionDetail("smooth");
+          return;
+        }
+        selectedSessionId = session.id;
+        sessionSelectionTouched = true;
+        loadSessionDetail({ scrollToDetail: true });
+      });
+      return button;
     }
 
     function scrollToSessionInList(sessionId, behavior) {
@@ -2047,7 +2166,6 @@
         selectedSessionId = null;
         sessionSelectionTouched = false;
         closeSeasonMenu();
-        showAllSessions = false;
         loadSeasonSessions();
       });
       return button;
@@ -2087,7 +2205,6 @@
           selectedSessionId = null;
           sessionSelectionTouched = false;
           closeSeasonMenu();
-          showAllSessions = false;
           loadSeasonSessions();
         });
         seasonMenuPanelEl.appendChild(item);
@@ -2151,16 +2268,18 @@
         return button;
       }
 
-      const nextSessionId = getNextRelevantSessionId(regularSessions);
-      const visibleRegularSessions = showAllSessions
-        ? regularSessions
-        : (() => {
-            const nextSession = regularSessions.find((session) => session.id === nextSessionId);
-            return nextSession ? [nextSession] : regularSessions.slice(0, 1);
-          })();
-      visibleRegularSessions.forEach((session) => {
-        sessionsListEl.appendChild(createSessionButton(session));
-      });
+      const selectableRegularSessions = regularSessions.filter(isSelectableSession);
+      const sessionPool = selectableRegularSessions.length > 0 ? selectableRegularSessions : regularSessions;
+      const chipSessions = getCompactSessionWindow(sessionPool, selectedSessionId);
+
+      if (chipSessions.length > 0) {
+        const chips = document.createElement("div");
+        chips.className = "session-chips";
+        chipSessions.forEach((session) => {
+          chips.appendChild(createSessionChip(session));
+        });
+        sessionsListEl.appendChild(chips);
+      }
 
       if (completedSessions.length > 0 && showCompletedSessions) {
         const completedWrap = document.createElement("div");
@@ -2174,24 +2293,13 @@
         sessionsListEl.appendChild(completedWrap);
       }
 
-      if (sessionsMoreBtnEl) {
-        const hiddenCount = Math.max(0, regularSessions.length - visibleRegularSessions.length);
-        const hasMoreSessions = hiddenCount > 0;
-        sessionsMoreBtnEl.classList.toggle("hidden", !hasMoreSessions && !showAllSessions);
-        if (hasMoreSessions || showAllSessions) {
-          sessionsMoreBtnEl.textContent = showAllSessions
-            ? "Weniger Termine"
-            : "Weitere...";
-        }
-      }
-
       if (sessionsCompletedBtnEl) {
         const hasCompleted = completedSessions.length > 0;
         sessionsCompletedBtnEl.classList.toggle("hidden", !hasCompleted);
         if (hasCompleted) {
           sessionsCompletedBtnEl.textContent = showCompletedSessions
             ? "Durchgefuehrte ausblenden"
-            : "Durchgefuehrte...";
+            : "Durchgefuehrte (" + String(completedSessions.length) + ")";
         }
       }
 
@@ -2280,8 +2388,6 @@
 
         selectedSeasonId = result.data.season.id;
         initialSeasonResolved = true;
-        overviewSeasonLabelEl.textContent = truncateLabel(result.data.season.name, 26);
-        overviewSeasonLabelEl.title = result.data.season.name;
         seasonRangeEl.textContent =
           formatSeasonRangeEndpoint(result.data.season.start_date) + " bis " + formatSeasonRangeEndpoint(result.data.season.end_date);
         seasonTimeEl.textContent = result.data.season.default_start_time
@@ -2466,10 +2572,6 @@
       if (seasonMenuOpen) {
         closeSeasonMenu();
       }
-    });
-    sessionsMoreBtnEl?.addEventListener("click", () => {
-      showAllSessions = !showAllSessions;
-      renderSessionsList();
     });
     sessionsCompletedBtnEl?.addEventListener("click", () => {
       showCompletedSessions = !showCompletedSessions;

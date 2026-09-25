@@ -37,10 +37,11 @@ export type TeamPlayer = {
 
 export type PlayerResponse = {
   playerId: number;
-  attendanceStatus: AttendanceStatus;
+  /** `null` = nur ein Kommentar hinterlegt, aber noch keine Zu- oder Absage. */
+  attendanceStatus: AttendanceStatus | null;
 };
 
-export function isAttendanceStatus(value: string): value is AttendanceStatus {
+export function isAttendanceStatus(value: unknown): value is AttendanceStatus {
   return attendanceStatuses.includes(value as AttendanceStatus);
 }
 

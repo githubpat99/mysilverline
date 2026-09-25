@@ -3,6 +3,11 @@ import { test, expect } from "@playwright/test";
 const TENNISTEAM_PLAYER_TOKEN =
   "294310927a442ea46ddabd53f7c9e5a95f28776498cacf64f0f9c856e1c4fab8";
 
+// Die Fixture-Termine liegen im April 2026. Die Uhr wird fixiert, damit die Auswahl
+// des naechsten Termins nicht vom echten Datum abhaengt (sonst liegen beide in der
+// Vergangenheit und die Auswahl kippt auf den letzten Termin).
+const FIXED_NOW = new Date("2026-03-30T12:00:00");
+
 const seasonPayload = {
   success: true,
   data: {
@@ -251,7 +256,7 @@ test("tennisteam recovers from a stale season id in the url", async ({ page }) =
 
   await expect(page.locator("#error-box")).toBeHidden();
   await expect(page.locator("#sessions-list button").first()).toBeVisible();
-  await expect(page.locator("#overview-season-label")).toHaveText(/Winter - Training 2025\/26/i);
+  await expect(page.locator("#season-selector button.active")).toHaveText(/Winter - Training 2025\/26/i);
 });
 
 test("tennisteam recovers from a stale or unpublished session id in the url", async ({ page }) => {
@@ -280,14 +285,20 @@ test("tennisteam recovers from a stale or unpublished session id in the url", as
     });
   });
 
+  await page.clock.setFixedTime(FIXED_NOW);
   await page.goto(`/htmltools/tennisteam/index.html?token=${TENNISTEAM_PLAYER_TOKEN}&session_id=999`);
 
   await expect(page.locator("#error-box")).toBeHidden();
   await expect(page.locator("#highlight-title")).toContainText("19:00");
-  await expect(page.locator("#sessions-list button").first()).toHaveClass(/current/);
+  // Der ausgewaehlte Termin steht im Band und ist markiert - das Datum der Karte
+  // muss dort vorkommen, damit kein Datumswechsel entsteht.
+  await expect(page.locator("#sessions-list .session-chip")).toHaveCount(2);
+  await expect(page.locator("#sessions-list .session-chip.current")).toHaveCount(1);
+  await expect(page.locator("#sessions-list .session-chip.current")).toContainText("1.4.");
 });
 
 test("tennisteam season view loads without runtime error", async ({ page }) => {
+  await page.clock.setFixedTime(FIXED_NOW);
   await page.goto(`/htmltools/tennisteam/index.html?token=${TENNISTEAM_PLAYER_TOKEN}`);
 
   await expect(
@@ -301,10 +312,13 @@ test("tennisteam season view loads without runtime error", async ({ page }) => {
 });
 
 test("tennisteam clicking a session opens its detail block", async ({ page }) => {
+  await page.clock.setFixedTime(FIXED_NOW);
   await page.goto(`/htmltools/tennisteam/index.html?token=${TENNISTEAM_PLAYER_TOKEN}`);
 
-  const sessionButtons = page.locator("#sessions-list button");
+  // Im Band steht der ausgewaehlte Termin (markiert) plus die Folgetermine.
+  const sessionButtons = page.locator("#sessions-list .session-chip");
   await expect(sessionButtons.first()).toBeVisible();
+  await expect(page.locator("#sessions-list .session-chip.current")).toHaveCount(1);
 
   const responseCard = page.locator("#response-card");
   await sessionButtons.nth(1).click();
@@ -316,6 +330,19 @@ test("tennisteam clicking a session opens its detail block", async ({ page }) =>
   await expect(page.locator("#selected-session-location")).toHaveText(/Center Court/i);
   await expect(page.locator("#session-note")).toContainText(/Platz 2 statt Platz 1/i);
   await expect(page.locator("#error-box")).toBeHidden();
+});
+
+test("tennisteam shows a player comment at the roster row", async ({ page }) => {
+  await page.clock.setFixedTime(FIXED_NOW);
+  await page.goto(`/htmltools/tennisteam/index.html?token=${TENNISTEAM_PLAYER_TOKEN}`);
+
+  // Der zweite Termin (8.4.) hat in der Fixture einen Kommentar an der Spielerzeile.
+  await page.locator("#sessions-list .session-chip").nth(1).click();
+  await expect(page.locator("#highlight-title")).toContainText("20:15");
+
+  // Kommentare stehen jetzt an der Spielerzeile, nicht nur in der Zusammenfassung.
+  await expect(page.locator("#players-list .player-comment-line")).toHaveCount(1);
+  await expect(page.locator("#players-list .player-comment-line")).toHaveText("Bin da");
 });
 
 test("tennisteam shows season defaults in the details panel", async ({ page }) => {

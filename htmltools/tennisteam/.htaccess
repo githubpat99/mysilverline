@@ -1,0 +1,11 @@
+# HTML und Web-Manifest immer beim Server nachfragen.
+# Ohne diese Zeilen sendet Apache nur Last-Modified/ETag ohne Cache-Control, und
+# Browser duerfen die Seite dann heuristisch zwischenspeichern - Folge: beim ersten
+# Aufruf erscheint die alte Version, erst ein Reload zeigt die neue.
+# "no-cache" heisst: zwischenspeichern erlaubt, aber vor jeder Verwendung
+# nachfragen (ETag/304 bleibt erhalten, es wird also nicht neu geladen).
+<IfModule mod_headers.c>
+    <FilesMatch "\.(html|webmanifest)$">
+        Header set Cache-Control "no-cache, must-revalidate"
+    </FilesMatch>
+</IfModule>

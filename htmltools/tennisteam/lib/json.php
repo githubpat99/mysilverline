@@ -10,6 +10,8 @@ function jsonResponse(array $payload, int $statusCode = 200): void
 
     http_response_code($statusCode);
     header('Content-Type: application/json; charset=utf-8');
+    // Token-gebundene Daten: nie zwischenspeichern, sonst zeigt die App alte Anwesenheiten.
+    header('Cache-Control: no-store');
     $json = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     if ($json === false) {
         $json = json_encode(

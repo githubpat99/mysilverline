@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">TennisTeam</title>
+  <desc id="desc">A bright lime tennis ball with sweeping cream seams on a deep forest-green background.</desc>
+  <defs>
+    <linearGradient id="court" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#123E36"/>
+      <stop offset="1" stop-color="#062820"/>
+    </linearGradient>
+    <linearGradient id="felt" x1="150" y1="120" x2="360" y2="390" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E2FA73"/>
+      <stop offset="1" stop-color="#B5E342"/>
+    </linearGradient>
+    <clipPath id="ball">
+      <circle cx="256" cy="256" r="152"/>
+    </clipPath>
+  </defs>
+  <path fill="url(#court)" d="M0 0h512v512H0z"/>
+  <circle cx="256" cy="265" r="152" fill="#001E18" opacity=".25"/>
+  <circle cx="256" cy="256" r="152" fill="url(#felt)"/>
+  <g clip-path="url(#ball)">
+    <g transform="rotate(35 256 256)" fill="none" stroke="#FAFFE8" stroke-width="17">
+      <path d="M139 111C263 173 263 339 139 401"/>
+      <path d="M373 111C249 173 249 339 373 401"/>
+    </g>
+  </g>
+</svg>

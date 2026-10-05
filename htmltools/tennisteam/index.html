@@ -796,29 +796,36 @@
       color: var(--muted);
     }
 
-    /* Zwei Umschalter unter dem Kurzdatum-Band: alle kommenden und alle
-       durchgefuehrten Termine. Beide standardmaessig zu, Optik wie die App. */
-    .sessions-toggle-btn {
+    /* Zwei Umschalter ueber dem Kurzdatum-Band: alle kommenden und alle
+       durchgefuehrten Termine. Beide standardmaessig zu, Optik wie die App.
+       ID-Selektoren, weil .secondary-btn sonst Groesse und Farbe ueberschreibt. */
+    .sessions-actions {
+      margin-top: 0;
+      margin-bottom: 10px;
+    }
+
+    #sessions-all-btn,
+    #sessions-completed-btn {
       font-size: 11px;
       color: #94a3b8;
       border-color: rgba(148, 163, 184, 0.35);
       background: rgba(15, 23, 42, 0.35);
       font-weight: 600;
-      padding: 9px 11px;
+      padding: 8px 10px;
     }
 
     .sessions-panel {
-      margin-top: 8px;
+      margin-top: 10px;
       border: 1px dashed rgba(148, 163, 184, 0.35);
       border-radius: 10px;
       padding: 8px;
       background: rgba(13, 21, 37, 0.45);
     }
 
-    /* Durchgefuehrte bleiben gedaempft - wie bisher in leichtem grau. */
+    /* Durchgefuehrte in hellem Grau - klar unterscheidbar von den kommenden. */
     #sessions-completed-panel .session-chip {
-      color: var(--muted);
-      border-color: rgba(148, 163, 184, 0.28);
+      color: #cbd5e1;
+      border-color: rgba(148, 163, 184, 0.35);
     }
 
     .sessions-hint {
@@ -1386,12 +1393,12 @@
       </section>
 
       <section class="card">
+        <div class="actions compact-actions sessions-actions">
+          <button id="sessions-all-btn" class="secondary-btn hidden" type="button">Zukünftige</button>
+          <button id="sessions-completed-btn" class="secondary-btn hidden" type="button">Durchgefuehrte</button>
+        </div>
         <div id="sessions-list" class="session-chips"></div>
         <div id="sessions-hint" class="sessions-hint hidden"></div>
-        <div class="actions compact-actions">
-          <button id="sessions-all-btn" class="secondary-btn sessions-toggle-btn hidden" type="button">Zukünftige</button>
-          <button id="sessions-completed-btn" class="secondary-btn sessions-toggle-btn hidden" type="button">Durchgefuehrte</button>
-        </div>
         <div id="sessions-all-panel" class="sessions-panel hidden">
           <div id="sessions-all-list" class="session-chips"></div>
         </div>
@@ -2277,6 +2284,12 @@
         sessionsCompletedListEl.appendChild(createSessionChip(session, true));
       });
 
+      // Das Band zeigt die naechsten Termine nur in der Standardansicht. Ist einer
+      // der beiden Bereiche offen, zeigt dieser den Inhalt allein - die jeweils
+      // andere Gruppe ist dann ausgeblendet.
+      const bandVisible = !showAllSessions && !showCompletedSessions;
+      sessionsListEl.classList.toggle("hidden", !bandVisible);
+
       if (futureSessions.length === 0) {
         sessionsHintEl.textContent = pastSessions.length > 0
           ? "Keine kommenden Termine in dieser Saison."
@@ -2565,10 +2578,13 @@
     });
     sessionsAllBtnEl?.addEventListener("click", () => {
       showAllSessions = !showAllSessions;
+      // Die beiden Bereiche schliessen sich gegenseitig aus.
+      if (showAllSessions) showCompletedSessions = false;
       renderSessionsList();
     });
     sessionsCompletedBtnEl?.addEventListener("click", () => {
       showCompletedSessions = !showCompletedSessions;
+      if (showCompletedSessions) showAllSessions = false;
       renderSessionsList();
     });
     commentsSummaryBtnEl?.addEventListener("click", () => {

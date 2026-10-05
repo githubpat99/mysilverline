@@ -46,8 +46,17 @@ if ($wsl) {
     Write-Host "Starte via WSL..." -ForegroundColor Gray
     $shPath = Join-Path $localDir "deploy.sh"
     if (Test-Path $shPath) {
-        $content = [System.IO.File]::ReadAllText($shPath) -replace "`r`n", "`n"
-        [System.IO.File]::WriteAllText($shPath, $content, [System.Text.UTF8Encoding]::new($false))
+        # deploy.sh braucht LF und kein BOM, damit bash sie unter WSL/Git Bash ausfuehren kann.
+        # Nur schreiben, wenn wirklich noetig: ein Schreibvorgang bei jedem Deploy aendert die
+        # mtime, und rsync laedt die Datei dann jedes Mal unnoetig erneut auf den Server.
+        $bytes = [System.IO.File]::ReadAllBytes($shPath)
+        $hasBom = $bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF
+        $text = [System.Text.Encoding]::UTF8.GetString($bytes)
+        if ($text.Contains("`r`n") -or $hasBom) {
+            $normalized = ($text.TrimStart([char]0xFEFF)) -replace "`r`n", "`n"
+            [System.IO.File]::WriteAllText($shPath, $normalized, [System.Text.UTF8Encoding]::new($false))
+            Write-Host "deploy.sh: auf LF ohne BOM normalisiert" -ForegroundColor Gray
+        }
     }
 
     $drive = $localDir.Substring(0, 1).ToLower()

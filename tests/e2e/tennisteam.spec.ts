@@ -252,10 +252,13 @@ test("tennisteam recovers from a stale season id in the url", async ({ page }) =
     });
   });
 
+  // Uhr fixieren: sonst liegen die Fixture-Termine (April 2026) in der Vergangenheit
+  // und landen in der rechten Spalte statt bei den zukuenftigen.
+  await page.clock.setFixedTime(FIXED_NOW);
   await page.goto(`/htmltools/tennisteam/index.html?token=${TENNISTEAM_PLAYER_TOKEN}&season_id=999`);
 
   await expect(page.locator("#error-box")).toBeHidden();
-  await expect(page.locator("#sessions-list button").first()).toBeVisible();
+  await expect(page.locator("#sessions-list .session-chip").first()).toBeVisible();
   await expect(page.locator("#season-selector button.active")).toHaveText(/Winter - Training 2025\/26/i);
 });
 

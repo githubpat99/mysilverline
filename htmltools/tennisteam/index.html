@@ -751,19 +751,10 @@
       padding: 8px 10px;
     }
 
-    #sessions-completed-btn {
-      font-size: 11px;
-      color: #94a3b8;
-      border-color: rgba(148, 163, 184, 0.35);
-      background: rgba(15, 23, 42, 0.35);
-      font-weight: 600;
-      padding: 9px 11px;
-    }
-
     .session-chips {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(56px, 1fr));
-      gap: 6px;
+      grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
+      gap: 5px;
       width: 100%;
     }
 
@@ -772,8 +763,8 @@
       align-items: center;
       justify-content: center;
       min-width: 0;
-      gap: 4px;
-      padding: 9px 4px;
+      gap: 3px;
+      padding: 8px 3px;
       border: 1px solid var(--border);
       border-radius: 9px;
       background: var(--card);
@@ -804,6 +795,93 @@
       font-weight: 700;
       color: var(--muted);
     }
+
+    /* Zwei helle Spalten in der sonst dunklen App:
+       links weiss die kommenden Termine, rechts hellgrau die durchgefuehrten.
+       Beide immer nebeneinander - die Kurzdatum-Eintraege sind schmal genug. */
+    .sessions-board {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+      gap: 10px;
+      align-items: start;
+    }
+
+    .sessions-column {
+      min-width: 0;
+      border-radius: 12px;
+      padding: 9px 9px;
+    }
+
+    .sessions-column-future {
+      background: #ffffff;
+      border: 1px solid #d7e0dc;
+    }
+
+    .sessions-column-past {
+      background: #eef1f0;
+      border: 1px solid #dde3e1;
+    }
+
+    .sessions-column-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .sessions-column-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .sessions-column-future .sessions-column-title { color: #167247; }
+    .sessions-column-past .sessions-column-title { color: #7c8b84; }
+
+    .sessions-column-count {
+      font-size: 11px;
+      font-weight: 700;
+      color: #8b9a93;
+    }
+
+    .sessions-hint {
+      margin-top: 8px;
+      font-size: 12px;
+      line-height: 1.35;
+      color: #7c8b84;
+    }
+
+    .sessions-column-future .session-chip {
+      background: #f4f7f6;
+      border-color: #d7e0dc;
+      color: #11231b;
+    }
+
+    .sessions-column-future .session-chip.current {
+      background: #e4f5eb;
+      border-color: #1f8f57;
+      color: #0f3b26;
+      box-shadow: 0 0 0 1px rgba(31, 143, 87, 0.35);
+    }
+
+    .sessions-column-future .session-chip-status-text { color: #5b6f66; }
+
+    .sessions-column-past .session-chip {
+      background: #e4e8e6;
+      border-color: #d5dbd8;
+      color: #6b7c75;
+    }
+
+    .sessions-column-past .session-chip.current {
+      background: #dbe2df;
+      border-color: #a9b6b1;
+      color: #46574f;
+      box-shadow: none;
+    }
+
+    .sessions-column-past .session-chip-status-text { color: #8b9a93; }
 
     .comment-summary-list {
       display: grid;
@@ -965,45 +1043,6 @@
 
     .session-item .player-name {
       color: var(--text);
-    }
-
-    .completed-sessions-wrap {
-      margin-top: 8px;
-      border: 1px dashed rgba(148, 163, 184, 0.35);
-      border-radius: 10px;
-      padding: 6px;
-      background: rgba(13, 21, 37, 0.45);
-    }
-
-    .completed-sessions-toggle {
-      cursor: pointer;
-      list-style: none;
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.3px;
-      padding: 6px 8px;
-      border-radius: 8px;
-    }
-
-    .completed-sessions-toggle::-webkit-details-marker {
-      display: none;
-    }
-
-    .completed-sessions-toggle::before {
-      content: "▸ ";
-      color: var(--accent);
-      font-weight: 800;
-    }
-
-    .completed-sessions-wrap[open] .completed-sessions-toggle::before {
-      content: "▾ ";
-    }
-
-    .completed-sessions-list {
-      display: grid;
-      gap: 8px;
-      margin-top: 6px;
     }
 
     .roster-legend-panel {
@@ -1401,10 +1440,22 @@
         </div>
       </section>
 
-      <section class="card">
-        <div id="sessions-list" class="players players-dense"></div>
-        <div class="actions compact-actions">
-          <button id="sessions-completed-btn" class="secondary-btn sessions-completed-btn hidden" type="button">Durchgefuehrte</button>
+      <section class="sessions-board">
+        <div class="sessions-column sessions-column-future">
+          <div class="sessions-column-head">
+            <span class="sessions-column-title">Zukünftige Termine</span>
+            <span id="sessions-future-count" class="sessions-column-count"></span>
+          </div>
+          <div id="sessions-list" class="session-chips"></div>
+          <div id="sessions-future-hint" class="sessions-hint hidden"></div>
+        </div>
+
+        <div id="sessions-past-column" class="sessions-column sessions-column-past hidden">
+          <div class="sessions-column-head">
+            <span class="sessions-column-title">Durchgeführt</span>
+            <span id="sessions-past-count" class="sessions-column-count"></span>
+          </div>
+          <div id="sessions-past-list" class="session-chips"></div>
         </div>
       </section>
 
@@ -1477,7 +1528,6 @@
     let selectedSessionDetailsOpen = false;
     let appHelpOpen = false;
     let seasonMenuOpen = false;
-    let showCompletedSessions = false;
     let commentsPanelOpen = false;
     let initialSeasonResolved = false;
     let sessionSelectionTouched = false;
@@ -1519,7 +1569,11 @@
     const selectedSessionLocationEl = document.getElementById("selected-session-location");
     const sessionNoteEl = document.getElementById("session-note");
     const sessionsListEl = document.getElementById("sessions-list");
-    const sessionsCompletedBtnEl = document.getElementById("sessions-completed-btn");
+    const sessionsFutureHintEl = document.getElementById("sessions-future-hint");
+    const sessionsFutureCountEl = document.getElementById("sessions-future-count");
+    const sessionsPastColumnEl = document.getElementById("sessions-past-column");
+    const sessionsPastListEl = document.getElementById("sessions-past-list");
+    const sessionsPastCountEl = document.getElementById("sessions-past-count");
     const responseCardEl = document.getElementById("response-card");
     const commentDetailsEl = document.getElementById("comment-details");
     const commentInputEl = document.getElementById("comment-input");
@@ -1958,10 +2012,6 @@
       return pool[pool.length - 1]?.id ?? null;
     }
 
-    // Anzahl der Folgetermine im Kurzdatum-Band. Der ausgewaehlte Termin kommt
-    // zusaetzlich dazu, damit Karte und Band dasselbe Datum zeigen (kein Datumswechsel).
-    const compactSessionLimit = 4;
-
     function formatChipDate(value) {
       if (!value) return "-";
       const date = new Date(value + "T00:00:00");
@@ -1969,26 +2019,6 @@
         day: "numeric",
         month: "numeric"
       }).format(date);
-    }
-
-    function getCompactSessionWindow(pool, selectedId) {
-      const sorted = [...pool].sort((a, b) => String(a.session_date).localeCompare(String(b.session_date)));
-      const todayIso = getLocalTodayIso();
-      const upcoming = sorted.filter((session) => session.session_date >= todayIso);
-      const base = upcoming.length > 0
-        ? upcoming
-        // Saison vorbei: stattdessen die zuletzt gewesenen Termine anbieten.
-        : sorted.slice(Math.max(0, sorted.length - (compactSessionLimit + 1)));
-      const window = base.slice(0, compactSessionLimit + 1);
-
-      if (window.some((session) => session.id === selectedId)) {
-        return window;
-      }
-
-      // Ausgewaehlter Termin liegt ausserhalb des Fensters (z. B. aus der URL):
-      // voranstellen, damit er im Band sichtbar und markiert ist.
-      const selected = sorted.find((session) => session.id === selectedId);
-      return selected ? [selected].concat(window.slice(0, compactSessionLimit)) : window;
     }
 
     function getChipStatusHtml(status) {
@@ -2004,9 +2034,13 @@
       return short ? '<span class="session-chip-status-text">' + escapeHtml(short) + "</span>" : "";
     }
 
-    function createSessionChip(session) {
+    // `isPast` steuert die graue Spalte: dort zaehlt nur die eigene Antwort,
+    // der Terminstatus ("OK") waere auf jedem Eintrag nur Rauschen.
+    function createSessionChip(session, isPast) {
       const ownStatus = session.own_response?.attendance_status || "none";
       const pillData = getSessionPillData(session, ownStatus);
+      const statusKey = isPast ? ownStatus : pillData.className;
+      const showStatus = !isPast || ownStatus !== "none";
       const button = document.createElement("button");
       button.type = "button";
       button.className = "session-chip" + (session.id === selectedSessionId ? " current" : "");
@@ -2014,7 +2048,7 @@
       button.title = formatShortDate(session.session_date) + " · " + pillData.label;
       button.innerHTML =
         '<span class="session-chip-date">' + escapeHtml(formatChipDate(session.session_date)) + "</span>" +
-        getChipStatusHtml(pillData.className);
+        (showStatus ? getChipStatusHtml(statusKey) : "");
       button.addEventListener("click", () => {
         if (session.id === selectedSessionId) {
           scrollToSessionDetail("smooth");
@@ -2223,9 +2257,15 @@
 
     function renderSessionsList() {
       sessionsListEl.innerHTML = "";
+      sessionsPastListEl.innerHTML = "";
+      sessionsFutureHintEl.classList.add("hidden");
 
       if (!seasonPayload.sessions.length) {
-        sessionsListEl.innerHTML = '<div class="empty">Fuer diese Saison sind noch keine Termine hinterlegt.</div>';
+        sessionsFutureHintEl.textContent = "Fuer diese Saison sind noch keine Termine hinterlegt.";
+        sessionsFutureHintEl.classList.remove("hidden");
+        sessionsPastColumnEl.classList.add("hidden");
+        sessionsFutureCountEl.textContent = "";
+        sessionsPastCountEl.textContent = "";
         return;
       }
 
@@ -2239,83 +2279,40 @@
         }
       });
 
-      function createSessionButton(session) {
-        const acceptanceCount = (session.summary?.yes ?? 0) + (session.summary?.maybe ?? 0) + (session.summary?.replacement ?? 0);
-        const ownStatus = session.own_response?.attendance_status || "none";
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = "player-row session-item" + (session.id === selectedSessionId ? " current" : "");
-        button.dataset.sessionId = String(session.id);
-        button.style.width = "100%";
-        button.style.textAlign = "left";
-        button.style.cursor = "pointer";
-        button.style.background = "var(--card)";
-        const metaLine = String(acceptanceCount) + " JA";
-
-        const left = document.createElement("div");
-        left.className = "player-row-main";
-        left.innerHTML =
-          '<div class="player-name">' + escapeHtml(formatShortDate(session.session_date)) + "</div>" +
-          '<div class="session-line-meta">' + metaLine + "</div>";
-
-        const pill = document.createElement("div");
-        const pillData = getSessionPillData(session, ownStatus);
-        pill.className = "pill " + pillData.className;
-        pill.innerHTML = getStatusTextWithBadge(pillData.className, pillData.shortLabel);
-        pill.title = pillData.label;
-
-        button.appendChild(left);
-        button.appendChild(pill);
-        button.addEventListener("click", () => {
-          selectedSessionId = session.id;
-          sessionSelectionTouched = true;
-          loadSessionDetail({ scrollToDetail: true });
-        });
-        return button;
-      }
-
+      const byDate = (a, b) => String(a.session_date).localeCompare(String(b.session_date));
+      const todayIso = getLocalTodayIso();
       const selectableRegularSessions = regularSessions.filter(isSelectableSession);
       const sessionPool = selectableRegularSessions.length > 0 ? selectableRegularSessions : regularSessions;
-      const chipSessions = getCompactSessionWindow(sessionPool, selectedSessionId);
 
-      if (chipSessions.length > 0) {
-        const chips = document.createElement("div");
-        chips.className = "session-chips";
-        chipSessions.forEach((session) => {
-          chips.appendChild(createSessionChip(session));
-        });
-        sessionsListEl.appendChild(chips);
+      // Links und weiss: alle kommenden Termine, damit man sich fuer die ganze Saison eintragen kann.
+      const futureSessions = sessionPool
+        .filter((session) => session.session_date >= todayIso)
+        .sort(byDate);
+
+      // Rechts und grau: durchgefuehrte plus vergangene, die nie abgeschlossen wurden.
+      const pastSessions = completedSessions
+        .slice()
+        .sort(byDate)
+        .concat(sessionPool.filter((session) => session.session_date < todayIso).sort(byDate));
+
+      futureSessions.forEach((session) => {
+        sessionsListEl.appendChild(createSessionChip(session, false));
+      });
+
+      pastSessions.forEach((session) => {
+        sessionsPastListEl.appendChild(createSessionChip(session, true));
+      });
+
+      if (futureSessions.length === 0) {
+        sessionsFutureHintEl.textContent = pastSessions.length > 0
+          ? "Keine kommenden Termine in dieser Saison."
+          : "Fuer diese Saison sind noch keine Termine hinterlegt.";
+        sessionsFutureHintEl.classList.remove("hidden");
       }
 
-      if (completedSessions.length > 0 && showCompletedSessions) {
-        const completedWrap = document.createElement("div");
-        completedWrap.className = "completed-sessions-wrap";
-        const completedList = document.createElement("div");
-        completedList.className = "completed-sessions-list";
-        completedSessions.forEach((session) => {
-          completedList.appendChild(createSessionButton(session));
-        });
-        completedWrap.appendChild(completedList);
-        sessionsListEl.appendChild(completedWrap);
-      }
-
-      if (sessionsCompletedBtnEl) {
-        const hasCompleted = completedSessions.length > 0;
-        sessionsCompletedBtnEl.classList.toggle("hidden", !hasCompleted);
-        if (hasCompleted) {
-          sessionsCompletedBtnEl.textContent = showCompletedSessions
-            ? "Durchgefuehrte ausblenden"
-            : "Durchgefuehrte (" + String(completedSessions.length) + ")";
-        }
-      }
-
-      if (regularSessions.length === 0 && completedSessions.length > 0) {
-        const hint = document.createElement("div");
-        hint.className = "empty";
-        hint.textContent = "Aktuell sind nur durchgefuehrte Termine vorhanden.";
-        sessionsListEl.insertBefore(hint, sessionsListEl.firstChild);
-      }
-
+      sessionsPastColumnEl.classList.toggle("hidden", pastSessions.length === 0);
+      sessionsFutureCountEl.textContent = futureSessions.length > 0 ? String(futureSessions.length) : "";
+      sessionsPastCountEl.textContent = pastSessions.length > 0 ? String(pastSessions.length) : "";
     }
 
     function renderSessionDetail(payload) {
@@ -2578,10 +2575,6 @@
       if (seasonMenuOpen) {
         closeSeasonMenu();
       }
-    });
-    sessionsCompletedBtnEl?.addEventListener("click", () => {
-      showCompletedSessions = !showCompletedSessions;
-      renderSessionsList();
     });
     commentsSummaryBtnEl?.addEventListener("click", () => {
       commentsPanelOpen = !commentsPanelOpen;

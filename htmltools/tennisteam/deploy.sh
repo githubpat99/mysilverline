@@ -91,6 +91,7 @@ rsync -avz --progress $DRY_RUN \
   --exclude 'sql/' \
   --exclude '*.test.ts' \
   --exclude 'config/database.example.php' \
+  --exclude 'config/database.local.php' \
   --delete \
   "${LOCAL_DIR}" "${SSH_USER}@${SSH_HOST}:${REMOTE_DIR}/"
 

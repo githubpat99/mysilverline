@@ -2,3 +2,8 @@
 intern/admin-links.html
 intern/.htaccess
 intern/.htpasswd
+
+# Lokale Entwicklung: eigene DB-Konfiguration und lokale Testdaten.
+# ACHTUNG: Wuerde database.local.php deployt, zeigte die Live-App auf localhost.
+config/database.local.php
+sql/local/

@@ -4,7 +4,12 @@ declare(strict_types=1);
 
 function loadDatabaseConfig(): array
 {
-    $configPath = __DIR__ . '/../config/database.php';
+    // Lokale Entwicklung: config/database.local.php hat Vorrang. Diese Datei ist
+    // gitignoriert und vom Deploy ausgeschlossen, existiert auf dem Hosting also
+    // nicht - dort greift unveraendert config/database.php.
+    $localPath = __DIR__ . '/../config/database.local.php';
+    $configPath = is_file($localPath) ? $localPath : __DIR__ . '/../config/database.php';
+
     if (!file_exists($configPath)) {
         throw new RuntimeException('Missing config/database.php');
     }

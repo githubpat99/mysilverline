@@ -3,7 +3,7 @@
 
 $ErrorActionPreference = "Stop"
 
-$project   = "C:\Users\patri\next-app"
+$project   = $PSScriptRoot
 $localOut  = Join-Path $project "out"
 
 $remoteDir = "/home/clients/cd018176a9efb9d6ecf8a0ae8be5e651/sites/mysilverline.it-pin.ch/app-static"

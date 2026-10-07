@@ -16,7 +16,7 @@ Cursor Rules (automatisch in diesem Workspace): `.cursor/rules/*.mdc`
 **Nur Tennisteam** (empfohlen):
 
 1. **File → Open Workspace from File…** → `tennisteam.code-workspace` in diesem Ordner  
-   **oder** **File → Open Folder…** → `c:\Users\patri\next-app\htmltools\tennisteam`
+   **oder** **File → Open Folder…** → `C:\Users\patri\AI\AI-Engineering-OS\projects\next-app\htmltools\tennisteam`
 
 Nicht über Chat-Links — die funktionieren in Cursor nicht als Ordner-Öffnen.
 

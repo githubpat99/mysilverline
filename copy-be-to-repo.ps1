@@ -1,7 +1,7 @@
 # Kopiert silverline-api.php ins BE-Repo für Deployment
 $ErrorActionPreference = "Stop"
 
-$source = "C:\Users\patri\next-app\BE_Copy\silverline-api.php"
+$source = Join-Path $PSScriptRoot "BE_Copy\silverline-api.php"
 $dest   = "C:\Users\patri\mysilverline.it-pin.ch\silverline-api\silverline-api.php"
 
 if (-not (Test-Path $source)) { throw "Quelle fehlt: $source" }
